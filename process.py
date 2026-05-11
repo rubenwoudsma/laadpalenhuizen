@@ -31,8 +31,8 @@ TARIFFS_URL   = f"{NDW_BASE}/charging_point_tariffs_ocpi.json.gz"
 OUTPUT_FILE = "huizen-data.json"
 
 # Bounding box: used for fast pre-filter before precise polygon check
-LAT_MIN, LAT_MAX = 52.270, 52.330
-LNG_MIN, LNG_MAX = 5.190, 5.290
+LAT_MIN, LAT_MAX = 52.260, 52.325
+LNG_MIN, LNG_MAX = 5.175, 5.305
 
 # Municipality boundary polygon (from PDOK/CBS wijkenbuurten 2024)
 BOUNDARY_FILE = os.path.join(os.path.dirname(__file__) or ".", "huizen-boundary.geojson")
@@ -95,16 +95,26 @@ CHARGEMAP_MARKUP     = 0.12  # ~12% markup on CPO rate
 
 
 def load_boundary() -> list:
-    """Load gemeente boundary polygon from GeoJSON file."""
-    with open(BOUNDARY_FILE) as f:
+    """
+    Load gemeente boundary from GeoJSON file.
+
+    Returns a list of polygons. Each polygon is a list of rings.
+    The first ring is the outer boundary, optional later rings are holes.
+    Supports both Polygon and MultiPolygon GeoJSON.
+    """
+    with open(BOUNDARY_FILE, "r", encoding="utf-8") as f:
         data = json.load(f)
+
     geom = data["geometry"]
-    if geom["type"] == "Polygon":
-        return geom["coordinates"][0]
-    elif geom["type"] == "MultiPolygon":
-        # Use the largest polygon (outer ring of first polygon)
-        return max(geom["coordinates"], key=lambda p: len(p[0]))[0]
-    raise ValueError(f"Unsupported geometry type: {geom['type']}")
+    geom_type = geom["type"]
+
+    if geom_type == "Polygon":
+        return [geom["coordinates"]]
+
+    if geom_type == "MultiPolygon":
+        return geom["coordinates"]
+
+    raise ValueError(f"Unsupported geometry type: {geom_type}")
 
 
 def point_in_polygon(lng: float, lat: float, polygon: list) -> bool:
@@ -120,6 +130,31 @@ def point_in_polygon(lng: float, lat: float, polygon: list) -> bool:
         j = i
     return inside
 
+def point_in_boundary(lng: float, lat: float, boundary: list) -> bool:
+    """
+    Check whether a point is inside a Polygon or MultiPolygon boundary.
+
+    boundary format:
+      [
+        [outer_ring, optional_hole_ring, ...],
+        [outer_ring, optional_hole_ring, ...],
+        ...
+      ]
+    """
+    for polygon in boundary:
+        outer_ring = polygon[0]
+
+        if not point_in_polygon(lng, lat, outer_ring):
+            continue
+
+        # If the polygon has holes, exclude points inside those holes
+        holes = polygon[1:]
+        if any(point_in_polygon(lng, lat, hole) for hole in holes):
+            continue
+
+        return True
+
+    return False
 
 def fetch_gz(url: str) -> bytes:
     print(f"  Fetching {url} ...", end=" ", flush=True)
@@ -225,7 +260,12 @@ def connector_type_label(conn: dict) -> str:
     return label_map.get(standard, standard)
 
 
-def process_location(loc: dict, tariff_map: dict, operator_median: Optional[dict] = None, boundary: Optional[list] = None) -> Optional[dict]:
+def process_location(
+    loc: dict,
+    tariff_map: dict,
+    operator_median: Optional[dict] = None,
+    boundary: Optional[list] = None,
+) -> Optional[dict]:
     coords = loc.get("coordinates", {})
     lat = float(coords.get("latitude", 0))
     lng = float(coords.get("longitude", 0))
@@ -234,7 +274,7 @@ def process_location(loc: dict, tariff_map: dict, operator_median: Optional[dict
     if not (LAT_MIN <= lat <= LAT_MAX and LNG_MIN <= lng <= LNG_MAX):
         return None
     # Precise polygon check
-    if boundary and not point_in_polygon(lng, lat, boundary):
+    if boundary and not point_in_boundary(lng, lat, boundary):
         return None
 
     operator = (loc.get("operator") or {}).get("name", "Onbekend")
@@ -394,7 +434,9 @@ def main():
     boundary = None
     try:
         boundary = load_boundary()
-        print(f"  Municipality boundary loaded ({len(boundary)} vertices)")
+        num_polygons = len(boundary)
+        num_vertices = sum(len(polygon[0]) for polygon in boundary)
+        print(f"  Municipality boundary loaded ({num_polygons} polygons, {num_vertices} outer-ring vertices)")
     except FileNotFoundError:
         print("  WARNING: huizen-boundary.geojson not found, using bbox only")
 
