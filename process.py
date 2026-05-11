@@ -52,7 +52,7 @@ HEADERS = {
 #   - Own Shell poles: variable CPO rate (2025 change)
 #   - Other AC poles:  €0.53 fixed
 # Chargemap adds ~12% markup on CPO rate.
-# Vattenfall own pass at own Gelderland/Overijssel poles: €0.31 concessie rate.
+# Vattenfall own pass at own Noord-Holland poles: €0.31 concessie rate.
 # ChargePoint: CPO rate 1:1, no markup.
 # Laadkompas met abonnement: CPO rate, no start fee.
 
@@ -70,7 +70,7 @@ ALLEGO_OWN_AC = 0.62
 
 # Per-CPO pricing overrides (when CPO rate not available from NDW tariffs).
 # Keyed by lowercase operator name substring.
-# Vattenfall/Nuon: €0,3624/kWh Gelderland & Overijssel (incharge.vattenfall.nl/onze-tarieven)
+# Vattenfall/Nuon: €0,3624/kWh Noord-Holland & Utrecht (incharge.vattenfall.nl/onze-tarieven)
 CPO_FALLBACK = {
     "vattenfall": {"vattenfall": 0.3624, "laadkompas": 0.3624, "allego": 0.60, "shell": 0.55, "chargemap": 0.41},
     "allego":     {"vattenfall": 0.62, "laadkompas": 0.60, "allego": 0.62, "shell": 0.60, "chargemap": 0.67},
