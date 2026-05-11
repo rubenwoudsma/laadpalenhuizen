@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Methodologie · Laadpalen Wijchen</title>
+<title>Methodologie · Laadpalen Huizen</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -105,8 +105,8 @@ footer a { color:var(--muted); }
     <div class="wordmark">
       <div class="wordmark-icon">⚡</div>
       <div class="wordmark-text">
-        <h1>Laadpalen Wijchen</h1>
-        <span>Wijchen · Gelderland</span>
+        <h1>Laadpalen Huizen</h1>
+        <span>Huizen · Noord-Holland</span>
       </div>
     </div>
   </a>
@@ -115,7 +115,7 @@ footer a { color:var(--muted); }
 
 <main>
   <h2>Methodologie</h2>
-  <p>Deze pagina beschrijft hoe de data op Laadpalen Wijchen wordt verzameld, verwerkt en weergegeven. Alle code is open source en beschikbaar op <a href="https://github.com/jdevalk/laadpalenwijchen.nl">GitHub</a>.</p>
+  <p>Deze pagina beschrijft hoe de data op Laadpalen Huizen wordt verzameld, verwerkt en weergegeven. Alle code is open source en beschikbaar op <a href="https://github.com/rubenwoudsma/laadpalenhuizen">GitHub</a>.</p>
 
   <h2>Databronnen</h2>
 
@@ -125,7 +125,7 @@ footer a { color:var(--muted); }
     <li><strong>Locaties</strong> &mdash; alle publieke laadpunten in Nederland met adres, operator, connectoren en vermogen.</li>
     <li><strong>Tarieven</strong> &mdash; OCPI 2.2.1 tariefobjecten met energieprijzen per kWh, gekoppeld aan individuele connectoren.</li>
   </ul>
-  <p>De data wordt gefilterd op een bounding box rond de gemeente Wijchen (lat 51.770&ndash;51.850, lng 5.670&ndash;5.810) die alle kernen van de gemeente omvat.</p>
+  <p>De data wordt gefilterd op een bounding box rond de gemeente Huizen (lat 51.770&ndash;51.850, lng 5.670&ndash;5.810) die alle kernen van de gemeente omvat.</p>
 
   <h3>Open Charge Map (OCM)</h3>
   <p>Voor live beschikbaarheid wordt de Open Charge Map API elke 5 minuten client-side bevraagd. Laadpunten die in OCM voorkomen maar niet in NDW worden apart getoond als "Niet in NDW". Deze punten hebben geen tariefdata.</p>
@@ -165,7 +165,7 @@ footer a { color:var(--muted); }
   <p>De live beschikbaarheidsstatus komt van Open Charge Map. Elk NDW-laadpunt wordt op basis van co&ouml;rdinaten gematcht met het dichtstbijzijnde OCM-resultaat (maximaal 15 meter afstand). Als er een match is, wordt de OCM-status overgenomen. Zonder match wordt de statische NDW-status getoond.</p>
 
   <h2>Data-update</h2>
-  <p>Een GitHub Actions workflow draait dagelijks om 06:00 UTC. Het script downloadt de nieuwste NDW-data, verwerkt deze en commit het resultaat (<code>wijchen-data.json</code>) als er wijzigingen zijn. Cloudflare Pages deployt automatisch bij elke push naar <code>main</code>.</p>
+  <p>Een GitHub Actions workflow draait dagelijks om 06:00 UTC. Het script downloadt de nieuwste NDW-data, verwerkt deze en commit het resultaat (<code>huizen-data.json</code>) als er wijzigingen zijn. Cloudflare Pages deployt automatisch bij elke push naar <code>main</code>.</p>
 
   <h2>Beperkingen</h2>
   <ul>
@@ -177,11 +177,11 @@ footer a { color:var(--muted); }
   </ul>
 
   <h2>Open source</h2>
-  <p>De volledige broncode is beschikbaar op <a href="https://github.com/jdevalk/laadpalenwijchen.nl">github.com/jdevalk/laadpalenwijchen.nl</a>. Het dataverwerkingsscript (<code>process.py</code>) heeft geen externe dependencies &mdash; alleen Python 3.12 standaardbibliotheek.</p>
+  <p>De volledige broncode is beschikbaar op <a href="https://github.com/rubenwoudsma/laadpalenhuizen">github.com/rubenwoudsma/laadpalenhuizen</a>. Het dataverwerkingsscript (<code>process.py</code>) heeft geen externe dependencies &mdash; alleen Python 3.12 standaardbibliotheek.</p>
 </main>
 
 <footer>
-  <span><a href="/">Laadpalen Wijchen</a> · open source op <a href="https://github.com/jdevalk/laadpalenwijchen.nl">GitHub</a></span>
+  <span><a href="/">Laadpalen Huizen</a> · open source op <a href="https://github.com/rubenwoudsma/laadpalenhuizen">GitHub</a></span>
 </footer>
 
 </body>
