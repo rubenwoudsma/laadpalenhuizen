@@ -135,11 +135,11 @@ De site vergelijkt een aantal veelgebruikte laadpassen op basis van beschikbare 
 
 | Pas | Maandkosten | Methode in deze site |
 |-----|-------------|----------------------|
-| Vattenfall InCharge | €0 | CPO-tarief uit NDW waar beschikbaar, anders fallback op basis van operator |
-| Laadkompas | €4,78/maand | CPO-basistarief of fallback op basis van operator |
-| Allego | €0 | CPO-tarief uit NDW waar beschikbaar, met aparte behandeling voor Allego-locaties |
-| Shell Recharge | €0 | Vast of geschat tarief afhankelijk van operator en laadpunt |
-| Chargemap | €0 | CPO-tarief met indicatieve opslag, of fallback op basis van operator |
+| Vattenfall | €0 | CPO-tarief uit NDW waar beschikbaar, anders indicatieve fallback op basis van operator |
+| Laadkompas | €4,78/maand | CPO-basistarief of indicatieve fallback op basis van operator |
+| Allego | €0 | CPO-tarief uit NDW waar beschikbaar, met aparte fallback voor Allego-locaties |
+| Shell Recharge | €0 | Indicatief vast AC-tarief voor vergelijking, transactiekosten niet meegenomen |
+| Chargemap | €0 | CPO-tarief met indicatieve serviceopslag, of fallback op basis van operator |
 
 De tarieven zijn indicatief. De exacte kosten kunnen verschillen per laadpaal, laadpas, operator, roamingafspraak, starttarief, blokkeertarief en moment van laden. Controleer daarom altijd de app van je laadpas of aanbieder voordat je gaat laden.
 
