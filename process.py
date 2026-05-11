@@ -7,7 +7,7 @@ Downloads the two public NDW open data files:
   - charging_point_tariffs_ocpi.json.gz    (OCPI 2.2.1 tariffs)
 
 Filters to a bounding box around Huizen, joins tariffs onto connectors,
-and writes huizen-data.json to be served statically by Cloudflare Pages.
+and writes huizen-data.json to be served statically by Github Pages.
 
 No API key required. Files are updated daily by NDW.
 Run: python3 process.py
@@ -31,8 +31,8 @@ TARIFFS_URL   = f"{NDW_BASE}/charging_point_tariffs_ocpi.json.gz"
 OUTPUT_FILE = "huizen-data.json"
 
 # Bounding box: used for fast pre-filter before precise polygon check
-LAT_MIN, LAT_MAX = 51.770, 51.870
-LNG_MIN, LNG_MAX = 5.590, 5.810
+LAT_MIN, LAT_MAX = 52.270, 52.330
+LNG_MIN, LNG_MAX = 5.190, 5.290
 
 # Municipality boundary polygon (from PDOK/CBS wijkenbuurten 2024)
 BOUNDARY_FILE = os.path.join(os.path.dirname(__file__) or ".", "huizen-boundary.geojson")
