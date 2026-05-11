@@ -42,19 +42,27 @@ HEADERS = {
     "Accept-Encoding": "identity",
 }
 
-# ── KNOWN MSP RATES (fallback / layered on top of CPO rate) ──────────────────
-# Used when a tariff_id is present but CPO rate not in NDW tariffs file,
-# OR for MSPs that use fixed rates regardless of CPO.
-# All €/kWh incl. BTW, AC loading, estimated for 15 kWh session.
-# Updated: March 2026
+# ── INDICATIVE MSP RATES [fallback / layered on top of CPO rate] ─────────────
+# Used when a tariff_id is present but no usable CPO rate can be extracted from
+# the NDW tariffs file, or for MSPs that use a fixed/estimated price model.
 #
-# Shell Recharge uses fixed rates per network type (not CPO passthrough):
-#   - Own Shell poles: variable CPO rate (2025 change)
-#   - Other AC poles:  €0.53 fixed
-# Chargemap adds ~12% markup on CPO rate.
-# Vattenfall own pass at own Noord-Holland poles: €0.31 concessie rate.
-# ChargePoint: CPO rate 1:1, no markup.
-# Laadkompas met abonnement: CPO rate, no start fee.
+# IMPORTANT:
+# These values are indicative estimates for comparison only. Exact prices can
+# differ per charge point, CPO, MSP, roaming agreement, region, start fee,
+# blocking fee and subscription. Always verify the actual price in the MSP app.
+#
+# All prices are €/kWh incl. VAT, AC charging, simplified for map comparison.
+# Updated: May 2026.
+#
+# Notes:
+# - NDW CPO tariffs are preferred whenever available.
+# - Vattenfall: own-pole and roaming prices can differ by location. The actual
+#   price should be checked in the Vattenfall InCharge app or tariffs page.
+# - Shell Recharge: uses a fixed-price model in NL, plus possible transaction
+#   costs per session. The kWh value below is an estimate for comparison.
+# - Allego: prices vary by location and may include overstay/blocking fees.
+# - Chargemap: generally applies a service markup on partner-network tariffs.
+# - Laadkompas with subscription is modelled as CPO rate without start fee.
 
 PASSES = [
     {"id": "vattenfall", "name": "Vattenfall",     "color": "#16a34a", "monthly": 0},
@@ -64,35 +72,117 @@ PASSES = [
     {"id": "chargemap",  "name": "Chargemap",      "color": "#7c3aed", "monthly": 0},
 ]
 
-# Allego own-network AC rate: €0.41–€0.62/kWh (varies per location)
-# Using upper bound as conservative estimate (allego.eu/nl/prijzen, Jan 2025)
+# Allego own-network AC rate can vary per location. Use a conservative estimate.
 ALLEGO_OWN_AC = 0.62
 
-# Per-CPO pricing overrides (when CPO rate not available from NDW tariffs).
+# Shell Recharge fixed AC estimate for NL roaming comparison.
+# Shell also charges transaction costs per session, which are not included here.
+SHELL_FIXED_OTHER_AC = 0.55
+
+# Chargemap service markup estimate.
+CHARGEMAP_MARKUP = 0.10
+
+# Operators where national median can be misleading due to regional/concession rates.
+SKIP_OPERATOR_MEDIAN = {"vattenfall incharge", "vattenfall", "nuon"}
+
+# Per-CPO pricing fallbacks when no usable CPO rate is available from NDW tariffs.
 # Keyed by lowercase operator name substring.
-# Vattenfall/Nuon: €0,3624/kWh Noord-Holland & Utrecht (incharge.vattenfall.nl/onze-tarieven)
+#
+# These are deliberately conservative estimates, not official tariffs.
+# Prefer NDW tariff data whenever available.
 CPO_FALLBACK = {
-    "vattenfall": {"vattenfall": 0.3624, "laadkompas": 0.3624, "allego": 0.60, "shell": 0.55, "chargemap": 0.41},
-    "allego":     {"vattenfall": 0.62, "laadkompas": 0.60, "allego": 0.62, "shell": 0.60, "chargemap": 0.67},
-    "shell":      {"vattenfall": 0.58, "laadkompas": 0.56, "allego": 0.60, "shell": 0.48, "chargemap": 0.59},
-    "e-flux":     {"vattenfall": 0.42, "laadkompas": 0.40, "allego": 0.60, "shell": 0.55, "chargemap": 0.45},
-    "road":       {"vattenfall": 0.42, "laadkompas": 0.40, "allego": 0.60, "shell": 0.55, "chargemap": 0.45},
-    "ev-box":     {"vattenfall": 0.40, "laadkompas": 0.38, "allego": 0.60, "shell": 0.55, "chargemap": 0.43},
-    "greenflux":  {"vattenfall": 0.44, "laadkompas": 0.42, "allego": 0.60, "shell": 0.57, "chargemap": 0.47},
-    "ecotap":     {"vattenfall": 0.34, "laadkompas": 0.32, "allego": 0.60, "shell": 0.55, "chargemap": 0.36},
-    "eneco":      {"vattenfall": 0.42, "laadkompas": 0.40, "allego": 0.60, "shell": 0.55, "chargemap": 0.45},
-    "nuon":       {"vattenfall": 0.3624, "laadkompas": 0.3624, "allego": 0.60, "shell": 0.55, "chargemap": 0.41},
-    "last mile":  {"vattenfall": 0.37, "laadkompas": 0.35, "allego": 0.60, "shell": 0.55, "chargemap": 0.39},
-    "plugwise":   {"vattenfall": 0.36, "laadkompas": 0.34, "allego": 0.60, "shell": 0.55, "chargemap": 0.38},
-    "default":    {"vattenfall": 0.39, "laadkompas": 0.37, "allego": 0.60, "shell": 0.55, "chargemap": 0.41},
+    "vattenfall": {
+        "vattenfall": 0.39,
+        "laadkompas": 0.39,
+        "allego": 0.60,
+        "shell": 0.55,
+        "chargemap": 0.43,
+    },
+    "nuon": {
+        "vattenfall": 0.39,
+        "laadkompas": 0.39,
+        "allego": 0.60,
+        "shell": 0.55,
+        "chargemap": 0.43,
+    },
+    "allego": {
+        "vattenfall": 0.62,
+        "laadkompas": 0.60,
+        "allego": 0.62,
+        "shell": 0.55,
+        "chargemap": 0.68,
+    },
+    "shell": {
+        "vattenfall": 0.58,
+        "laadkompas": 0.56,
+        "allego": 0.60,
+        "shell": 0.55,
+        "chargemap": 0.62,
+    },
+    "e-flux": {
+        "vattenfall": 0.42,
+        "laadkompas": 0.40,
+        "allego": 0.60,
+        "shell": 0.55,
+        "chargemap": 0.46,
+    },
+    "road": {
+        "vattenfall": 0.42,
+        "laadkompas": 0.40,
+        "allego": 0.60,
+        "shell": 0.55,
+        "chargemap": 0.46,
+    },
+    "ev-box": {
+        "vattenfall": 0.40,
+        "laadkompas": 0.38,
+        "allego": 0.60,
+        "shell": 0.55,
+        "chargemap": 0.44,
+    },
+    "greenflux": {
+        "vattenfall": 0.44,
+        "laadkompas": 0.42,
+        "allego": 0.60,
+        "shell": 0.55,
+        "chargemap": 0.48,
+    },
+    "ecotap": {
+        "vattenfall": 0.36,
+        "laadkompas": 0.34,
+        "allego": 0.60,
+        "shell": 0.55,
+        "chargemap": 0.40,
+    },
+    "eneco": {
+        "vattenfall": 0.42,
+        "laadkompas": 0.40,
+        "allego": 0.60,
+        "shell": 0.55,
+        "chargemap": 0.46,
+    },
+    "last mile": {
+        "vattenfall": 0.37,
+        "laadkompas": 0.35,
+        "allego": 0.60,
+        "shell": 0.55,
+        "chargemap": 0.41,
+    },
+    "plugwise": {
+        "vattenfall": 0.36,
+        "laadkompas": 0.34,
+        "allego": 0.60,
+        "shell": 0.55,
+        "chargemap": 0.40,
+    },
+    "default": {
+        "vattenfall": 0.42,
+        "laadkompas": 0.40,
+        "allego": 0.60,
+        "shell": 0.55,
+        "chargemap": 0.46,
+    },
 }
-
-SHELL_FIXED_OTHER_AC = 0.55  # Shell Recharge fixed rate for non-Shell poles (2025)
-
-# Operators where national median is misleading (regional concessie rates)
-SKIP_OPERATOR_MEDIAN = {"vattenfall incharge"}
-CHARGEMAP_MARKUP     = 0.12  # ~12% markup on CPO rate
-
 
 def load_boundary() -> list:
     """
@@ -219,7 +309,7 @@ def build_pricing(cpo_rate: Optional[float], operator_name: str) -> dict:
 
     # Detect Shell-own poles to use their own rate
     is_shell_pole = "shell" in op_lower
-    shell_price = round(cpo_rate * 0.95, 4) if is_shell_pole else SHELL_FIXED_OTHER_AC
+    shell_price = SHELL_FIXED_OTHER_AC
 
     # Allego uses fixed rate on own network, CPO rate elsewhere
     is_allego_pole = "allego" in op_lower
