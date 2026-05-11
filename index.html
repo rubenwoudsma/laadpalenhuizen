@@ -308,7 +308,7 @@ footer {
 
 <footer>
   <span>Bron: NDW open data (opendata.ndw.nu) · <span id="footer-stats"></span></span>
-  <span>Tarieven indicatief · check altijd de app · <a href="/methodologie.html" style="color:inherit">methodologie</a></span>
+  <span>Tarieven indicatief · check altijd de app · <a href="methodologie.html" style="color:inherit">methodologie</a></span>
 </footer>
 
 <script>
@@ -779,7 +779,7 @@ async function refreshStatus() {
 // ── MAIN ─────────────────────────────────────────────────────────────────────
 async function init() {
   try {
-    const res = await fetch('./huizen-data.json');
+    const res = await fetch('huizen-data.json');
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
 
