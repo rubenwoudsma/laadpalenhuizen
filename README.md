@@ -1,98 +1,189 @@
-# Laadpalen Wijchen
+# Laadpalen Huizen
 
-Vergelijkt 5 laadpassen op alle publieke laadpunten in Wijchen en omgeving.
+Een interactieve kaart met publieke laadpunten in de gemeente Huizen.
 
-**Live data van NDW** (Nationaal Dataportaal Wegverkeer) — dagelijks bijgewerkt.
+De site vergelijkt indicatief meerdere laadpassen op basis van openbare NDW-data en toont per laadpunt onder andere locatie, operator, beschikbaarheid, vermogen en geschatte laadkosten.
+
+**Live data van NDW** [Nationaal Dataportaal Wegverkeer], dagelijks bijgewerkt via GitHub Actions.
+
+## Live website
+
+De website draait via GitHub Pages:
+
+```text
+https://rubenwoudsma.github.io/laadpalenhuizen/
+```
 
 ## Hoe werkt het?
 
-```
-NDW open data (gratis, geen API-key)
-         ↓  (dagelijks, 06:00 UTC)
+```text
+NDW open data [gratis, geen API-key]
+         ↓  [dagelijks, 06:00 UTC]
 GitHub Actions → process.py
          ↓
-wijchen-data.json  (gecommit naar repo)
+huizen-data.json [gecommit naar repo]
          ↓
-Cloudflare Pages   (auto-deploy bij elke push)
+GitHub Pages [publiceert main branch / root]
          ↓
-index.html leest wijchen-data.json
+index.html leest huizen-data.json
 ```
+
+## Wat doet deze repo?
+
+Deze repository bevat een statische website die:
+
+1. NDW open data downloadt.
+2. Publieke laadpunten filtert op de gemeentegrens van Huizen.
+3. Locaties en tarieven combineert.
+4. Een compact `huizen-data.json` bestand genereert.
+5. De kaart in `index.html` toont via GitHub Pages.
+
+Er is geen backend, database of API-key nodig.
 
 ## Setup
 
-### 1. Fork / clone deze repo
+### 1. Clone deze repo
 
 ```bash
-git clone https://github.com/jdevalk/laadpalenwijchen.nl
-cd laadpalenwijchen.nl
+git clone https://github.com/rubenwoudsma/laadpalenhuizen.git
+cd laadpalenhuizen
 ```
 
-### 2. Cloudflare Pages koppelen
-
-1. Ga naar [Cloudflare Pages](https://pages.cloudflare.com/)
-2. **Create a project** → Connect to Git → selecteer deze repo
-3. Build settings:
-   - **Framework preset:** None
-   - **Build command:** *(leeg laten)*
-   - **Build output directory:** `/` (of leeg)
-4. Deploy → Cloudflare geeft je een `*.pages.dev` URL
-
-Cloudflare Pages deployt automatisch bij elke push naar `main`.
-
-### 3. GitHub Actions (automatische dagelijkse update)
-
-De workflow in `.github/workflows/update.yml` draait elke dag om 06:00 UTC:
-1. Download NDW bestanden
-2. Filter op Wijchen bounding box
-3. Join locaties + tarieven
-4. Commit `wijchen-data.json` terug naar repo
-5. Cloudflare Pages detecteert de push → auto-deploy
-
-**Geen secrets nodig** — NDW data is volledig open/gratis.
-
-### 4. Handmatig draaien (testen)
+### 2. Handmatig draaien [testen]
 
 ```bash
 python3 process.py
-# schrijft wijchen-data.json lokaal
-# open index.html in browser (via lokale server)
+```
+
+Dit schrijft lokaal:
+
+```text
+huizen-data.json
+```
+
+Start daarna een lokale webserver:
+
+```bash
 python3 -m http.server 8080
+```
+
+Open vervolgens:
+
+```text
+http://localhost:8080
+```
+
+## GitHub Pages
+
+Deze site is bedoeld om direct vanuit de root van de `main` branch te draaien.
+
+Instelling in GitHub:
+
+```text
+Settings → Pages
+Source: Deploy from a branch
+Branch: main
+Folder: /root
+```
+
+GitHub Pages publiceert daarna automatisch de bestanden uit de repository.
+
+## GitHub Actions [automatische dagelijkse update]
+
+De workflow in `.github/workflows/update.yml` draait elke dag om 06:00 UTC.
+
+De workflow doet het volgende:
+
+1. Downloadt de actuele NDW-bestanden.
+2. Draait `process.py`.
+3. Genereert een nieuwe `huizen-data.json`.
+4. Controleert of de data gewijzigd is.
+5. Commit de nieuwe data terug naar de repo als er wijzigingen zijn.
+
+Geen secrets nodig, NDW-data is openbaar beschikbaar.
+
+Let op: de workflow moet schrijfrechten hebben.
+
+Controleer in GitHub:
+
+```text
+Settings → Actions → General → Workflow permissions
+Read and write permissions
 ```
 
 ## Data bronnen
 
-| Bron | URL | Update |
-|------|-----|--------|
-| NDW locaties (OCPI) | `opendata.ndw.nu/charging_point_locations_ocpi.json.gz` | Dagelijks |
-| NDW tarieven (OCPI) | `opendata.ndw.nu/charging_point_tariffs_ocpi.json.gz` | Dagelijks |
+| Bron | Bestand | Update |
+|------|---------|--------|
+| NDW locaties [OCPI] | `charging_point_locations_ocpi.json.gz` | Dagelijks |
+| NDW tarieven [OCPI] | `charging_point_tariffs_ocpi.json.gz` | Dagelijks |
 
-NDW haalt data op bij CPO's (laadpaal-exploitanten). Voor sommige CPO's
-is er ook een push-connectie met minuut-updates, maar de gepubliceerde
-open data bestanden worden dagelijks geregenereerd.
+NDW haalt data op bij laadpaalexploitanten [CPO's]. De open databestanden worden periodiek bijgewerkt.
 
-> **Let op:** Niet alle Nederlandse CPO's zijn verplicht aangesloten op NDW
-> (AFIR-wetgeving is van kracht maar naleving is nog niet 100%).
-> Locaties zonder NDW-tarief gebruiken een schatting (zie `process.py`).
+## Gemeentegrens Huizen
+
+De filtering gebeurt in twee stappen:
+
+1. Een ruime bounding box rond Huizen voor snelle voorselectie.
+2. Een precieze polygon-check op basis van `huizen-boundary.geojson`.
+
+Het bestand `huizen-boundary.geojson` bevat de gemeentegrens van Huizen als GeoJSON `Feature` met een `MultiPolygon` geometry.
 
 ## Passen vergeleken
 
 | Pas | Maandkosten | Methode |
-|-----|------------|---------|
-| Vattenfall InCharge | €0 | Concessietarief Gelderland/Overijssel: €0,3624/kWh |
-| Laadkompas | €4.78/mo | CPO-basistarief (geen starttarief met abo) |
-| Allego | €0 | Max. €0,62/kWh op eigen netwerk (range €0,41–€0,62), CPO-tarief elders |
-| Shell Recharge | €0 | €0,55 vaste prijs overige AC-palen (2025) |
-| Chargemap | €0 | CPO-tarief + ~12% opslag |
+|-----|-------------|---------|
+| Vattenfall | €0 | CPO-tarief of fallback op basis van operator |
+| Laadkompas | €4,78/maand | CPO-basistarief of fallback op basis van operator |
+| Allego | €0 | Allego-tarief op eigen netwerk, CPO-tarief elders |
+| Shell Recharge | €0 | Vast of geschat tarief afhankelijk van operator |
+| Chargemap | €0 | CPO-tarief met indicatieve opslag |
 
-Tarieven zijn indicatief. Check altijd de app voor de exacte prijs per paal.
+Tarieven zijn indicatief. Controleer altijd de app van je laadpas of aanbieder voordat je gaat laden.
+
+## Belangrijke kanttekeningen
+
+Deze site is bedoeld als hulpmiddel, niet als officiële prijsbron.
+
+Mogelijke beperkingen:
+
+- Niet elk laadpunt heeft een volledig NDW-tarief.
+- Sommige tarieven worden geschat via fallbackregels in `process.py`.
+- Beschikbaarheid kan afwijken van de werkelijke situatie bij de laadpaal.
+- Laadpassen kunnen eigen voorwaarden, starttarieven of roamingkosten rekenen.
+- Tarieven kunnen wijzigen zonder dat dit direct zichtbaar is in de open data.
 
 ## Bestanden
 
-```
-laadpalenwijchen.nl/
-├── index.html              ← de website (leest wijchen-data.json)
-├── wijchen-data.json       ← gegenereerd door process.py, geserveerd door Pages
-├── process.py              ← NDW downloader + preprocessor
+```text
+laadpalenhuizen/
+├── index.html                  ← website en kaart
+├── methodologie.html           ← uitleg over data en tariefberekening
+├── huizen-data.json            ← gegenereerde laadpuntdata
+├── huizen-boundary.geojson     ← gemeentegrens Huizen
+├── process.py                  ← NDW downloader en preprocessor
+├── .nojekyll                   ← voorkomt Jekyll-verwerking door GitHub Pages
 └── .github/workflows/
-      └── update.yml        ← dagelijkse cron job
+      └── update.yml            ← dagelijkse update via GitHub Actions
 ```
+
+## Gebaseerd op
+
+Dit project is gebaseerd op de open source repository:
+
+```text
+https://github.com/jdevalk/laadpalenwijchen.nl
+```
+
+Aanpassingen voor deze versie:
+
+- Omgezet van Wijchen naar Huizen.
+- Gemeentegrens vervangen door `huizen-boundary.geojson`.
+- Outputbestand aangepast van `wijchen-data.json` naar `huizen-data.json`.
+- Bounding box aangepast naar de omgeving Huizen.
+- Workflow aangepast voor GitHub Pages in plaats van Cloudflare Pages.
+- Teksten, methodologie en kaartinstellingen aangepast voor Huizen.
+
+## Licentie
+
+Controleer de licentie van de oorspronkelijke repository en neem die over als deze van toepassing is. Voeg hier eventueel een eigen licentie toe als dat past bij het gebruik van deze fork.
