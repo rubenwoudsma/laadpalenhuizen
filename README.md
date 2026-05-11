@@ -186,4 +186,4 @@ Aanpassingen voor deze versie:
 
 ## Licentie
 
-Controleer de licentie van de oorspronkelijke repository en neem die over als deze van toepassing is. Voeg hier eventueel een eigen licentie toe als dat past bij het gebruik van deze fork.
+Controleer de licentie van de oorspronkelijke repository en neem die over als deze van toepassing is. 
