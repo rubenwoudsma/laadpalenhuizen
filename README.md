@@ -131,15 +131,17 @@ Het bestand `huizen-boundary.geojson` bevat de gemeentegrens van Huizen als GeoJ
 
 ## Passen vergeleken
 
-| Pas | Maandkosten | Methode |
-|-----|-------------|---------|
-| Vattenfall | €0 | CPO-tarief of fallback op basis van operator |
-| Laadkompas | €4,78/maand | CPO-basistarief of fallback op basis van operator |
-| Allego | €0 | Allego-tarief op eigen netwerk, CPO-tarief elders |
-| Shell Recharge | €0 | Vast of geschat tarief afhankelijk van operator |
-| Chargemap | €0 | CPO-tarief met indicatieve opslag |
+De site vergelijkt een aantal veelgebruikte laadpassen op basis van beschikbare NDW-tarieven en fallbackregels in `process.py`.
 
-Tarieven zijn indicatief. Controleer altijd de app van je laadpas of aanbieder voordat je gaat laden.
+| Pas | Maandkosten | Methode in deze site |
+|-----|-------------|----------------------|
+| Vattenfall InCharge | €0 | CPO-tarief uit NDW waar beschikbaar, anders fallback op basis van operator |
+| Laadkompas | €4,78/maand | CPO-basistarief of fallback op basis van operator |
+| Allego | €0 | CPO-tarief uit NDW waar beschikbaar, met aparte behandeling voor Allego-locaties |
+| Shell Recharge | €0 | Vast of geschat tarief afhankelijk van operator en laadpunt |
+| Chargemap | €0 | CPO-tarief met indicatieve opslag, of fallback op basis van operator |
+
+De tarieven zijn indicatief. De exacte kosten kunnen verschillen per laadpaal, laadpas, operator, roamingafspraak, starttarief, blokkeertarief en moment van laden. Controleer daarom altijd de app van je laadpas of aanbieder voordat je gaat laden.
 
 ## Belangrijke kanttekeningen
 
