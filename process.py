@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-NDW charging point preprocessor for Wijchen, NL.
+NDW charging point preprocessor for Huizen, NL.
 
 Downloads the two public NDW open data files:
   - charging_point_locations_ocpi.json.gz  (OCPI 2.2.1 locations)
   - charging_point_tariffs_ocpi.json.gz    (OCPI 2.2.1 tariffs)
 
-Filters to a bounding box around Wijchen, joins tariffs onto connectors,
-and writes wijchen-data.json to be served statically by Cloudflare Pages.
+Filters to a bounding box around Huizen, joins tariffs onto connectors,
+and writes huizen-data.json to be served statically by Cloudflare Pages.
 
 No API key required. Files are updated daily by NDW.
 Run: python3 process.py
@@ -28,17 +28,17 @@ NDW_BASE = "https://opendata.ndw.nu"
 LOCATIONS_URL = f"{NDW_BASE}/charging_point_locations_ocpi.json.gz"
 TARIFFS_URL   = f"{NDW_BASE}/charging_point_tariffs_ocpi.json.gz"
 
-OUTPUT_FILE = "wijchen-data.json"
+OUTPUT_FILE = "huizen-data.json"
 
 # Bounding box: used for fast pre-filter before precise polygon check
 LAT_MIN, LAT_MAX = 51.770, 51.870
 LNG_MIN, LNG_MAX = 5.590, 5.810
 
 # Municipality boundary polygon (from PDOK/CBS wijkenbuurten 2024)
-BOUNDARY_FILE = os.path.join(os.path.dirname(__file__) or ".", "wijchen-boundary.geojson")
+BOUNDARY_FILE = os.path.join(os.path.dirname(__file__) or ".", "huizen-boundary.geojson")
 
 HEADERS = {
-    "User-Agent": "laadpalenwijchen.nl/1.0 (github.com/jdevalk/laadpalenwijchen.nl)",
+    "User-Agent": "laadpalenhuizen/1.0 (github.com/rubenwoudsma/laadpalenhuizen)",
     "Accept-Encoding": "identity",
 }
 
@@ -332,7 +332,7 @@ def process_location(loc: dict, tariff_map: dict, operator_median: Optional[dict
 
 
 def main():
-    print("=== NDW Wijchen preprocessor ===")
+    print("=== NDW Huizen preprocessor ===")
 
     # ── Download ────────────────────────────────────────────────────────────
     print("\n[1/3] Downloading NDW data files...")
@@ -396,10 +396,10 @@ def main():
         boundary = load_boundary()
         print(f"  Municipality boundary loaded ({len(boundary)} vertices)")
     except FileNotFoundError:
-        print("  WARNING: wijchen-boundary.geojson not found, using bbox only")
+        print("  WARNING: huizen-boundary.geojson not found, using bbox only")
 
     # ── Pass 2: filter + process with operator median as extra fallback ────
-    print(f"\n[4/4] Filtering to gemeente Wijchen...")
+    print(f"\n[4/4] Filtering to gemeente Huizen...")
     results = []
     ndw_priced = 0
     fallback_priced = 0
