@@ -2,8 +2,9 @@ name: Update charging point data
 
 on:
   schedule:
-    # Run daily at 06:00 UTC. In the Netherlands this is 07:00 or 08:00 local time depending on DST.
-    - cron: "0 6 * * *"
+    # Run daily at 06:37 UTC. In the Netherlands this is 07:37 or 08:37 local time depending on DST.
+    - cron: "37 6 * * *"
+    - cron: "52 14 * * *"
   workflow_dispatch:
 
 permissions:
