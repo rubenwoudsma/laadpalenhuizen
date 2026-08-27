@@ -1,0 +1,115 @@
+name: Monitor charging tariffs
+
+on:
+  schedule:
+    # Monthly source check. Tariffs themselves are never changed automatically.
+    - cron: "17 8 5 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: monitor-charging-tariffs
+  cancel-in-progress: false
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - name: Run regression tests
+        run: python3 -m unittest discover -s tests
+
+      - name: Verify official pricing sources
+        id: monitor
+        continue-on-error: true
+        run: python3 scripts/check_pricing_sources.py --report pricing-monitor-report.md
+
+      - name: Add report to workflow summary
+        if: always()
+        run: |
+          if [ -f pricing-monitor-report.md ]; then
+            cat pricing-monitor-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Tariefmonitor kon geen rapport genereren." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Sync pricing review issue
+        if: always()
+        uses: actions/github-script@v9
+        env:
+          MONITOR_OUTCOME: ${{ steps.monitor.outcome }}
+        with:
+          script: |
+            const fs = require('fs');
+            const outcome = process.env.MONITOR_OUTCOME;
+            const title = 'Tariefmonitor: controle van prijsbronnen vereist';
+
+            const { data: repo } = await github.rest.repos.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+
+            if (!repo.has_issues) {
+              core.notice('GitHub Issues is uitgeschakeld voor deze repository. De tariefcontrole blijft beschikbaar in de Job Summary.');
+              return;
+            }
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const existing = issues.find(issue => !issue.pull_request && issue.title === title);
+
+            if (outcome === 'failure') {
+              const report = fs.existsSync('pricing-monitor-report.md')
+                ? fs.readFileSync('pricing-monitor-report.md', 'utf8')
+                : 'De tariefmonitor is mislukt zonder rapportbestand.';
+              const body = `${report}\n\nAutomatisch gecontroleerd door workflow \`${context.workflow}\` in run ${context.runId}.`;
+              if (existing) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: existing.number,
+                  body,
+                });
+              } else {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title,
+                  body,
+                });
+              }
+            } else if (outcome === 'success' && existing) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body: 'De maandelijkse broncontrole is weer volledig groen. Dit issue wordt automatisch gesloten.',
+              });
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                state: 'closed',
+              });
+            }
+
+      - name: Fail when a pricing source needs review
+        if: steps.monitor.outcome == 'failure'
+        run: |
+          echo "Een of meer officiële tariefbronnen moeten handmatig worden gecontroleerd. Zie de Job Summary."
+          exit 1

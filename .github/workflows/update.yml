@@ -1,19 +1,28 @@
 name: Update charging point data
 
 on:
-  # Daily scheduled run moved to the Mac Mini (launchd: com.jdevalk.laadpalenwijchen.update)
-  # to save GitHub Actions minutes. See ~/Code/laadpalenwijchen.nl-update.sh on `mini`.
-  # The schedule trigger below is intentionally disabled; kept here for reference.
-  # schedule:
-  #   - cron: "0 6 * * *"
+  push:
+    paths:
+      - "process.py"
+      - "tests/test_pricing.py"
+      - "tests/test_quality_report.py"
+      - "scripts/generate_quality_report.py"
+      - ".github/workflows/update.yml"
+  schedule:
+    # Run daily at 06:37 UTC. In the Netherlands this is 07:37 or 08:37 local time depending on DST.
+    - cron: "37 6 * * *"
   workflow_dispatch:
-    # Allow manual trigger from GitHub Actions UI (fallback if the Mini is down)
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-charging-point-data
+  cancel-in-progress: false
 
 jobs:
   update:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write   # needed to commit wijchen-data.json back to repo
 
     steps:
       - name: Checkout repo
@@ -22,15 +31,21 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.14"
+          python-version: "3.x"
+
+      - name: Run pricing tests
+        run: python3 -m unittest discover -s tests
 
       - name: Run preprocessor
         run: python3 process.py
 
+      - name: Build pricing quality report
+        run: python3 scripts/generate_quality_report.py --github-summary
+
       - name: Check if data changed
         id: diff
         run: |
-          if git diff --quiet wijchen-data.json; then
+          if [[ -z "$(git status --porcelain -- huizen-data.json pricing-quality.json)" ]]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "No change in data, skipping commit."
           else
@@ -40,11 +55,9 @@ jobs:
       - name: Commit and push updated data
         if: steps.diff.outputs.changed == 'true'
         run: |
-          git config user.name  "github-actions[bot]"
+          git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add wijchen-data.json
+          git add huizen-data.json pricing-quality.json
           TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M UTC")
           git commit -m "data: NDW update ${TIMESTAMP}"
           git push
-        # Cloudflare Pages watches this branch and auto-deploys on push.
-        # No separate deploy step needed once Pages is connected to the repo.
