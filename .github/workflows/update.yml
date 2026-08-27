@@ -4,8 +4,11 @@ on:
   push:
     paths:
       - "process.py"
+      - "pricing-sources.json"
       - "tests/test_pricing.py"
+      - "tests/test_pricing_monitor.py"
       - "tests/test_quality_report.py"
+      - "scripts/check_pricing_sources.py"
       - "scripts/generate_quality_report.py"
       - ".github/workflows/update.yml"
   schedule:
@@ -26,15 +29,26 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.x"
 
-      - name: Run pricing tests
-        run: python3 -m unittest discover -s tests
+      - name: Run regression tests
+        run: |
+          python3 -m unittest discover -s tests
+          python3 -m py_compile process.py scripts/check_pricing_sources.py scripts/generate_quality_report.py
+          node --check app.js
+
+      - name: Verify pricing rules for this run
+        run: |
+          python3 scripts/check_pricing_sources.py \
+            --report pricing-monitor-daily.md \
+            --json-status pricing-source-status.json \
+            --allow-failures
+          cat pricing-monitor-daily.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Run preprocessor
         run: python3 process.py

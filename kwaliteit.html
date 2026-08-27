@@ -1,369 +1,102 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Datakwaliteit van de laadpaal- en prijsvergelijking voor Huizen.">
-  <title>Datakwaliteit | Laadpalen Huizen</title>
-  <style>
-    :root {
-      --bg: #f4f7f5;
-      --card: #ffffff;
-      --ink: #17251f;
-      --muted: #617068;
-      --line: #dce5df;
-      --green: #167a4a;
-      --green-soft: #e8f5ee;
-      --amber: #9a6700;
-      --amber-soft: #fff7df;
-      --red: #b42318;
-      --red-soft: #fff0ee;
-      --blue: #1d5f91;
-      --blue-soft: #edf6fb;
-      --shadow: 0 8px 30px rgba(35, 58, 47, 0.07);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--ink);
-      background: var(--bg);
-      line-height: 1.5;
-    }
-    a { color: var(--green); }
-    header {
-      padding: 28px 24px 24px;
-      background: #173f31;
-      color: white;
-    }
-    .header-inner, main, footer { max-width: 1180px; margin: 0 auto; }
-    .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; opacity: .72; }
-    h1 { margin: 4px 0 4px; font-size: clamp(26px, 4vw, 38px); }
-    header p { margin: 0; max-width: 760px; color: rgba(255,255,255,.78); }
-    nav { margin-top: 16px; display: flex; gap: 14px; flex-wrap: wrap; font-size: 14px; }
-    nav a { color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.35); }
-    main { padding: 24px; }
-    .status-line {
-      display: flex; justify-content: space-between; gap: 12px; align-items: center;
-      color: var(--muted); font-size: 13px; margin-bottom: 16px; flex-wrap: wrap;
-    }
-    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
-    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
-    .kpi { padding: 18px; }
-    .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
-    .kpi-value { font-size: 30px; font-weight: 750; margin-top: 4px; }
-    .kpi-sub { color: var(--muted); font-size: 13px; }
-    section { margin-top: 22px; }
-    section > h2 { margin: 0 0 10px; font-size: 20px; }
-    section > p.lead { margin: -3px 0 12px; color: var(--muted); font-size: 14px; }
-    .section-card { padding: 18px; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
-    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
-    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
-    tr:last-child td { border-bottom: 0; }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
-    .attention { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-    .attention-item { padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: white; }
-    .attention-item.medium { background: var(--amber-soft); border-color: #efd78f; }
-    .attention-item.high { background: var(--red-soft); border-color: #efb6ae; }
-    .attention-item.info { background: var(--blue-soft); border-color: #b9dcec; }
-    .attention-title { font-weight: 700; }
-    .attention-meta { font-size: 13px; color: var(--muted); margin-top: 3px; }
-    .bar-row { display: grid; grid-template-columns: 85px 1fr 120px; gap: 12px; align-items: center; margin: 10px 0; }
-    .bar-track { height: 10px; border-radius: 999px; overflow: hidden; background: #e9eeeb; }
-    .bar-fill { height: 100%; background: var(--green); border-radius: inherit; }
-    .bar-row.medium .bar-fill { background: #d59a18; }
-    .bar-row.low .bar-fill { background: #c45a4a; }
-    .bar-value { text-align: right; color: var(--muted); font-size: 13px; }
-    .tag { display: inline-block; padding: 3px 7px; border-radius: 999px; background: #eef3f0; font-size: 11px; white-space: nowrap; }
-    .tag.transition { background: var(--amber-soft); color: #745100; }
-    details { border-top: 1px solid var(--line); padding: 10px 0 0; margin-top: 10px; }
-    details summary { cursor: pointer; font-weight: 650; }
-    .muted { color: var(--muted); }
-    .empty { padding: 16px; color: var(--muted); }
-    .notice { padding: 14px 16px; background: #edf4f0; border: 1px solid #cfe0d6; border-radius: 12px; color: #355447; font-size: 14px; }
-    footer { padding: 12px 24px 28px; color: var(--muted); font-size: 13px; }
-    @media (max-width: 900px) {
-      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .attention { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 620px) {
-      main { padding: 16px; }
-      header { padding: 22px 16px; }
-      .grid { grid-template-columns: 1fr; }
-      .bar-row { grid-template-columns: 70px 1fr; }
-      .bar-value { grid-column: 2; text-align: left; margin-top: -8px; }
-      .table-wrap { overflow-x: auto; }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Pricing & Data Quality Report van Laadpalen Huizen: betrouwbaarheid, specificiteit, volledigheid en actuele datagaten.">
+<title>Datakwaliteit · Laadpalen Huizen</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f0f2f5;--surface:#fff;--surface2:#f7f8fa;--border:#e4e7ed;--text:#111827;--text2:#374151;--muted:#6b7280;--green:#15803d;--teal:#0f766e;--amber:#b45309;--red:#b91c1c}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif}a{color:inherit}header{background:#fff;border-bottom:1px solid var(--border);padding:15px 22px;display:flex;justify-content:space-between;gap:16px;align-items:center}.brand{font:700 14px 'IBM Plex Mono',monospace}.sub{font-size:10px;color:var(--muted);margin-top:3px}.nav{display:flex;gap:8px;flex-wrap:wrap}.nav a{font:600 9px 'IBM Plex Mono',monospace;border:1px solid var(--border);border-radius:999px;padding:6px 9px;text-decoration:none;background:var(--surface2)}main{max-width:1120px;margin:0 auto;padding:28px 18px 60px}h1{font:700 28px 'IBM Plex Mono',monospace;margin:0 0 8px}h2{font:700 17px 'IBM Plex Mono',monospace;margin:34px 0 6px}.lead{color:var(--text2);line-height:1.55;max-width:900px}.meta{font:500 9px 'IBM Plex Mono',monospace;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:18px}.card{background:#fff;border:1px solid var(--border);border-radius:11px}.kpi{padding:15px}.kpi-label{font:600 8px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}.kpi-value{font:700 24px 'IBM Plex Mono',monospace;margin-top:8px}.kpi-sub{font-size:10px;color:var(--muted);margin-top:3px}.section-card{padding:16px;margin-top:12px}.notice{border-left:4px solid var(--teal);background:#f0fdfa;padding:12px 14px;border-radius:8px;line-height:1.5;color:var(--text2)}.warning{border-left-color:var(--amber);background:#fffbeb}.attention-item{padding:10px 0;border-bottom:1px solid var(--border)}.attention-item:last-child{border:0}.attention-title{font-weight:600;font-size:12px}.attention-meta{font:400 9px 'IBM Plex Mono',monospace;color:var(--muted);margin-top:2px}.attention-item.high .attention-title{color:var(--red)}.attention-item.medium .attention-title{color:var(--amber)}table{width:100%;border-collapse:collapse;font-size:11px}th,td{padding:9px 8px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}th{font:600 8px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.55px;color:var(--muted)}tr:last-child td{border-bottom:0}.table-wrap{overflow-x:auto}.bars{display:grid;gap:12px}.bar-row{display:grid;grid-template-columns:150px 1fr 100px;gap:10px;align-items:center;font-size:11px}.bar-track{height:9px;border-radius:999px;background:#eef0f3;overflow:hidden}.bar-fill{height:100%;background:var(--teal)}.bar-value{text-align:right;font:600 9px 'IBM Plex Mono',monospace}.dim-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.dim h3{font:600 11px 'IBM Plex Mono',monospace;margin:0 0 12px}.muted{color:var(--muted)}code,.tag{font:400 8px 'IBM Plex Mono',monospace}.tag{display:inline-block;padding:2px 5px;border:1px solid var(--border);border-radius:4px;background:var(--surface2);margin:1px}.tag.transition{border-color:#fcd34d;background:#fffbeb;color:#92400e}details{border-top:1px solid var(--border);padding:9px 0}details:first-of-type{border-top:0}summary{cursor:pointer;font-size:11px;font-weight:500}footer{padding:16px 20px;border-top:1px solid var(--border);background:#fff;text-align:center;font-size:9px;color:var(--muted)}@media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.dim-grid{grid-template-columns:1fr}}@media(max-width:520px){header{align-items:flex-start;flex-direction:column}.grid{grid-template-columns:1fr 1fr}.bar-row{grid-template-columns:100px 1fr 70px}h1{font-size:22px}}
+</style>
 </head>
 <body>
-<header>
-  <div class="header-inner">
-    <div class="eyebrow">Laadpalen Huizen</div>
-    <h1>Pricing & data quality</h1>
-    <p>Transparant overzicht van de dekking en betrouwbaarheid achter de prijsvergelijking. Dit rapport wordt automatisch uit dezelfde dagelijkse dataset opgebouwd als de kaart.</p>
-    <nav>
-      <a href="index.html">Terug naar de kaart</a>
-      <a href="methodologie.html">Methodologie</a>
-      <a href="https://github.com/rubenwoudsma/laadpalenhuizen/blob/main/ROADMAP.md">Roadmap</a>
-      <a href="https://github.com/rubenwoudsma/laadpalenhuizen">GitHub</a>
-    </nav>
-  </div>
-</header>
-
+<header><div><div class="brand">⚡ Laadpalen Huizen</div><div class="sub">Pricing & Data Quality v2</div></div><nav class="nav"><a href="index.html">Kaart</a><a href="methodologie.html">Methodologie</a><a href="https://github.com/rubenwoudsma/laadpalenhuizen">GitHub</a></nav></header>
 <main>
-  <div class="status-line">
-    <span id="generated-at">Rapport laden...</span>
-    <span>Geen kwaliteitsscore op basis van een verborgen formule: de onderliggende KPI's zijn leidend.</span>
-  </div>
-
+  <h1>Datakwaliteit</h1>
+  <p class="lead">Dit rapport beantwoordt niet alleen hoeveel prijzen we hebben, maar vooral of ze geschikt zijn om een keuze op te baseren. Quality Model v2 scheidt bronkwaliteit, prijs-specificiteit, kostenvolledigheid en decision-grade. Er is bewust geen kunstmatige totaalscore.</p>
+  <div class="meta" id="generated-at">Rapport laden…</div>
+  <div id="schema-notice"></div>
   <div class="grid" id="kpis"></div>
 
-  <section>
-    <h2>Aandacht voor de volgende iteratie</h2>
-    <p class="lead">Dit zijn signalen uit de actuele dataset. Ze bepalen waar aanvullende harvesting of opschoning de meeste gebruikerswaarde oplevert.</p>
-    <div class="attention" id="attention"></div>
-  </section>
+  <h2>Wat vraagt aandacht?</h2>
+  <p class="lead">Een aandachtspunt is niet automatisch een fout. Het maakt zichtbaar waar een gebruiker mogelijk minder zekerheid heeft of waar de volgende ontwikkelstap het meeste oplevert.</p>
+  <div class="card section-card" id="attention"></div>
 
-  <section>
-    <h2>Direct / QR dekking</h2>
-    <p class="lead">Waar direct betalen bekend is, maar nog geen reproduceerbaar bedrag beschikbaar is.</p>
-    <div class="card section-card table-wrap">
-      <table>
-        <thead><tr><th>CPO</th><th>party_id</th><th>Ongeprijsd</th><th>Voorbeelden</th></tr></thead>
-        <tbody id="direct-gaps"></tbody>
-      </table>
-    </div>
-  </section>
+  <h2>Besliskwaliteit</h2>
+  <p class="lead"><strong>Betrouwbaar</strong> betekent dat meerdere complete, voldoende specifieke prijsroutes beschikbaar zijn. <strong>Indicatief</strong> betekent dat we wel kunnen vergelijken, maar geen harde zekerheid claimen. <strong>Onvoldoende</strong> betekent dat we bewust geen vergelijking maken.</p>
+  <div class="card section-card"><div class="bars" id="decision-bars"></div></div>
 
-  <section>
-    <h2>CPO-basistarief ontbreekt</h2>
-    <p class="lead">Deze locaties hebben nog geen bruikbaar regulier basistarief. Een losse Shell-prijsband telt hierbij niet als CPO-basistarief.</p>
-    <div class="card section-card table-wrap">
-      <table>
-        <thead><tr><th>CPO</th><th>party_id</th><th>Locaties</th><th>Voorbeelden</th></tr></thead>
-        <tbody id="unknown-base"></tbody>
-      </table>
-    </div>
-  </section>
+  <h2>Kwaliteitsdimensies</h2>
+  <p class="lead">De oude algemene confidence-score is vervangen. Een officiële regionale bron kan bijvoorbeeld zeer betrouwbaar zijn als bron, maar toch niet connector-specifiek genoeg zijn voor een harde winnaar.</p>
+  <div class="dim-grid" id="dimensions"></div>
 
-  <section>
-    <h2>Confidence van prijsregels</h2>
-    <p class="lead">Confidence zegt iets over de herkomst van een prijsregel. Low is niet automatisch fout, maar verdient meer voorzichtigheid bij de vergelijking.</p>
-    <div class="card section-card" id="confidence"></div>
-  </section>
+  <h2>Prijsdekking per connectorprofiel</h2>
+  <div class="dim-grid">
+    <div class="card section-card"><h3>Direct / QR bekend maar ongeprijsd</h3><div class="table-wrap"><table><thead><tr><th>CPO</th><th>party_id</th><th>Profielen</th><th>Voorbeelden</th></tr></thead><tbody id="direct-gaps"></tbody></table></div></div>
+    <div class="card section-card"><h3>CPO-basistarief ontbreekt</h3><div class="table-wrap"><table><thead><tr><th>CPO</th><th>party_id</th><th>Profielen</th><th>Voorbeelden</th></tr></thead><tbody id="unknown-base"></tbody></table></div></div>
+  </div>
 
-  <section>
-    <h2>Prijsbronnen</h2>
-    <div class="card section-card table-wrap">
-      <table>
-        <thead><tr><th>Bronstrategie</th><th>Locaties</th><th>Aandeel</th></tr></thead>
-        <tbody id="pricing-sources"></tbody>
-      </table>
-    </div>
-  </section>
+  <h2>Bronstrategie van basistarieven</h2>
+  <div class="card section-card table-wrap"><table><thead><tr><th>Bronstrategie</th><th>Connectorprofielen</th><th>Aandeel</th></tr></thead><tbody id="pricing-sources"></tbody></table></div>
 
-  <section>
-    <h2>Versheid van locatiestatus</h2>
-    <p class="lead">Een prijs kan correct zijn terwijl de status van het laadpunt oud is. Locaties ouder dan zeven dagen worden daarom afzonderlijk zichtbaar gemaakt.</p>
-    <div class="card section-card">
-      <div id="freshness-summary"></div>
-      <details id="stale-details">
-        <summary id="stale-summary">Toon locaties ouder dan zeven dagen</summary>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Adres</th><th>CPO</th><th>Status</th><th>Laatste update</th><th>Leeftijd</th></tr></thead>
-            <tbody id="stale-locations"></tbody>
-          </table>
-        </div>
-      </details>
-    </div>
-  </section>
+  <h2>Dagelijkse verificatie van vaste prijsregels</h2>
+  <p class="lead">Vaste MSP-regels worden vóór iedere data-update opnieuw tegen de openbare bron gecontroleerd. Een mislukte controle schakelt alleen die regel fail-closed uit.</p>
+  <div class="card section-card" id="rule-verification"></div>
 
-  <section>
-    <h2>Mogelijke dubbele of vervangen locaties</h2>
-    <p class="lead">Meerdere records op hetzelfde adres worden niet automatisch verwijderd. Vooral een oud record naast een recent record van een andere CPO kan wijzen op een operatorwissel.</p>
-    <div class="card section-card" id="duplicates"></div>
-  </section>
+  <h2>Waarom routes indicatief of uitgesloten zijn</h2>
+  <p class="lead">Hier zie je de inhoudelijke oorzaken achter de decision-grade. Zo telt dezelfde onderliggende onzekerheid niet alleen als een abstract confidence-cijfer, maar is zichtbaar wat er concreet beter moet.</p>
+  <div class="card section-card" id="decision-reasons"></div>
 
-  <section>
-    <div class="notice">
-      Dit rapport beoordeelt de kwaliteit van de beschikbare brondata en het prijsmodel. Het is geen garantie voor de uiteindelijke factuur. De prijs op de betaalpagina of in de laadapp blijft leidend bij het starten van een sessie.
-    </div>
-  </section>
+  <h2>Bekende kosten die ranking blokkeren</h2>
+  <p class="lead">Als een tarief bijvoorbeeld tijd-, parkeer-, minimum/maximum- of een onbekende roamingcomponent bevat die nog niet volledig kan worden berekend, blijft de route zichtbaar maar wordt hij niet gerangschikt.</p>
+  <div class="card section-card" id="blockers"></div>
+
+  <h2>Versheid van locatiestatus</h2>
+  <p class="lead">Beschikbaarheid is een momentopname uit de laatste NDW-run. Het rapport houdt daarom statusversheid apart van prijskwaliteit.</p>
+  <div class="card section-card"><div id="freshness-summary"></div><details><summary id="stale-summary">Toon oude statussen</summary><div class="table-wrap"><table><thead><tr><th>Adres</th><th>CPO</th><th>Status</th><th>Laatste update</th><th>Leeftijd</th></tr></thead><tbody id="stale-locations"></tbody></table></div></details></div>
+
+  <h2>Mogelijke dubbele of vervangen locaties</h2>
+  <p class="lead">Meerdere records op hetzelfde adres worden niet automatisch verwijderd. Een oud record naast een recent record van een andere CPO kan bijvoorbeeld een operatorwissel zijn.</p>
+  <div class="card section-card" id="duplicates"></div>
+
+  <h2>Interpretatie</h2>
+  <div class="notice">Een lager coverage-percentage na Quality Model v2 kan juist een verbetering zijn: de site claimt dan minder zekerheid waar brondata die zekerheid niet ondersteunt. De prijs op de betaalpagina of in de laadapp en de actuele fysieke status van de paal blijven leidend.</div>
 </main>
-
-<footer>
-  Gegenereerd uit <code>huizen-data.json</code>. De GitHub Action publiceert tegelijk een machineleesbare <code>pricing-quality.json</code> en dezelfde kern-KPI's in de Action summary.
-</footer>
-
+<footer>Automatisch gegenereerd uit <code>huizen-data.json</code> via <code>pricing-quality.json</code>.</footer>
 <script>
-  const fmt = new Intl.NumberFormat('nl-NL');
-
-  function esc(value) {
-    return String(value ?? '')
-      .replaceAll('&', '&amp;')
-      .replaceAll('<', '&lt;')
-      .replaceAll('>', '&gt;')
-      .replaceAll('"', '&quot;')
-      .replaceAll("'", '&#039;');
-  }
-
-  function percent(value) {
-    return `${Number(value || 0).toLocaleString('nl-NL', {maximumFractionDigits: 1})}%`;
-  }
-
-  function dateTime(value) {
-    if (!value) return 'onbekend';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleString('nl-NL', {dateStyle: 'medium', timeStyle: 'short'});
-  }
-
-  function examples(items) {
-    return (items || []).slice(0, 3).map(item => esc(item.address || item.name || item.id)).join('<br>') || '-';
-  }
-
-  function renderKpis(report) {
-    const coverage = report.coverage;
-    const direct = report.direct_payment;
-    const fresh = report.freshness;
-    const currentCount = Math.max(0, coverage.total_locations - fresh.older_than_24h - fresh.missing_or_invalid_timestamp);
-    const currentPct = coverage.total_locations ? (currentCount / coverage.total_locations) * 100 : 0;
-
-    const cards = [
-      ['Vergelijkbaar', percent(coverage.comparison_ready_pct), `${coverage.comparison_ready} van ${coverage.total_locations} locaties`],
-      ['Basistarief bekend', percent(coverage.base_tariff_known_pct), `${coverage.base_tariff_known} van ${coverage.total_locations} locaties`],
-      ['Direct geprijsd', percent(direct.priced_pct_of_known), `${direct.priced} van ${direct.known} direct-payment locaties`],
-      ['Status < 24 uur', percent(currentPct), `${currentCount} van ${coverage.total_locations} locaties`],
-    ];
-    document.getElementById('kpis').innerHTML = cards.map(([label, value, sub]) => `
-      <div class="card kpi"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div><div class="kpi-sub">${sub}</div></div>
-    `).join('');
-  }
-
-  function renderAttention(report) {
-    const target = document.getElementById('attention');
-    if (!report.attention.length) {
-      target.innerHTML = '<div class="attention-item"><div class="attention-title">Geen aandachtspunten</div></div>';
-      return;
-    }
-    target.innerHTML = report.attention.map(item => `
-      <div class="attention-item ${esc(item.severity)}">
-        <div class="attention-title">${esc(item.title)}</div>
-        <div class="attention-meta">${fmt.format(item.count)} signalen · ${esc(item.category)}</div>
-      </div>
-    `).join('');
-  }
-
-  function renderOperatorRows(id, rows) {
-    const target = document.getElementById(id);
-    if (!rows.length) {
-      target.innerHTML = '<tr><td colspan="4" class="muted">Geen openstaande locaties.</td></tr>';
-      return;
-    }
-    target.innerHTML = rows.map(row => `
-      <tr>
-        <td>${esc(row.operator)}</td>
-        <td><code>${esc(row.party_id)}</code></td>
-        <td>${fmt.format(row.count)}</td>
-        <td>${examples(row.examples)}</td>
-      </tr>
-    `).join('');
-  }
-
-  function renderConfidence(report) {
-    const c = report.confidence;
-    const rows = [
-      ['High', c.high, c.high_pct, 'high'],
-      ['Medium', c.medium, c.medium_pct, 'medium'],
-      ['Low', c.low, c.low_pct, 'low'],
-    ];
-    document.getElementById('confidence').innerHTML = rows.map(([label, count, pct, cls]) => `
-      <div class="bar-row ${cls}">
-        <strong>${label}</strong>
-        <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100, Number(pct || 0))}%"></div></div>
-        <div class="bar-value">${fmt.format(count)} · ${percent(pct)}</div>
-      </div>
-    `).join('') + `<div class="muted" style="margin-top:12px">Totaal ${fmt.format(c.total_quotes)} berekenbare prijsregels.</div>`;
-  }
-
-  function renderSources(report) {
-    document.getElementById('pricing-sources').innerHTML = report.pricing_sources.map(row => `
-      <tr><td><code>${esc(row.id)}</code></td><td>${fmt.format(row.locations)}</td><td>${percent(row.pct)}</td></tr>
-    `).join('');
-  }
-
-  function renderFreshness(report) {
-    const f = report.freshness;
-    document.getElementById('freshness-summary').innerHTML = `
-      <strong>${fmt.format(f.older_than_24h)}</strong> locaties ouder dan 24 uur ·
-      <strong>${fmt.format(f.older_than_7d)}</strong> ouder dan 7 dagen ·
-      <strong>${fmt.format(f.older_than_30d)}</strong> ouder dan 30 dagen
-    `;
-    document.getElementById('stale-summary').textContent = `Toon ${f.older_than_7d} locaties ouder dan zeven dagen`;
-    document.getElementById('stale-locations').innerHTML = (f.stale_locations_over_7d || []).map(row => `
-      <tr>
-        <td>${esc(row.address)}</td>
-        <td>${esc(row.operator)} <code>${esc(row.party_id)}</code></td>
-        <td>${(row.statuses || []).map(status => `<span class="tag">${esc(status)}</span>`).join(' ')}</td>
-        <td>${dateTime(row.last_updated)}</td>
-        <td>${Number(row.age_days).toLocaleString('nl-NL', {maximumFractionDigits: 1})} dagen</td>
-      </tr>
-    `).join('');
-  }
-
-  function renderDuplicates(report) {
-    const d = report.potential_duplicates;
-    const target = document.getElementById('duplicates');
-    if (!d.groups.length) {
-      target.innerHTML = '<div class="muted">Geen adressen met meerdere records gevonden.</div>';
-      return;
-    }
-    const intro = `<div><strong>${d.group_count}</strong> adresgroepen met meerdere records, waarvan <strong>${d.possible_operator_transition_groups}</strong> mogelijk een CPO-wissel of vervangen record zijn.</div>`;
-    const groups = d.groups.map(group => {
-      const label = group.reason === 'possible_operator_transition' ? 'mogelijke CPO-wissel' : (group.reason === 'same_operator_multiple_records' ? 'meerdere records zelfde CPO' : 'meerdere CPO\'s');
-      const cls = group.reason === 'possible_operator_transition' ? 'transition' : '';
-      const rows = group.locations.map(location => `
-        <tr>
-          <td>${esc(location.operator)}</td>
-          <td><code>${esc(location.id)}</code></td>
-          <td>${(location.statuses || []).map(status => `<span class="tag">${esc(status)}</span>`).join(' ')}</td>
-          <td>${dateTime(location.last_updated)}</td>
-        </tr>
-      `).join('');
-      return `
-        <details>
-          <summary>${esc(group.address)} · ${group.count} records · <span class="tag ${cls}">${label}</span></summary>
-          <div class="table-wrap"><table><thead><tr><th>CPO</th><th>ID</th><th>Status</th><th>Laatste update</th></tr></thead><tbody>${rows}</tbody></table></div>
-        </details>
-      `;
-    }).join('');
-    target.innerHTML = intro + groups;
-  }
-
-  async function loadReport() {
-    try {
-      const response = await fetch(`pricing-quality.json?v=${Date.now()}`, {cache: 'no-store'});
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const report = await response.json();
-      document.getElementById('generated-at').textContent = `Dataset: ${dateTime(report.generated_at)}`;
-      renderKpis(report);
-      renderAttention(report);
-      renderOperatorRows('direct-gaps', report.direct_payment.unpriced_by_operator || []);
-      renderOperatorRows('unknown-base', report.unknown_base_tariff.by_operator || []);
-      renderConfidence(report);
-      renderSources(report);
-      renderFreshness(report);
-      renderDuplicates(report);
-    } catch (error) {
-      document.getElementById('generated-at').textContent = 'Quality report kon niet worden geladen.';
-      document.getElementById('kpis').innerHTML = `<div class="card kpi" style="grid-column:1/-1"><div class="kpi-label">Nog niet beschikbaar</div><div class="kpi-sub">${esc(error.message)}. Start de workflow Update charging point data om pricing-quality.json te genereren.</div></div>`;
-    }
-  }
-
-  loadReport();
+const fmt=new Intl.NumberFormat('nl-NL');
+function esc(v){return String(v??'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#039;')}
+function pct(v){return `${Number(v||0).toLocaleString('nl-NL',{maximumFractionDigits:1})}%`}
+function dt(v){if(!v)return'onbekend';const d=new Date(v);return Number.isNaN(d.getTime())?v:d.toLocaleString('nl-NL',{dateStyle:'medium',timeStyle:'short'})}
+function examples(items){return(items||[]).slice(0,3).map(x=>esc([x.address,x.connector,x.current_type].filter(Boolean).join(' · '))).join('<br>')||'-'}
+function bars(rows){return(rows||[]).map(row=>`<div class="bar-row"><strong>${esc(row.id)}</strong><div class="bar-track"><div class="bar-fill" style="width:${Math.min(100,Number(row.pct||0))}%"></div></div><div class="bar-value">${fmt.format(row.count)} · ${pct(row.pct)}</div></div>`).join('')||'<span class="muted">Geen data.</span>'}
+function operatorRows(id,rows){document.getElementById(id).innerHTML=(rows||[]).length?(rows||[]).map(r=>`<tr><td>${esc(r.operator)}</td><td><code>${esc(r.party_id)}</code></td><td>${fmt.format(r.count)}</td><td>${examples(r.examples)}</td></tr>`).join(''):'<tr><td colspan="4" class="muted">Geen openstaande profielen.</td></tr>'}
+function blockerLabel(v){const m={TARIFF_RESTRICTIONS:'OCPI-tariefvoorwaarden (tijd/dag/duur/verbruik)',TIME:'Tijdkosten tijdens laden',PARKING_TIME:'Parkeer- of idle-kosten',MIN_PRICE:'Minimum sessieprijs',MAX_PRICE:'Maximum sessieprijs',INVALID_VAT:'Ongeldige expliciete btw-waarde in OCPI',ENERGY_STEP_SIZE_VARIANTS:'Meerdere verschillende energie-afrekenstappen',LOCATION_TARIFF_COMPONENTS_UNKNOWN:'Lokale tariefcomponenten onbekend',INVALID_PRICE_COMPONENT:'Ongeldige OCPI-prijscomponent',UNSUPPORTED_PRICE_COMPONENT:'Niet-ondersteunde OCPI-prijscomponent',DUPLICATE_PRICE_DIMENSION:'Meerdere prijscomponenten voor dezelfde OCPI-dimensie'};return m[v]||v}
+function reasonLabel(v){const m={potential_network_discount:'Netwerkspecifieke MSP-korting kan eindtarief wijzigen',potential_msp_blocking_fee:'Mogelijke MSP-/blokkeerkosten verschillen per laadpunt',energy_step_size_not_explicit:'OCPI-afrekenstap voor energie ontbreekt',currency_not_explicit:'Tariefvaluta ontbreekt in OCPI',operator_estimate_only:'Alleen operator-mediaan beschikbaar',bounded_price_uncertainty:'Gepubliceerde prijsband in plaats van exact tarief',specificity_regional:'Prijs is regionaal, niet connector-specifiek',specificity_national:'Prijs is landelijk, niet connector-specifiek',specificity_operator_estimate:'Prijs is operator-schatting',specificity_unknown:'Prijs-specificiteit onbekend',source_quality_low:'Lage bronkwaliteit',source_quality_medium:'Middelmatige bronkwaliteit',known_cost_component_not_modelled:'Bekende kostencomponent nog niet gemodelleerd'};return m[v]||v}
+function render(report){
+ document.getElementById('generated-at').textContent=`Dataset: ${dt(report.generated_at)} · input schema ${report.input_schema_version}`;
+ if(report.legacy_profile_fallback) document.getElementById('schema-notice').innerHTML='<div class="notice warning" style="margin-top:14px">Deze publicatie gebruikt nog de vorige datasetstructuur. De eerstvolgende succesvolle “Update charging point data”-run bouwt echte connectorprofielen op en vervangt deze overgangsmeting.</div>';
+ const c=report.coverage,p=report.connector_coverage,d=report.direct_payment,b=report.base_pricing,f=report.freshness;
+ const fresh=Math.max(0,c.total_locations-f.older_than_24h-f.missing_or_invalid_timestamp);const freshPct=c.total_locations?fresh/c.total_locations*100:0;
+ const cards=[['Betrouwbaar',pct(c.reliable_locations_pct),`${c.reliable_locations} van ${c.total_locations} locaties`],['Indicatief',pct(c.indicative_locations_pct),`${c.indicative_locations} van ${c.total_locations} locaties`],['Direct rangschikbaar',pct(d.rankable_pct_of_known),`${d.rankable_profiles} rangschikbaar, ${d.priced_profiles} numeriek geprijsd`],['Status <24u',pct(freshPct),`${fresh} van ${c.total_locations} locaties`]];
+ document.getElementById('kpis').innerHTML=cards.map(x=>`<div class="card kpi"><div class="kpi-label">${x[0]}</div><div class="kpi-value">${x[1]}</div><div class="kpi-sub">${x[2]}</div></div>`).join('');
+ document.getElementById('attention').innerHTML=(report.attention||[]).map(x=>`<div class="attention-item ${esc(x.severity)}"><div class="attention-title">${esc(x.title)}</div><div class="attention-meta">${fmt.format(x.count)} · ${esc(x.category)}</div></div>`).join('')||'<span class="muted">Geen aandachtspunten.</span>';
+ document.getElementById('decision-bars').innerHTML=bars([{id:'betrouwbaar',count:p.reliable,pct:p.reliable_pct},{id:'indicatief',count:p.indicative,pct:p.indicative_pct},{id:'onvoldoende',count:p.insufficient,pct:p.insufficient_pct}]);
+ const q=report.quality_dimensions;const dims=[['Bronkwaliteit per profiel',q.profile_source_quality],['Prijs-specificiteit per profiel',q.profile_price_specificity],['Kostenvolledigheid per route',q.quote_cost_completeness],['Decision-grade per route',q.quote_decision_grade]];
+ document.getElementById('dimensions').innerHTML=dims.map(([title,rows])=>`<div class="card section-card dim"><h3>${title}</h3><div class="bars">${bars(rows)}</div></div>`).join('');
+ operatorRows('direct-gaps',d.unpriced_by_operator);operatorRows('unknown-base',b.unknown_by_operator);
+ document.getElementById('pricing-sources').innerHTML=(b.sources||[]).map(r=>`<tr><td><code>${esc(r.id)}</code></td><td>${fmt.format(r.profiles)}</td><td>${pct(r.pct)}</td></tr>`).join('');
+ const vr=report.pricing_rule_verification||{};const disabled=vr.disabled_rules||[];document.getElementById('rule-verification').innerHTML=`<strong>${vr.mode==='daily_verified_fail_closed'?(vr.all_ok?'Alle gecontroleerde regels akkoord':'Een of meer regels uitgeschakeld'):'Nog geen dagelijkse v2-verificatie in deze dataset'}</strong><div class="muted" style="margin-top:5px">Laatste controle: ${dt(vr.checked_at)}${disabled.length?` · uitgeschakeld: ${disabled.map(x=>`<code>${esc(x)}</code>`).join(', ')}`:''}</div>`;
+ document.getElementById('decision-reasons').innerHTML=(report.decision_reasons||[]).length?`<div class="table-wrap"><table><thead><tr><th>Reden</th><th>Routes</th></tr></thead><tbody>${report.decision_reasons.map(x=>`<tr><td>${esc(reasonLabel(x.reason))}</td><td>${fmt.format(x.count)}</td></tr>`).join('')}</tbody></table></div>`:'<span class="muted">Geen aanvullende decision-redenen in deze dataset.</span>';
+ document.getElementById('blockers').innerHTML=(report.decision_blockers||[]).length?`<div class="table-wrap"><table><thead><tr><th>Ontbrekende/gedeeltelijke component</th><th>Routes</th></tr></thead><tbody>${report.decision_blockers.map(x=>`<tr><td>${esc(blockerLabel(x.reason))}</td><td>${fmt.format(x.count)}</td></tr>`).join('')}</tbody></table></div>`:'<span class="muted">Geen bekende onbegrensde kostencomponenten in deze dataset.</span>';
+ document.getElementById('freshness-summary').innerHTML=`<strong>${fmt.format(f.older_than_24h)}</strong> locaties ouder dan 24 uur · <strong>${fmt.format(f.older_than_7d)}</strong> ouder dan 7 dagen · <strong>${fmt.format(f.older_than_30d)}</strong> ouder dan 30 dagen`;
+ document.getElementById('stale-summary').textContent=`Toon ${f.older_than_7d} locaties ouder dan zeven dagen`;document.getElementById('stale-locations').innerHTML=(f.stale_locations_over_7d||[]).map(r=>`<tr><td>${esc(r.address)}</td><td>${esc(r.operator)} <code>${esc(r.party_id)}</code></td><td>${(r.statuses||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join(' ')}</td><td>${dt(r.last_updated)}</td><td>${Number(r.age_days).toLocaleString('nl-NL',{maximumFractionDigits:1})} dagen</td></tr>`).join('');
+ const dup=report.potential_duplicates;document.getElementById('duplicates').innerHTML=!dup.groups.length?'<span class="muted">Geen multi-record adressen gevonden.</span>':`<p><strong>${dup.group_count}</strong> adresgroepen, waarvan <strong>${dup.possible_operator_transition_groups}</strong> mogelijke CPO-wissels.</p>`+dup.groups.map(g=>`<details><summary>${esc(g.address)} · ${g.count} records · <span class="tag ${g.reason==='possible_operator_transition'?'transition':''}">${esc(g.reason)}</span></summary><div class="table-wrap"><table><thead><tr><th>CPO</th><th>ID</th><th>Status</th><th>Laatste update</th></tr></thead><tbody>${g.locations.map(r=>`<tr><td>${esc(r.operator)}</td><td><code>${esc(r.id)}</code></td><td>${(r.statuses||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join(' ')}</td><td>${dt(r.last_updated)}</td></tr>`).join('')}</tbody></table></div></details>`).join('');
+}
+fetch(`pricing-quality.json?v=${Date.now()}`,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json()}).then(render).catch(err=>{document.getElementById('schema-notice').innerHTML=`<div class="notice warning" style="margin-top:14px">Kon kwaliteitsrapport niet laden: ${esc(err.message)}</div>`});
 </script>
 </body>
 </html>

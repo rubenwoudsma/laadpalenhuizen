@@ -32,11 +32,11 @@ class PricingMonitorTest(unittest.TestCase):
     def test_current_reference_snippets_match_all_configured_checks(self):
         config = monitor.load_config(ROOT / "pricing-sources.json")
         snippets = {
-            "anwb_free": "Gratis laadpas zonder abonnement. Wel betaal je per laadsessie een starttarief van € 0,89.",
+            "anwb_free": "Gratis laadpas zonder abonnement. Wel betaal je per laadsessie een starttarief van € 0,89. Profiteer van korting bij Ionity, Total Energies, Ubitricity en Equans.",
             "tap_light": "Light De beste keuze. € 0.00 /maand Je betaalt het tarief van de laadpaal +5% transactiekosten per sessie.",
-            "vattenfall": "Voor onze gratis laadpas betaal je geen abonnementskosten. Je betaalt een starttarief van €0,35 als je laadt bij laadpalen die niet van ons zijn.",
-            "eflux_flex": "Flex Gratis. €0,31 per laadsessie. €0,024/kWh toeslag op sessies bij niet-E-Flux laadpunten.",
-            "shell_basic": "Shell Recharge Basic Geen maandelijkse kosten. DC: € 0,79 / kWh - € 0,82 / kWh - € 0,85 / kWh. AC: € 0,50 / kWh - € 0,55 / kWh - € 0,60 / kWh. € 0,35 transactiekosten per laadsessie.",
+            "vattenfall": "Voor onze gratis laadpas betaal je geen abonnementskosten. Je betaalt een starttarief als je laadt bij laadpalen die niet van ons zijn.",
+            "eflux_flex": "Flex Gratis. €0,31 per laadsessie. €0,024/kWh toeslag op sessies bij niet-E-Flux laadpunten. Er geldt een extra toeslag van €0,48 per sessie bij Hubject, Gireve of e-clearing.",
+            "shell_basic": "Shell Recharge Basic Geen maandelijkse kosten. Laden bij Shell Recharge Snelladen € 0,78 / kWh. Laden bij andere aanbieders DC: € 0,79 / kWh - € 0,82 / kWh - € 0,85 / kWh. AC: € 0,50 / kWh - € 0,55 / kWh - € 0,60 / kWh. € 0,35 transactiekosten per laadsessie. Eventuele extra kosten, waaronder blokkeerkosten, verschillen per aanbieder of laadpunt en staan in de Shell Recharge App.",
             "laadkompas_free": "Laadpas zonder abonnement. Het tarief is € 0,47 per laadsessie.",
             "totalenergies_mrae": "Provincies Flevoland, Noord-Holland en Utrecht MRA-E 2 t/m 5 €0,40 €0,48. MRA-E 6 €0,30 €0,36. MRA-E 6 - Dynamische tarieven €0,34 €0,36. Snelladers DC Provincies Flevoland, Noord-Holland en Utrecht (MRA-E) €0,45 €0,54.",
             "ubitricity_mrae_direct": "Ad Hoc Opladen via QR-code op scherm. Per kWh 0,35€. RFID / Apps Per kWh: ANWB, Greenchoice, Tap Electric, Essent, MoveMove, Green Caravan, Eneco, Shell Recharge (App), Vattenfall Incharge, MKB Brandstof.",
@@ -52,8 +52,8 @@ class PricingMonitorTest(unittest.TestCase):
         config = monitor.load_config(ROOT / "pricing-sources.json")
         by_id = {source["id"]: source for source in config["sources"]}
         live_snippets = {
-            "vattenfall": "Voor onze laadpas betaal je geen abonnementskosten. Je betaalt alleen voor het opladen zelf en een starttarief van €0,35 als je laadt bij laadpalen die niet van ons zijn.",
-            "shell_basic": "Shell Recharge Basic Geen maandelijkse kosten. Laden bij andere aanbieders DC: € 0,79 / kWh - € 0,82 / kWh - € 0,85 / kWh AC: € 0,50 / kWh - € 0,55 / kWh - € 0,60 / kWh. Goed om te weten € 0,35 transactiekosten per laadsessie.",
+            "vattenfall": "Voor onze laadpas betaal je geen abonnementskosten. Je betaalt alleen voor het opladen zelf en een starttarief als je laadt bij laadpalen die niet van ons zijn.",
+            "shell_basic": "Shell Recharge Basic Geen maandelijkse kosten. Laden bij Shell Recharge Snelladen € 0,78 / kWh. Laden bij andere aanbieders DC: € 0,79 / kWh - € 0,82 / kWh - € 0,85 / kWh AC: € 0,50 / kWh - € 0,55 / kWh - € 0,60 / kWh. Goed om te weten € 0,35 transactiekosten per laadsessie. Eventuele extra kosten en blokkeerkosten verschillen per aanbieder of laadpunt en staan in de Shell Recharge App.",
             "laadkompas_free": "Geen abonnementskosten: je betaalt alleen wanneer je oplaadt. Scherp laadtarief van € 0,47, plus het tarief per kWh van de betreffende laadpaal. Het starttarief van € 0,47 komt bij een abonnement te vervallen.",
         }
         for source_id, snippet in live_snippets.items():
@@ -73,6 +73,23 @@ class PricingMonitorTest(unittest.TestCase):
             "checks": [{"label": "expected fee", "patterns": [r"0[,.]89"]}],
         }
         self.assertEqual(monitor.evaluate_source(source, "starttarief 1,25"), ["expected fee"])
+
+    def test_status_json_lists_enabled_and_disabled_rules(self):
+        results = [
+            {"id": "anwb_free", "status": "ok"},
+            {"id": "vattenfall", "status": "mismatch"},
+        ]
+        status = monitor.build_status(results, "2026-08-27", checked_at="2026-08-27T12:00:00+00:00")
+        self.assertFalse(status["all_ok"])
+        self.assertEqual(status["enabled_rule_ids"], ["anwb_free"])
+        self.assertEqual(status["disabled_rule_ids"], ["vattenfall"])
+
+    def test_daily_update_workflow_verifies_pricing_rules_fail_closed(self):
+        workflow = (ROOT / ".github" / "workflows" / "update.yml").read_text(encoding="utf-8")
+        self.assertIn("--json-status pricing-source-status.json", workflow)
+        self.assertIn("--allow-failures", workflow)
+        self.assertIn("Run preprocessor", workflow)
+
 
 
 if __name__ == "__main__":
