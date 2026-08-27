@@ -3,70 +3,139 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Vergelijk laadkosten in Huizen met je eigen laadpassen op basis van openbare NDW-data.">
+<meta name="description" content="Vergelijk de totale laadkosten in Huizen per laadpas, app of directe QR-betaling op basis van openbare laadpaaldata.">
 <title>Laadpalen Huizen</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="app.js" defer></script>
 <style>
 :root {
-  --bg:#f0f2f5; --surface:#fff; --surface2:#f7f8fa; --border:#e4e7ed;
-  --border2:#d0d5df; --text:#111827; --text2:#374151; --muted:#6b7280;
-  --green:#16a34a; --green-bg:#dcfce7; --red:#dc2626; --red-bg:#fee2e2;
-  --amber:#b45309; --amber-bg:#fef3c7; --blue-bg:#eff6ff;
+  --bg:#f0f2f5;
+  --surface:#fff;
+  --surface2:#f7f8fa;
+  --border:#e4e7ed;
+  --border2:#d0d5df;
+  --text:#111827;
+  --text2:#374151;
+  --muted:#6b7280;
+  --green:#15803d;
+  --green2:#16a34a;
+  --green-bg:#f0fdf4;
+  --green-border:#bbf7d0;
+  --red:#dc2626;
+  --red-bg:#fee2e2;
+  --amber:#b45309;
+  --amber-bg:#fef3c7;
+  --blue-bg:#eff6ff;
 }
 * { box-sizing:border-box; }
 html, body { margin:0; padding:0; height:100%; }
 body {
-  font-family:'IBM Plex Sans',sans-serif; background:var(--bg); color:var(--text);
-  display:flex; flex-direction:column; overflow:hidden;
+  font-family:'IBM Plex Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
 }
-button, select { font:inherit; }
+button, input { font:inherit; }
 a { color:inherit; }
 
 header {
-  height:56px; flex-shrink:0; display:flex; align-items:center; justify-content:space-between;
-  padding:0 18px; background:var(--surface); border-bottom:1px solid var(--border); z-index:1000;
+  height:56px;
+  flex-shrink:0;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:0 18px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  z-index:1000;
 }
-.wordmark { display:flex; align-items:center; gap:10px; }
+.wordmark { display:flex; align-items:center; gap:10px; min-width:0; }
 .wordmark-icon {
-  width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center;
-  background:var(--text); color:#fff; font-size:16px;
+  width:32px;
+  height:32px;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--text);
+  color:#fff;
+  font-size:16px;
+  flex-shrink:0;
 }
+.wordmark-text { min-width:0; }
 .wordmark-text h1 { margin:0; font:700 13px 'IBM Plex Mono',monospace; }
-.wordmark-text span { display:block; margin-top:1px; font-size:10px; color:var(--muted); }
+.wordmark-text span {
+  display:block;
+  margin-top:1px;
+  font-size:10px;
+  color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 .header-right { display:flex; align-items:center; gap:16px; }
 .header-stats { display:flex; gap:18px; }
 .hstat { text-align:center; min-width:50px; }
 .hstat-val { font:700 17px 'IBM Plex Mono',monospace; line-height:1; }
 .hstat-lbl { margin-top:3px; font-size:8px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
 .pill-btn, .data-age {
-  border:1px solid var(--border); background:var(--surface2); border-radius:999px;
-  padding:5px 10px; font:500 10px 'IBM Plex Mono',monospace; color:var(--text2);
+  border:1px solid var(--border);
+  background:var(--surface2);
+  border-radius:999px;
+  padding:5px 10px;
+  font:500 10px 'IBM Plex Mono',monospace;
+  color:var(--text2);
 }
 .pill-btn { cursor:pointer; }
 .pill-btn:hover { border-color:var(--border2); background:#fff; }
 
 .main { min-height:0; flex:1; display:flex; }
 .sidebar {
-  width:390px; flex-shrink:0; display:flex; flex-direction:column; min-height:0;
-  background:var(--surface); border-right:1px solid var(--border);
+  width:410px;
+  flex-shrink:0;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
 }
-.controls { flex-shrink:0; padding:12px 14px; background:var(--surface2); border-bottom:1px solid var(--border); }
+.controls {
+  flex-shrink:0;
+  padding:12px 14px;
+  background:var(--surface2);
+  border-bottom:1px solid var(--border);
+}
 .control-row + .control-row { margin-top:12px; }
-.control-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:7px; }
+.control-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:7px; }
 .control-label {
-  font:600 9px 'IBM Plex Mono',monospace; text-transform:uppercase; letter-spacing:.8px; color:var(--muted);
+  font:600 9px 'IBM Plex Mono',monospace;
+  text-transform:uppercase;
+  letter-spacing:.8px;
+  color:var(--muted);
 }
 .control-help { font-size:9px; color:var(--muted); }
 .reset-btn { border:0; background:transparent; padding:0; cursor:pointer; color:var(--muted); font-size:10px; }
 .reset-btn:hover { color:var(--text); }
 .pass-chips, .operator-chips, .energy-chips { display:flex; gap:5px; flex-wrap:wrap; }
 .pass-chip, .operator-chip, .energy-chip {
-  border:1.5px solid var(--border2); background:#fff; color:var(--text2); border-radius:999px;
-  padding:4px 8px; cursor:pointer; font-size:10px; line-height:1.1; display:flex; align-items:center; gap:5px;
+  border:1.5px solid var(--border2);
+  background:#fff;
+  color:var(--text2);
+  border-radius:999px;
+  padding:4px 8px;
+  cursor:pointer;
+  font-size:10px;
+  line-height:1.1;
+  display:flex;
+  align-items:center;
+  gap:5px;
 }
 .pass-chip .dot { width:7px; height:7px; border-radius:50%; background:var(--pass-color); }
 .pass-chip.active { border-color:var(--pass-color); box-shadow:inset 0 0 0 1px var(--pass-color); }
@@ -76,10 +145,60 @@ header {
 .operator-chip .count { font:400 8px 'IBM Plex Mono',monospace; opacity:.65; }
 .selection-note { margin-top:6px; font-size:9px; color:var(--muted); line-height:1.35; }
 
-.list { min-height:0; flex:1; overflow-y:auto; padding:9px; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
+.energy-control { display:grid; grid-template-columns:1fr auto; gap:8px 12px; align-items:center; }
+.energy-slider { width:100%; accent-color:var(--text); cursor:pointer; }
+.energy-value {
+  min-width:58px;
+  text-align:right;
+  font:700 12px 'IBM Plex Mono',monospace;
+  color:var(--text);
+}
+.energy-chips { grid-column:1 / -1; }
+.energy-chip.preset { border-color:#86efac; background:#f0fdf4; }
+.energy-chip.preset.active { background:var(--green); border-color:var(--green); color:#fff; }
+
+.search-wrap { position:relative; }
+.search-input {
+  width:100%;
+  border:1px solid var(--border2);
+  border-radius:8px;
+  padding:8px 30px 8px 9px;
+  background:#fff;
+  color:var(--text);
+  font-size:11px;
+  outline:none;
+}
+.search-input:focus { border-color:#9ca3af; box-shadow:0 0 0 2px rgba(17,24,39,.06); }
+.search-clear {
+  position:absolute;
+  right:6px;
+  top:50%;
+  transform:translateY(-50%);
+  border:0;
+  background:transparent;
+  color:var(--muted);
+  cursor:pointer;
+  padding:4px;
+  font-size:11px;
+}
+
+.list {
+  min-height:0;
+  flex:1;
+  overflow-y:auto;
+  padding:9px;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border2) transparent;
+}
 .card {
-  border:1px solid var(--border); border-radius:11px; background:#fff; margin-bottom:8px;
-  overflow:hidden; cursor:pointer; position:relative; transition:border-color .12s, box-shadow .12s;
+  border:1px solid var(--border);
+  border-radius:11px;
+  background:#fff;
+  margin-bottom:8px;
+  overflow:hidden;
+  cursor:pointer;
+  position:relative;
+  transition:border-color .12s, box-shadow .12s;
 }
 .card:hover { border-color:var(--card-color,var(--border2)); box-shadow:0 3px 12px rgba(0,0,0,.06); }
 .card.active { border-color:var(--card-color,var(--border2)); }
@@ -88,14 +207,27 @@ header {
 .card-head { display:flex; justify-content:space-between; gap:8px; align-items:flex-start; }
 .card-name { font-size:13px; font-weight:600; line-height:1.25; }
 .status-badge { flex-shrink:0; font:600 8px 'IBM Plex Mono',monospace; padding:3px 6px; border-radius:999px; }
-.status-free { color:#14532d; background:var(--green-bg); }
+.status-free { color:#14532d; background:#dcfce7; }
 .status-other { color:#7f1d1d; background:var(--red-bg); }
 .card-sub { margin-top:2px; font-size:10px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .tags { display:flex; gap:4px; flex-wrap:wrap; margin-top:7px; }
-.tag { font:400 8px 'IBM Plex Mono',monospace; border:1px solid var(--border); background:var(--surface2); border-radius:4px; padding:2px 5px; color:var(--text2); }
+.tag {
+  font:400 8px 'IBM Plex Mono',monospace;
+  border:1px solid var(--border);
+  background:var(--surface2);
+  border-radius:4px;
+  padding:2px 5px;
+  color:var(--text2);
+}
 .best-row {
-  margin-top:9px; display:flex; justify-content:space-between; align-items:center; gap:10px;
-  padding:8px 9px; border-radius:7px; background:color-mix(in srgb,var(--card-color,#9ca3af) 8%,white);
+  margin-top:9px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
+  padding:8px 9px;
+  border-radius:7px;
+  background:color-mix(in srgb,var(--card-color,#9ca3af) 8%,white);
   border:1px solid color-mix(in srgb,var(--card-color,#9ca3af) 18%,var(--border));
 }
 .best-name { font-size:11px; font-weight:600; color:var(--text2); }
@@ -103,18 +235,52 @@ header {
 .best-effective { display:block; margin-top:1px; font:400 8px 'IBM Plex Mono',monospace; color:var(--muted); }
 .breakdown { display:none; margin-top:10px; }
 .card.active .breakdown { display:block; }
-.breakdown-title { font:600 8px 'IBM Plex Mono',monospace; text-transform:uppercase; letter-spacing:.7px; color:var(--muted); margin-bottom:3px; }
-.quote-row { padding:6px 0; border-bottom:1px solid var(--border); }
+.breakdown-title {
+  font:600 8px 'IBM Plex Mono',monospace;
+  text-transform:uppercase;
+  letter-spacing:.7px;
+  color:var(--muted);
+  margin-bottom:4px;
+}
+.quote-row { padding:7px 6px; margin:0 -6px; border-bottom:1px solid var(--border); border-radius:6px; }
 .quote-row:last-of-type { border-bottom:0; }
+.quote-row.top-three { background:var(--green-bg); border-bottom-color:var(--green-border); }
 .quote-main { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-.quote-pass { display:flex; align-items:center; gap:6px; font-size:10px; color:var(--text2); }
-.quote-dot { width:7px; height:7px; border-radius:50%; }
-.quote-price { font:600 10px 'IBM Plex Mono',monospace; }
+.quote-pass { display:flex; align-items:center; gap:6px; font-size:10px; color:var(--text2); min-width:0; }
+.quote-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.rank-badge {
+  min-width:20px;
+  padding:2px 4px;
+  border-radius:999px;
+  text-align:center;
+  font:700 8px 'IBM Plex Mono',monospace;
+  color:#166534;
+  background:#dcfce7;
+  border:1px solid #86efac;
+}
+.quote-price { font:600 10px 'IBM Plex Mono',monospace; flex-shrink:0; }
+.quote-row.top-three .quote-price { color:#166534; }
 .quote-detail, .quote-note { margin-top:2px; padding-left:13px; font-size:8px; line-height:1.35; color:var(--muted); }
 .quote-note { color:#92400e; }
+.route-pill {
+  display:inline-block;
+  margin-right:4px;
+  padding:1px 4px;
+  border-radius:3px;
+  border:1px solid var(--border2);
+  background:#fff;
+  color:var(--text2);
+  font:600 7px 'IBM Plex Mono',monospace;
+  text-transform:uppercase;
+  letter-spacing:.3px;
+}
 .source-pill {
-  margin-top:7px; display:inline-flex; font:500 8px 'IBM Plex Mono',monospace; padding:3px 6px;
-  border-radius:4px; border:1px solid;
+  margin-top:7px;
+  display:inline-flex;
+  font:500 8px 'IBM Plex Mono',monospace;
+  padding:3px 6px;
+  border-radius:4px;
+  border:1px solid;
 }
 .source-direct { color:#1e40af; background:var(--blue-bg); border-color:#bfdbfe; }
 .source-estimate { color:#92400e; background:var(--amber-bg); border-color:#fcd34d; }
@@ -124,60 +290,100 @@ header {
 
 #map { min-width:0; flex:1; z-index:1; }
 .price-marker {
-  width:28px; height:28px; border-radius:50% 50% 50% 4px; transform:rotate(-45deg);
-  background:var(--marker-color,#6b7280); border:2px solid #fff; box-shadow:0 2px 7px rgba(0,0,0,.28);
-  display:flex; align-items:center; justify-content:center;
+  width:28px;
+  height:28px;
+  border-radius:50% 50% 50% 4px;
+  transform:rotate(-45deg);
+  background:var(--marker-color,#6b7280);
+  border:2px solid #fff;
+  box-shadow:0 2px 7px rgba(0,0,0,.28);
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 .price-marker > span { transform:rotate(45deg); font:700 8px 'IBM Plex Mono',monospace; color:#fff; }
 .user-dot { width:14px; height:14px; border:3px solid #fff; border-radius:50%; background:#111827; box-shadow:0 1px 5px rgba(0,0,0,.35); }
 .leaflet-popup-content-wrapper { border-radius:12px; border:1px solid var(--border2); box-shadow:0 8px 28px rgba(0,0,0,.12); }
 .leaflet-popup-content { margin:0; }
-.popup { min-width:250px; max-width:300px; padding:12px 14px; }
+.popup { min-width:260px; max-width:310px; padding:12px 14px; }
 .popup h3 { margin:0; font-size:13px; }
 .popup .sub { margin-top:2px; font-size:9px; color:var(--muted); }
 .popup .best { margin-top:9px; padding-top:8px; border-top:1px solid var(--border); display:flex; justify-content:space-between; gap:10px; font-size:10px; }
 .popup .best strong { flex-shrink:0; font-family:'IBM Plex Mono',monospace; }
 .popup-quotes { margin-top:9px; padding-top:8px; border-top:1px solid var(--border); }
 .popup-quotes-title { margin-bottom:3px; font:600 8px 'IBM Plex Mono',monospace; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); }
-.popup-quotes-list { max-height:155px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
-.popup-quote { padding:5px 0; border-bottom:1px solid var(--border); }
+.popup-quotes-list { max-height:190px; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border2) transparent; }
+.popup-quote { padding:5px 4px; border-bottom:1px solid var(--border); border-radius:5px; }
+.popup-quote.top-three { background:var(--green-bg); border-bottom-color:var(--green-border); }
 .popup-quote:last-child { border-bottom:0; }
 .popup-quote-main { display:flex; justify-content:space-between; align-items:center; gap:10px; }
 .popup-quote-pass { min-width:0; display:flex; align-items:center; gap:6px; font-size:9px; color:var(--text2); }
 .popup-quote-pass span:last-child { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .popup-quote-dot { width:6px; height:6px; flex-shrink:0; border-radius:50%; }
 .popup-quote-price { flex-shrink:0; font:600 9px 'IBM Plex Mono',monospace; }
+.popup-quote.top-three .popup-quote-price { color:#166534; }
 .popup-quote-detail { margin-top:1px; padding-left:12px; font-size:8px; color:var(--muted); }
 .popup .source-pill { margin-top:8px; }
 
 footer {
-  min-height:26px; flex-shrink:0; padding:5px 14px; background:#fff; border-top:1px solid var(--border);
-  display:flex; justify-content:space-between; gap:12px; align-items:center;
-  font:400 9px 'IBM Plex Mono',monospace; color:var(--muted);
+  min-height:26px;
+  flex-shrink:0;
+  padding:5px 14px;
+  background:#fff;
+  border-top:1px solid var(--border);
+  color:var(--muted);
+  font-size:9px;
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:center;
 }
+footer a { text-decoration:none; font-weight:600; }
 footer a:hover { color:var(--text); }
 
-.overlay {
-  position:fixed; inset:56px 0 26px; z-index:5000; display:flex; align-items:center; justify-content:center;
-  background:rgba(240,242,245,.92); transition:opacity .2s;
+.loader {
+  position:fixed;
+  inset:56px 0 26px 0;
+  z-index:2000;
+  background:rgba(240,242,245,.92);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font:600 11px 'IBM Plex Mono',monospace;
+  color:var(--text2);
+  transition:opacity .15s;
 }
-.overlay.gone { opacity:0; pointer-events:none; }
-.loader { font:600 11px 'IBM Plex Mono',monospace; color:var(--text2); }
+.loader.gone { opacity:0; pointer-events:none; }
 
 @media (max-width:820px) {
   header { height:50px; padding:0 10px; }
-  .header-stats { gap:8px; }
-  .hstat:nth-child(2) { display:none; }
-  .data-age { display:none; }
-  .header-right { gap:8px; }
-  .main { flex-direction:column-reverse; }
-  .sidebar { width:100%; height:54%; border-right:0; border-top:1px solid var(--border); }
-  #map { height:46%; flex:none; }
-  .controls { padding:9px 10px; }
-  .control-row + .control-row { margin-top:8px; }
-  .selection-note { display:none; }
+  .wordmark-text span, .header-stats, .data-age { display:none; }
+  .main { position:relative; display:block; }
+  #map { position:absolute; left:0; right:0; top:0; height:44%; }
+  .sidebar {
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    width:auto;
+    height:56%;
+    border-right:0;
+    border-top:1px solid var(--border);
+    z-index:500;
+  }
+  .controls { padding:9px 10px; max-height:49%; overflow-y:auto; }
+  .control-row + .control-row { margin-top:9px; }
+  .operator-row { display:none; }
+  .list { padding:7px; }
   footer { display:none; }
-  .overlay { inset:50px 0 0; }
+  .loader { inset:50px 0 0 0; }
+}
+
+@media (max-width:430px) {
+  .sidebar { height:60%; }
+  #map { height:40%; }
+  .pass-chip .plan { display:none; }
+  .energy-chip { padding:4px 7px; }
 }
 </style>
 </head>
@@ -187,17 +393,17 @@ footer a:hover { color:var(--text); }
     <div class="wordmark-icon">⚡</div>
     <div class="wordmark-text">
       <h1>Laadpalen Huizen</h1>
-      <span>Welke van mijn passen is hier voordelig?</span>
+      <span>Vergelijk de totale sessiekosten, niet alleen €/kWh</span>
     </div>
   </div>
   <div class="header-right">
     <div class="header-stats">
-      <div class="hstat"><div class="hstat-val" id="stat-total">-</div><div class="hstat-lbl">locaties</div></div>
-      <div class="hstat"><div class="hstat-val" id="stat-comparable">-</div><div class="hstat-lbl">vergelijkbaar</div></div>
-      <div class="hstat"><div class="hstat-val" id="stat-free">-</div><div class="hstat-lbl">vrij bij update</div></div>
+      <div class="hstat"><div class="hstat-val" id="stat-total">-</div><div class="hstat-lbl">Laadpunten</div></div>
+      <div class="hstat"><div class="hstat-val" id="stat-comparable">-</div><div class="hstat-lbl">Vergelijkbaar</div></div>
+      <div class="hstat"><div class="hstat-val" id="stat-free">-</div><div class="hstat-lbl">Vrij</div></div>
     </div>
-    <div class="data-age" id="data-age">data laden...</div>
-    <button class="pill-btn" id="locate-btn" type="button">Mijn locatie</button>
+    <span class="data-age" id="data-age">data laden</span>
+    <button type="button" class="pill-btn" id="locate-btn">Mijn locatie</button>
   </div>
 </header>
 
@@ -206,568 +412,60 @@ footer a:hover { color:var(--text); }
     <div class="controls">
       <div class="control-row">
         <div class="control-head">
-          <span class="control-label">Mijn laadpassen</span>
-          <button class="reset-btn" id="reset-passes" type="button">reset</button>
+          <span class="control-label">Zoek laadpunt</span>
+          <span class="control-help" id="visible-count">-</span>
         </div>
-        <div class="pass-chips" id="pass-chips"></div>
-        <div class="selection-note">Alleen geselecteerde passen doen mee in de vergelijking. Je keuze wordt lokaal in deze browser bewaard.</div>
+        <div class="search-wrap">
+          <input class="search-input" id="charger-search" type="search" autocomplete="off" placeholder="Straat, operator of laadpunt-ID">
+          <button type="button" class="search-clear" id="search-clear" aria-label="Wis zoekopdracht">×</button>
+        </div>
       </div>
 
       <div class="control-row">
         <div class="control-head">
-          <span class="control-label">Laadsessie</span>
-          <span class="control-help" id="energy-label">20 kWh</span>
+          <span class="control-label">Betaalopties</span>
+          <button type="button" class="reset-btn" id="reset-passes">Reset</button>
         </div>
-        <div class="energy-chips" id="energy-chips">
-          <button type="button" class="energy-chip" data-kwh="5">5 kWh</button>
-          <button type="button" class="energy-chip" data-kwh="10">10 kWh</button>
-          <button type="button" class="energy-chip active" data-kwh="20">20 kWh</button>
-          <button type="button" class="energy-chip" data-kwh="30">30 kWh</button>
-        </div>
+        <div class="pass-chips" id="pass-chips"></div>
+        <div class="selection-note">Direct / QR staat naast laadpassen en apps. Alleen opties met een berekenbaar tarief doen mee aan de rangschikking.</div>
       </div>
 
       <div class="control-row">
-        <div class="control-head"><span class="control-label">Laadpaalbeheerder</span></div>
+        <div class="control-head">
+          <span class="control-label">Hoeveel wil je laden?</span>
+          <span class="control-help">sessiekosten = kWh × tarief + toeslagen</span>
+        </div>
+        <div class="energy-control">
+          <input class="energy-slider" id="energy-slider" type="range" min="5" max="60" step="1" value="25" aria-label="Aantal kWh voor deze laadsessie">
+          <span class="energy-value" id="energy-label">25 kWh</span>
+          <div class="energy-chips" id="energy-chips">
+            <button type="button" class="energy-chip" data-kwh="10">10 kWh</button>
+            <button type="button" class="energy-chip" data-kwh="20">20 kWh</button>
+            <button type="button" class="energy-chip preset active" data-kwh="25" title="Praktische benadering voor Hyundai Inster 20% naar 80%">Inster 20→80% ≈25</button>
+            <button type="button" class="energy-chip" data-kwh="30">30 kWh</button>
+            <button type="button" class="energy-chip" data-kwh="40">40 kWh</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="control-row operator-row">
+        <div class="control-head">
+          <span class="control-label">Exploitant [CPO]</span>
+          <span class="control-help">optioneel filter</span>
+        </div>
         <div class="operator-chips" id="operator-chips"></div>
       </div>
     </div>
     <div class="list" id="list"><div class="empty">Data wordt geladen...</div></div>
   </aside>
-  <div id="map" aria-label="Kaart met laadpunten in Huizen"></div>
+  <div id="map" aria-label="Kaart met openbare laadpunten in Huizen"></div>
 </div>
 
 <footer>
-  <span>Bron: NDW open data, dagelijkse snapshot <span id="footer-stats"></span></span>
-  <span>Tarieven zijn indicatief, controleer de app voor vertrek · <a href="methodologie.html">methodologie</a></span>
+  <span>Bron: NDW DOT-NL, dagelijkse snapshot <span id="footer-stats"></span></span>
+  <span>Tarieven blijven indicatief, controleer de prijs vóór starten · <a href="methodologie.html">Methodologie</a> · <a href="https://github.com/rubenwoudsma/laadpalenhuizen">GitHub</a></span>
 </footer>
 
-<div class="overlay" id="loader"><div class="loader">Laadpunten laden...</div></div>
-
-<script>
-'use strict';
-
-const HUIZEN = [52.2955, 5.2451];
-const STORAGE_KEY = 'laadpalenhuizen-v2-preferences';
-const DEFAULT_KWH = 20;
-
-const map = L.map('map', { center: HUIZEN, zoom: 14, zoomControl: true });
-L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 19,
-}).addTo(map);
-
-let passes = [];
-let points = [];
-let markers = [];
-let activeId = null;
-let activeOperator = 'all';
-let selectedPasses = new Set();
-let energyKwh = DEFAULT_KWH;
-let userLocation = null;
-let userMarker = null;
-
-function euro(value, digits = 2) {
-  return `€${Number(value).toFixed(digits).replace('.', ',')}`;
-}
-
-function passById(id) {
-  return passes.find(p => p.id === id);
-}
-
-function passLabel(pass) {
-  return pass ? `${pass.name}` : 'Onbekend';
-}
-
-function sessionCost(quote) {
-  if (!quote || quote.kwh == null) return null;
-  const percentage = Number(quote.percentage || 0);
-  return quote.kwh * energyKwh * (1 + percentage) + (quote.session || 0);
-}
-
-function sessionCostRange(quote) {
-  if (!quote || quote.kwh == null) return null;
-  const kwhRange = quote.range?.length === 2 ? quote.range : [quote.kwh, quote.kwh];
-  const session = quote.session || 0;
-  const multiplier = 1 + Number(quote.percentage || 0);
-  return {
-    min: Number(kwhRange[0]) * energyKwh * multiplier + session,
-    max: Number(kwhRange[1]) * energyKwh * multiplier + session,
-    mid: sessionCost(quote),
-  };
-}
-
-function formatCostRange(cost) {
-  if (!cost) return 'onbekend';
-  if (Math.abs(cost.max - cost.min) < 0.005) return euro(cost.mid);
-  return `${euro(cost.min)}-${euro(cost.max)}`;
-}
-
-function quoteCount(pt) {
-  return [...selectedPasses].filter(id => pt.pricing?.[id]?.kwh != null).length;
-}
-
-function comparisonFor(pt) {
-  const rows = [...selectedPasses]
-    .map(id => ({ id, quote: pt.pricing?.[id] }))
-    .filter(row => row.quote?.kwh != null)
-    .map(row => ({ ...row, cost: sessionCostRange(row.quote) }))
-    .map(row => ({ ...row, total: row.cost.mid, min: row.cost.min, max: row.cost.max }))
-    .sort((a, b) => a.total - b.total);
-
-  const comparable = rows.length >= 2;
-  let best = rows.length === 1 ? rows[0] : null;
-  if (comparable) {
-    best = rows.find(row => rows.every(other => other.id === row.id || row.max < other.min - 1e-9)) || null;
-  }
-
-  return {
-    rows,
-    best,
-    likely: rows[0] || null,
-    comparable,
-    ambiguous: comparable && !best,
-  };
-}
-
-function confidenceLabel(confidence) {
-  if (confidence === 'high') return 'hoge zekerheid';
-  if (confidence === 'medium') return 'redelijke schatting';
-  return 'indicatief';
-}
-
-function sourceInfo(pt) {
-  if (pt.pricing_source === 'ndw') return { cls:'source-direct', label:'NDW CPO-tarief' };
-  if (pt.pricing_source === 'totalenergies_mrae') return { cls:'source-regional', label:'Officiële TotalEnergies MRA-E prijsband' };
-  if (pt.pricing_source === 'totalenergies_mrae_dc') return { cls:'source-regional', label:'Officieel TotalEnergies MRA-E DC-tarief' };
-  if (pt.pricing_source === 'operator_median') return { cls:'source-estimate', label:'Schatting via operator-mediaan' };
-  return { cls:'source-unknown', label:'CPO-basistarief onbekend' };
-}
-
-function markerColor(pt) {
-  const cmp = comparisonFor(pt);
-  if (cmp.best && cmp.comparable) return passById(cmp.best.id)?.color || '#6b7280';
-  if (cmp.ambiguous) return '#0f766e';
-  return '#6b7280';
-}
-
-function markerText(pt) {
-  const cmp = comparisonFor(pt);
-  if (!cmp.likely) return '?';
-  const value = euro(cmp.likely.total, 0).replace('€', '');
-  return cmp.ambiguous ? `~${value}` : value;
-}
-
-function makeIcon(pt) {
-  const color = markerColor(pt);
-  return L.divIcon({
-    className: '',
-    iconSize: [30, 30],
-    iconAnchor: [15, 29],
-    popupAnchor: [0, -26],
-    html: `<div class="price-marker" style="--marker-color:${color}"><span>${markerText(pt)}</span></div>`,
-  });
-}
-
-function statusLabel(pt) {
-  return pt.available ? 'Vrij' : 'Geen vrije poort';
-}
-
-function popupQuoteRows(pt, cmp) {
-  if (selectedPasses.size === 0) {
-    return '<div class="popup-quote"><div class="popup-quote-detail" style="padding-left:0">Selecteer minimaal een laadpas.</div></div>';
-  }
-
-  const rows = passes
-    .filter(pass => selectedPasses.has(pass.id))
-    .map(pass => {
-      const quote = pt.pricing?.[pass.id];
-      return { pass, quote, cost: sessionCostRange(quote) };
-    })
-    .sort((a, b) => {
-      if (a.cost == null && b.cost == null) return 0;
-      if (a.cost == null) return 1;
-      if (b.cost == null) return -1;
-      return a.cost.mid - b.cost.mid;
-    });
-
-  return rows.map(({ pass, quote, cost }) => {
-    if (cost == null) {
-      return `<div class="popup-quote">
-        <div class="popup-quote-main">
-          <div class="popup-quote-pass"><span class="popup-quote-dot" style="background:${pass.color}"></span><span>${escapeHtml(pass.name)}</span></div>
-          <span class="popup-quote-price" style="color:var(--muted)">onbekend</span>
-        </div>
-      </div>`;
-    }
-
-    const isBest = cmp.comparable && cmp.best?.id === pass.id;
-    return `<div class="popup-quote">
-      <div class="popup-quote-main">
-        <div class="popup-quote-pass"><span class="popup-quote-dot" style="background:${pass.color}"></span><span>${escapeHtml(pass.name)}</span></div>
-        <span class="popup-quote-price" style="${isBest ? `color:${pass.color}` : ''}">${formatCostRange(cost)}</span>
-      </div>
-      <div class="popup-quote-detail">${quoteDetail(quote)}</div>
-    </div>`;
-  }).join('');
-}
-
-
-function makePopup(pt) {
-  const cmp = comparisonFor(pt);
-  const src = sourceInfo(pt);
-  let bestHtml = '<span>Prijsvergelijking</span><strong>onvoldoende data</strong>';
-  if (cmp.best && cmp.comparable) {
-    bestHtml = `<span>Voordeligst: ${escapeHtml(passLabel(passById(cmp.best.id)))}</span><strong>${formatCostRange(cmp.best.cost)}</strong>`;
-  } else if (cmp.ambiguous) {
-    bestHtml = '<span>Geen eenduidige goedkoopste pas</span><strong>prijsbanden overlappen</strong>';
-  } else if (cmp.best) {
-    bestHtml = `<span>Enige berekende pas voor ${energyKwh} kWh</span><strong>${formatCostRange(cmp.best.cost)}</strong>`;
-  }
-  const cpoRange = pt.cpo_rate_range?.length === 2 ? ` · CPO ${euro(pt.cpo_rate_range[0],3)}-${euro(pt.cpo_rate_range[1],3)}/kWh` : '';
-  return `<div class="popup">
-    <h3>${escapeHtml(pt.name)}</h3>
-    <div class="sub">${escapeHtml(pt.operator)} · ${escapeHtml(pt.address)}</div>
-    <div class="sub">Status bij laatste NDW-update: ${statusLabel(pt)}</div>
-    <div class="best">${bestHtml}</div>
-    <div class="popup-quotes">
-      <div class="popup-quotes-title">Jouw passen voor ${energyKwh} kWh</div>
-      <div class="popup-quotes-list">${popupQuoteRows(pt, cmp)}</div>
-      <span class="source-pill ${src.cls}">${src.label}${cpoRange}</span>
-    </div>
-  </div>`;
-}
-
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;').replaceAll("'", '&#039;');
-}
-
-function quoteDetail(quote) {
-  const parts = [];
-  if (quote.range?.length === 2) parts.push(`${euro(quote.range[0],3)}-${euro(quote.range[1],3)}/kWh`);
-  else parts.push(`${euro(quote.kwh, 3)}/kWh`);
-  if (quote.percentage) parts.push(`+${Math.round(Number(quote.percentage) * 100)}% transactiekosten`);
-  if (quote.session) parts.push(`${euro(quote.session)} start`);
-  else if (!quote.percentage) parts.push('geen starttarief');
-  parts.push(confidenceLabel(quote.confidence));
-  return parts.join(' · ');
-}
-
-function renderQuoteRows(pt, cmp) {
-  if (selectedPasses.size === 0) return '<div class="empty">Selecteer minimaal één laadpas.</div>';
-
-  return [...selectedPasses].map(id => {
-    const pass = passById(id);
-    const quote = pt.pricing?.[id];
-    if (!pass) return '';
-    if (!quote?.kwh && quote?.kwh !== 0) {
-      return `<div class="quote-row">
-        <div class="quote-main">
-          <div class="quote-pass"><span class="quote-dot" style="background:${pass.color}"></span>${escapeHtml(pass.name)}</div>
-          <div class="quote-price" style="color:var(--muted)">onbekend</div>
-        </div>
-        <div class="quote-detail">Geen betrouwbare CPO-basisprijs beschikbaar.</div>
-      </div>`;
-    }
-
-    const cost = sessionCostRange(quote);
-    const isBest = cmp.comparable && cmp.best?.id === id;
-    return `<div class="quote-row">
-      <div class="quote-main">
-        <div class="quote-pass"><span class="quote-dot" style="background:${pass.color}"></span>${escapeHtml(pass.name)}</div>
-        <div class="quote-price" style="${isBest ? `color:${pass.color}` : ''}">${formatCostRange(cost)}</div>
-      </div>
-      <div class="quote-detail">${quoteDetail(quote)}</div>
-      ${quote.note ? `<div class="quote-note">${escapeHtml(quote.note)}</div>` : ''}
-    </div>`;
-  }).join('');
-}
-
-function distanceM(pt) {
-  if (!userLocation) return null;
-  const [lat1, lng1] = userLocation;
-  const lat2 = pt.lat, lng2 = pt.lng;
-  const R = 6371000;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-
-function distanceLabel(pt) {
-  const d = distanceM(pt);
-  if (d == null) return '';
-  if (d < 1000) return `${Math.round(d / 10) * 10} m`;
-  return `${(d / 1000).toFixed(1).replace('.', ',')} km`;
-}
-
-function cardBestHtml(pt, cmp) {
-  if (selectedPasses.size === 0) {
-    return `<div class="best-name">Selecteer je laadpassen</div><div class="best-price">-</div>`;
-  }
-  if (!cmp.likely) {
-    return `<div class="best-name">Geen betrouwbare prijs</div><div class="best-price">-</div>`;
-  }
-  if (cmp.ambiguous) {
-    const pass = passById(cmp.likely.id);
-    return `<div class="best-name">Geen eenduidige goedkoopste pas</div>
-      <div class="best-price">${formatCostRange(cmp.likely.cost)}<span class="best-effective">laagste middenwaarde: ${escapeHtml(passLabel(pass))}</span></div>`;
-  }
-  const pass = passById(cmp.best.id);
-  const effective = cmp.best.total / energyKwh;
-  if (!cmp.comparable) {
-    return `<div class="best-name">Enige berekende pas: ${escapeHtml(passLabel(pass))}</div>
-      <div class="best-price">${formatCostRange(cmp.best.cost)}<span class="best-effective">${euro(effective, 3)}/kWh effectief</span></div>`;
-  }
-  return `<div class="best-name">Voordeligst met jouw passen: ${escapeHtml(passLabel(pass))}</div>
-    <div class="best-price">${formatCostRange(cmp.best.cost)}<span class="best-effective">${energyKwh} kWh · ${euro(effective, 3)}/kWh effectief</span></div>`;
-}
-
-
-function renderList(inputPoints) {
-  const list = document.getElementById('list');
-  if (!inputPoints.length) {
-    list.innerHTML = '<div class="empty">Geen laadpunten voor dit filter.</div>';
-    return;
-  }
-
-  list.innerHTML = inputPoints.map(pt => {
-    const cmp = comparisonFor(pt);
-    const color = markerColor(pt);
-    const src = sourceInfo(pt);
-    const dist = distanceLabel(pt);
-    const range = pt.cpo_rate_range?.length === 2 ? ` · CPO-range ${euro(pt.cpo_rate_range[0],3)}-${euro(pt.cpo_rate_range[1],3)}` : '';
-
-    return `<article class="card ${activeId === pt.id ? 'active' : ''}" data-id="${escapeHtml(pt.id)}" style="--card-color:${color}">
-      <div class="card-stripe"></div>
-      <div class="card-inner">
-        <div class="card-head">
-          <div class="card-name">${escapeHtml(pt.name)}</div>
-          <span class="status-badge ${pt.available ? 'status-free' : 'status-other'}">${statusLabel(pt)}</span>
-        </div>
-        <div class="card-sub">${escapeHtml(pt.operator)} · ${escapeHtml(pt.address)}${dist ? ` · ${dist}` : ''}</div>
-        <div class="tags">
-          ${pt.max_power ? `<span class="tag">${pt.max_power} kW</span>` : ''}
-          ${(pt.connectors || []).slice(0,3).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
-          ${pt.num_evses > 1 ? `<span class="tag">${pt.num_evses} aansluitingen</span>` : ''}
-        </div>
-        <div class="best-row">${cardBestHtml(pt, cmp)}</div>
-        <div class="breakdown">
-          <div class="breakdown-title">Jouw passen voor ${energyKwh} kWh</div>
-          ${renderQuoteRows(pt, cmp)}
-          <span class="source-pill ${src.cls}">${src.label}${range}</span>
-        </div>
-      </div>
-    </article>`;
-  }).join('');
-
-  list.querySelectorAll('.card').forEach(card => {
-    card.addEventListener('click', () => selectCard(card.dataset.id));
-  });
-}
-
-function visiblePoints() {
-  let filtered = points.filter(pt => activeOperator === 'all' || pt.operator === activeOperator);
-  if (userLocation) filtered = [...filtered].sort((a,b) => distanceM(a) - distanceM(b));
-  return filtered;
-}
-
-function refreshMarkers() {
-  const allowed = new Set(visiblePoints().map(pt => pt.id));
-  markers.forEach(marker => {
-    const pt = points.find(p => p.id === marker._pid);
-    if (!pt) return;
-    marker.setIcon(makeIcon(pt));
-    marker.setPopupContent(makePopup(pt));
-    if (allowed.has(pt.id)) {
-      if (!map.hasLayer(marker)) marker.addTo(map);
-    } else if (map.hasLayer(marker)) {
-      map.removeLayer(marker);
-    }
-  });
-}
-
-function applyFilters() {
-  renderList(visiblePoints());
-  refreshMarkers();
-}
-
-function scrollActiveCardIntoView(block = 'nearest') {
-  if (!activeId) return;
-  requestAnimationFrame(() => {
-    const card = document.querySelector(`.card[data-id="${CSS.escape(activeId)}"]`);
-    if (card) card.scrollIntoView({ block, behavior:'smooth' });
-  });
-}
-
-function selectCard(id) {
-  activeId = activeId === id ? null : id;
-  applyFilters();
-  if (!activeId) return;
-  const pt = points.find(p => p.id === activeId);
-  if (!pt) return;
-  map.setView([pt.lat, pt.lng], 16, { animate:true });
-  const marker = markers.find(m => m._pid === activeId);
-  if (marker) marker.openPopup();
-  scrollActiveCardIntoView('nearest');
-}
-
-function selectCardFromMarker(id) {
-  if (activeId === id) return;
-  activeId = id;
-  renderList(visiblePoints());
-  scrollActiveCardIntoView('center');
-}
-
-function renderPassChips() {
-  const container = document.getElementById('pass-chips');
-  container.innerHTML = passes.map(pass => {
-    const active = selectedPasses.has(pass.id);
-    return `<button type="button" class="pass-chip ${active ? 'active' : ''}" data-pass="${pass.id}" aria-pressed="${active}" style="--pass-color:${pass.color}" title="${escapeHtml(pass.summary)}">
-      <span class="dot"></span><span>${escapeHtml(pass.name)}</span><span class="plan">${escapeHtml(pass.plan)}</span>
-    </button>`;
-  }).join('');
-
-  container.querySelectorAll('.pass-chip').forEach(button => {
-    button.addEventListener('click', () => {
-      const id = button.dataset.pass;
-      if (selectedPasses.has(id)) selectedPasses.delete(id); else selectedPasses.add(id);
-      savePreferences();
-      renderPassChips();
-      applyFilters();
-    });
-  });
-}
-
-function renderOperatorChips() {
-  const counts = new Map();
-  points.forEach(pt => counts.set(pt.operator, (counts.get(pt.operator) || 0) + 1));
-  const sorted = [...counts.entries()].sort((a,b) => b[1] - a[1]);
-  document.getElementById('operator-chips').innerHTML = [
-    `<button type="button" class="operator-chip ${activeOperator === 'all' ? 'active' : ''}" data-op="all">Alle <span class="count">${points.length}</span></button>`,
-    ...sorted.map(([op,count]) => `<button type="button" class="operator-chip ${activeOperator === op ? 'active' : ''}" data-op="${escapeHtml(op)}">${escapeHtml(op)} <span class="count">${count}</span></button>`),
-  ].join('');
-
-  document.querySelectorAll('.operator-chip').forEach(button => {
-    button.addEventListener('click', () => {
-      activeOperator = button.dataset.op;
-      renderOperatorChips();
-      applyFilters();
-    });
-  });
-}
-
-function setEnergy(kwh) {
-  energyKwh = Number(kwh) || DEFAULT_KWH;
-  document.getElementById('energy-label').textContent = `${energyKwh} kWh`;
-  document.querySelectorAll('.energy-chip').forEach(btn => btn.classList.toggle('active', Number(btn.dataset.kwh) === energyKwh));
-  savePreferences();
-  applyFilters();
-}
-
-function savePreferences() {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ passes:[...selectedPasses], kwh:energyKwh }));
-  } catch (_) { /* localStorage can be unavailable in strict privacy modes */ }
-}
-
-function loadPreferences() {
-  const defaults = passes.filter(p => p.default_selected !== false).map(p => p.id);
-  selectedPasses = new Set(defaults);
-  energyKwh = DEFAULT_KWH;
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    if (saved?.passes && Array.isArray(saved.passes)) {
-      const valid = new Set(passes.map(p => p.id));
-      selectedPasses = new Set(saved.passes.filter(id => valid.has(id)));
-    }
-    if ([5,10,20,30].includes(Number(saved?.kwh))) energyKwh = Number(saved.kwh);
-  } catch (_) { /* use defaults */ }
-}
-
-function formatAge(iso) {
-  if (!iso) return 'onbekende leeftijd';
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const hours = Math.max(0, Math.round(diffMs / 3600000));
-  if (hours < 1) return 'data zojuist bijgewerkt';
-  if (hours < 24) return `data ${hours}u oud`;
-  return `data ${Math.round(hours / 24)}d oud`;
-}
-
-function setupGeolocation() {
-  document.getElementById('locate-btn').addEventListener('click', () => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(position => {
-      userLocation = [position.coords.latitude, position.coords.longitude];
-      if (userMarker) map.removeLayer(userMarker);
-      userMarker = L.marker(userLocation, {
-        icon:L.divIcon({ className:'', iconSize:[14,14], iconAnchor:[7,7], html:'<div class="user-dot"></div>' })
-      }).addTo(map).bindPopup('Mijn locatie');
-      map.setView(userLocation, 15);
-      applyFilters();
-    }, () => {
-      document.getElementById('locate-btn').textContent = 'Locatie niet beschikbaar';
-    }, { enableHighAccuracy:true, timeout:8000, maximumAge:60000 });
-  });
-}
-
-async function drawBoundary() {
-  try {
-    const res = await fetch('huizen-boundary.geojson');
-    if (!res.ok) return;
-    const geo = await res.json();
-    L.geoJSON(geo, { style:{ color:'#6b7280', weight:1, opacity:.55, fillOpacity:0 } }).addTo(map);
-  } catch (_) { /* boundary is decorative only */ }
-}
-
-async function init() {
-  try {
-    const res = await fetch('huizen-data.json', { cache:'no-cache' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    passes = data.passes || [];
-    points = data.locations || [];
-
-    loadPreferences();
-    renderPassChips();
-    renderOperatorChips();
-    setEnergy(energyKwh);
-
-    document.getElementById('stat-total').textContent = points.length;
-    document.getElementById('stat-comparable').textContent = data.stats?.comparison_ready ?? points.filter(p => Object.keys(p.pricing || {}).length >= 2).length;
-    document.getElementById('stat-free').textContent = data.stats?.available_snapshot ?? points.filter(p => p.available).length;
-    document.getElementById('data-age').textContent = formatAge(data.generated_at);
-    document.getElementById('footer-stats').textContent = `· ${data.stats?.ndw_priced ?? 0} direct · ${data.stats?.regional_priced ?? 0} regionale indicatie · ${data.stats?.unknown_base_rate ?? 0} onbekend`;
-
-    markers = points.map(pt => {
-      const marker = L.marker([pt.lat, pt.lng], { icon:makeIcon(pt) }).bindPopup(makePopup(pt), { maxWidth:320 });
-      marker._pid = pt.id;
-      marker.on('click', () => selectCardFromMarker(pt.id));
-      marker.addTo(map);
-      return marker;
-    });
-
-    applyFilters();
-    drawBoundary();
-  } catch (error) {
-    console.error(error);
-    document.getElementById('list').innerHTML = `<div class="empty">Kon de laadpuntdata niet laden.<br>${escapeHtml(error.message)}</div>`;
-  } finally {
-    document.getElementById('loader').classList.add('gone');
-  }
-}
-
-document.querySelectorAll('.energy-chip').forEach(button => button.addEventListener('click', () => setEnergy(button.dataset.kwh)));
-document.getElementById('reset-passes').addEventListener('click', () => {
-  selectedPasses = new Set(passes.filter(p => p.default_selected !== false).map(p => p.id));
-  energyKwh = DEFAULT_KWH;
-  savePreferences();
-  renderPassChips();
-  setEnergy(DEFAULT_KWH);
-});
-setupGeolocation();
-init();
-</script>
+<div class="loader" id="loader">Laadpunten en tarieven laden...</div>
 </body>
 </html>

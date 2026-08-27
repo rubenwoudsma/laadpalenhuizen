@@ -10,12 +10,16 @@ Pricing philosophy:
 - NDW CPO energy tariffs are the preferred base price.
 - Tariff IDs are resolved in their OCPI country/party scope, with an ID-only
   fallback only when that tariff ID is unique in the national feed.
-- If a direct connector tariff is missing, an operator median may be used as an
+- OCPI AD_HOC_PAYMENT tariffs are kept separate from regular CPO/MSP tariffs.
+  Direct QR/card payment is therefore a first-class price route, never an alias
+  for a charge-pass tariff.
+- If a regular connector tariff is missing, an operator median may be used as an
   explicitly labelled estimate when enough nationwide samples exist.
 - TotalEnergies locations in Huizen use an official MRA-E regional price range
   when NDW does not expose a usable connector tariff. This is a targeted fallback
   based on public concession tariffs, not a generic invented price.
-- Charge-pass fees are modelled separately as per-session fees, percentage fees and kWh markups.
+- Charge-pass fees are modelled separately as per-session fees, percentage fees
+  and kWh markups, with explicit own-network versus roaming classification.
 - The browser calculates session totals for the user's selected amount of energy.
 
 No external Python dependencies are required.
@@ -81,10 +85,70 @@ TOTALENERGIES_MRAE_SOURCE_URL = "https://totalenergies.nl/elektrisch-rijden/vind
 HUIZEN_CHARGING_SOURCE_URL = "https://www.huizen.nl/elektrisch-laden"
 LAADWERK_SOURCE_URL = "https://www.laadwerk.nl/diensten/laadinfra"
 
+# OCPI party IDs make CPO matching more reliable than operator-name matching.
+# The list is deliberately limited to operators relevant to Huizen or current
+# pricing rules. Unknown parties remain usable, they simply do not get an
+# invented own-network relationship.
+CPO_PARTY_NAMES = {
+    "ALL": "Allego",
+    "ENE": "Eneco",
+    "EFL": "E-Flux by Road",
+    "GFX": "TotalEnergies",
+    "JEG": "JOLT Energy",
+    "LDL": "Lidl",
+    "LMS": "EQUANS",
+    "LNT": "Laadnet",
+    "NUO": "Vattenfall InCharge",
+    "TNM": "Shell Recharge",
+    "UB2": "Ubitricity",
+}
+
+# A corporate relationship is not enough to classify a tariff as own-network.
+# For example, Ubitricity is part of Shell but its direct QR price can differ
+# from the Shell Recharge app/card price. Only explicit OCPI party matches (or
+# a conservative name fallback when party_id is unavailable) are treated as
+# own-network.
+MSP_HOME_CPO_PARTIES = {
+    "vattenfall": {"NUO"},
+    "eflux_flex": {"EFL"},
+    "shell_basic": {"TNM"},
+}
+
+MSP_HOME_OPERATOR_TOKENS = {
+    "vattenfall": ("vattenfall", "incharge", "nuon"),
+    "eflux_flex": ("e-flux", "e flux"),
+    "shell_basic": ("shell recharge",),
+}
+
+# Direct-payment support cannot always be inferred from an OCPI capability.
+# Ubitricity publicly documents QR/NFC direct access. Other operators are only
+# marked as direct-payment capable when NDW exposes an AD_HOC_PAYMENT tariff or
+# a recognised payment capability.
+KNOWN_DIRECT_PAYMENT_PARTIES = {"UB2"}
+KNOWN_DIRECT_PAYMENT_OPERATOR_TOKENS = ("ubitricity",)
+DIRECT_PAYMENT_CAPABILITIES = {
+    "CREDIT_CARD_PAYABLE",
+    "DEBIT_CARD_PAYABLE",
+    "PED_TERMINAL",
+    "CONTACTLESS_CARD_SUPPORT",
+}
+
 # Public charge-pass conditions verified on 2026-08-12.
 # The site deliberately compares plans without a monthly subscription so that a
 # single charging session can be compared without inventing an amortisation rule.
 PASSES = [
+    {
+        "id": "direct_pay",
+        "name": "Direct / QR",
+        "plan": "Zonder laadpas",
+        "color": "#15803d",
+        "monthly_fee": 0.0,
+        "summary": "Rechtstreeks betalen bij de laadpaal wanneer een ad-hoc tarief beschikbaar is",
+        "verified_at": None,
+        "source_url": "https://docs.ndw.nu/en/elektrisch-rijden/",
+        "default_selected": True,
+        "kind": "direct",
+    },
     {
         "id": "anwb_free",
         "name": "ANWB",
@@ -95,6 +159,7 @@ PASSES = [
         "verified_at": "2026-08-12",
         "source_url": "https://www.anwb.nl/auto/elektrisch-rijden/laadpas-abonnement",
         "default_selected": True,
+        "kind": "msp",
     },
     {
         "id": "tap_light",
@@ -106,6 +171,7 @@ PASSES = [
         "verified_at": "2026-08-12",
         "source_url": "https://tapelectric.app/nl/laadpas/",
         "default_selected": True,
+        "kind": "msp",
     },
     {
         "id": "vattenfall",
@@ -117,6 +183,7 @@ PASSES = [
         "verified_at": "2026-08-12",
         "source_url": "https://incharge.vattenfall.nl/onze-tarieven",
         "default_selected": True,
+        "kind": "msp",
     },
     {
         "id": "eflux_flex",
@@ -128,6 +195,7 @@ PASSES = [
         "verified_at": "2026-08-12",
         "source_url": "https://www.e-flux.io/nl/tarieven-laadpassen",
         "default_selected": True,
+        "kind": "msp",
     },
     {
         "id": "shell_basic",
@@ -139,6 +207,7 @@ PASSES = [
         "verified_at": "2026-08-12",
         "source_url": "https://www.shell.nl/elektrisch-opladen/Tarieven.html",
         "default_selected": True,
+        "kind": "msp",
     },
     {
         "id": "laadkompas_free",
@@ -150,6 +219,7 @@ PASSES = [
         "verified_at": "2026-08-12",
         "source_url": "https://laadkompas.nl/laadpas/zonder-abonnement/",
         "default_selected": True,
+        "kind": "msp",
     },
 ]
 
@@ -206,15 +276,17 @@ def fetch_gz(url: str) -> bytes:
     return gzip.decompress(compressed)
 
 
-def energy_price_including_vat(component: dict) -> Optional[float]:
-    """
-    Return an ENERGY component price including explicitly supplied VAT.
+def price_component_including_vat(component: dict, expected_type: Optional[str] = None) -> Optional[float]:
+    """Return one OCPI price component including explicitly supplied VAT.
 
     OCPI 2.2.1 defines PriceComponent.price excluding VAT and has an optional
-    vat percentage. If vat is omitted, we do not invent a Dutch VAT rate. That
-    is more standards-compliant than silently adding 21% to every tariff.
+    VAT percentage. When VAT is omitted we keep the published value instead of
+    inventing a Dutch VAT rate, because the feed itself remains authoritative.
     """
-    if component.get("type") != "ENERGY" or "price" not in component:
+    component_type = str(component.get("type") or "").upper()
+    if expected_type and component_type != expected_type.upper():
+        return None
+    if "price" not in component:
         return None
 
     try:
@@ -230,6 +302,11 @@ def energy_price_including_vat(component: dict) -> Optional[float]:
             pass
 
     return round(price, 4)
+
+
+def energy_price_including_vat(component: dict) -> Optional[float]:
+    """Compatibility wrapper that returns an OCPI ENERGY component price."""
+    return price_component_including_vat(component, "ENERGY")
 
 
 def build_tariff_index(tariffs: list) -> dict:
@@ -278,15 +355,81 @@ def get_tariff(
     return tariff_index.get("unique", {}).get(str(tariff_id))
 
 
+def normalized_tariff_type(tariff: dict) -> str:
+    """Treat an omitted OCPI tariff type as a regular tariff."""
+    return str(tariff.get("type") or "REGULAR").upper()
+
+
+def get_tariff_price_info(
+    tariff_id: str,
+    tariff_index: dict,
+    country_code: str = "",
+    party_id: str = "",
+    mode: str = "regular",
+) -> Optional[dict]:
+    """Return usable ENERGY/FLAT information for a regular or ad-hoc tariff.
+
+    Multiple restricted tariff elements can expose different prices. Rather
+    than picking one silently, the midpoint and the full observed range are
+    retained so the browser can propagate pricing uncertainty to session cost.
+    TIME and PARKING_TIME components are flagged but are not converted to an
+    invented amount because their cost depends on session duration.
+    """
+    tariff = get_tariff(tariff_id, tariff_index, country_code, party_id)
+    if not tariff:
+        return None
+
+    tariff_type = normalized_tariff_type(tariff)
+    if mode == "ad_hoc" and tariff_type != "AD_HOC_PAYMENT":
+        return None
+    if mode == "regular" and tariff_type == "AD_HOC_PAYMENT":
+        return None
+
+    energy_rates: list[float] = []
+    flat_fees: list[float] = []
+    unmodelled_types: set[str] = set()
+
+    for element in tariff.get("elements", []):
+        for component in element.get("price_components", []):
+            component_type = str(component.get("type") or "").upper()
+            value = price_component_including_vat(component)
+            if value is None:
+                continue
+            if component_type == "ENERGY":
+                energy_rates.append(value)
+            elif component_type == "FLAT":
+                flat_fees.append(value)
+            elif component_type in {"TIME", "PARKING_TIME"}:
+                unmodelled_types.add(component_type)
+
+    energy_rates = sorted(set(energy_rates))
+    flat_fees = sorted(set(flat_fees))
+    if not energy_rates:
+        return None
+
+    low_rate, high_rate = energy_rates[0], energy_rates[-1]
+    low_flat = flat_fees[0] if flat_fees else 0.0
+    high_flat = flat_fees[-1] if flat_fees else 0.0
+    return {
+        "rate": round((low_rate + high_rate) / 2, 4),
+        "range": [low_rate, high_rate] if len(energy_rates) > 1 else None,
+        "session": round((low_flat + high_flat) / 2, 4),
+        "session_range": [low_flat, high_flat] if len(flat_fees) > 1 else None,
+        "tariff_type": tariff_type,
+        "tariff_id": str(tariff_id),
+        "unmodelled_types": sorted(unmodelled_types),
+    }
+
+
 def get_cpo_rates(
     tariff_id: str,
     tariff_index: dict,
     country_code: str = "",
     party_id: str = "",
 ) -> list[float]:
-    """Return all distinct usable OCPI ENERGY prices for a resolved tariff."""
+    """Return all distinct regular OCPI ENERGY prices for a resolved tariff."""
     tariff = get_tariff(tariff_id, tariff_index, country_code, party_id)
-    if not tariff:
+    if not tariff or normalized_tariff_type(tariff) == "AD_HOC_PAYMENT":
         return []
 
     rates = []
@@ -304,7 +447,7 @@ def get_cpo_rate(
     country_code: str = "",
     party_id: str = "",
 ) -> Optional[float]:
-    """Return one usable ENERGY price for median building and compatibility."""
+    """Return one usable regular ENERGY price for median building and compatibility."""
     rates = get_cpo_rates(tariff_id, tariff_index, country_code, party_id)
     return rates[0] if rates else None
 
@@ -315,19 +458,46 @@ def get_cpo_price_info(
     country_code: str = "",
     party_id: str = "",
 ) -> Optional[dict]:
-    """Return midpoint plus a range when an OCPI tariff exposes multiple prices."""
-    rates = get_cpo_rates(tariff_id, tariff_index, country_code, party_id)
-    if not rates:
-        return None
-    low, high = rates[0], rates[-1]
-    return {
-        "rate": round((low + high) / 2, 4),
-        "range": [low, high] if len(rates) > 1 else None,
-    }
+    """Return regular CPO tariff information, excluding AD_HOC_PAYMENT tariffs."""
+    return get_tariff_price_info(tariff_id, tariff_index, country_code, party_id, mode="regular")
+
+
+def get_ad_hoc_price_info(
+    tariff_id: str,
+    tariff_index: dict,
+    country_code: str = "",
+    party_id: str = "",
+) -> Optional[dict]:
+    """Return only an explicit OCPI AD_HOC_PAYMENT tariff."""
+    return get_tariff_price_info(tariff_id, tariff_index, country_code, party_id, mode="ad_hoc")
 
 
 def operator_key(name: str) -> str:
     return " ".join((name or "").lower().split())
+
+
+def is_msp_home_network(pass_id: str, operator_name: str, party_id: str = "") -> bool:
+    """Return whether an MSP tariff is clearly on its own CPO network."""
+    party = (party_id or "").upper()
+    if party:
+        return party in MSP_HOME_CPO_PARTIES.get(pass_id, set())
+    op = operator_key(operator_name)
+    return any(token in op for token in MSP_HOME_OPERATOR_TOKENS.get(pass_id, ()))
+
+
+def direct_payment_supported(operator_name: str, party_id: str, capabilities: set[str], has_ad_hoc_tariff: bool) -> tuple[bool, str]:
+    """Determine whether direct payment is known without inventing a live price."""
+    if has_ad_hoc_tariff:
+        return True, "ocpi_ad_hoc_tariff"
+    if capabilities & DIRECT_PAYMENT_CAPABILITIES:
+        return True, "ocpi_payment_capability"
+    party = (party_id or "").upper()
+    if party in KNOWN_DIRECT_PAYMENT_PARTIES:
+        return True, "operator_documentation"
+    op = operator_key(operator_name)
+    if any(token in op for token in KNOWN_DIRECT_PAYMENT_OPERATOR_TOKENS):
+        return True, "operator_documentation"
+    return False, "not_confirmed"
 
 
 def find_operator_median(operator_name: str, medians: dict) -> Optional[float]:
@@ -404,10 +574,13 @@ def make_quote(
     note: Optional[str] = None,
     price_range: Optional[list[float]] = None,
     transaction_percentage: float = 0.0,
+    session_range: Optional[list[float]] = None,
+    route: Optional[str] = None,
+    relation: Optional[str] = None,
 ) -> dict:
     quote = {
         "kwh": round(float(kwh), 4),
-        "session": round(float(session), 2),
+        "session": round(float(session), 4),
         "confidence": confidence,
         "basis": basis,
     }
@@ -417,6 +590,12 @@ def make_quote(
         quote["range"] = [round(float(v), 4) for v in price_range]
     if transaction_percentage:
         quote["percentage"] = round(float(transaction_percentage), 4)
+    if session_range:
+        quote["session_range"] = [round(float(v), 4) for v in session_range]
+    if route:
+        quote["route"] = route
+    if relation:
+        quote["relation"] = relation
     return quote
 
 
@@ -427,13 +606,41 @@ def build_pricing(
     max_power_kw: float = 0,
     cpo_rate_range: Optional[list[float]] = None,
     cpo_note: Optional[str] = None,
+    party_id: str = "",
+    direct_price_info: Optional[dict] = None,
 ) -> dict:
-    """Build per-pass price components for one representative location tariff."""
+    """Build direct-payment and MSP price components for one location.
+
+    The route is deliberately explicit. Direct/ad-hoc payment is sourced from
+    an OCPI AD_HOC_PAYMENT tariff. MSP quotes are classified as own-network or
+    roaming using CPO party IDs where possible. Corporate ownership alone does
+    not make two tariff routes equivalent.
+    """
     pricing: dict[str, dict] = {}
     op = operator_key(operator_name)
     base_confidence = confidence_for_source(cpo_source)
     if cpo_rate_range and len(cpo_rate_range) == 2 and abs(cpo_rate_range[1] - cpo_rate_range[0]) > 1e-9:
         base_confidence = downgrade_confidence(base_confidence)
+
+    if direct_price_info:
+        direct_confidence = "high"
+        if direct_price_info.get("range") or direct_price_info.get("session_range"):
+            direct_confidence = "medium"
+        direct_note = None
+        if direct_price_info.get("unmodelled_types"):
+            direct_confidence = downgrade_confidence(direct_confidence)
+            direct_note = "Tijd- of parkeerkosten staan in het OCPI-tarief maar zijn niet in het sessietotaal opgenomen."
+        pricing["direct_pay"] = make_quote(
+            direct_price_info["rate"],
+            direct_price_info.get("session", 0.0),
+            direct_confidence,
+            "ndw_ad_hoc",
+            note=direct_note,
+            price_range=direct_price_info.get("range"),
+            session_range=direct_price_info.get("session_range"),
+            route="ad_hoc",
+            relation="cpo_direct",
+        )
 
     # ANWB free plan: CPO price + EUR 0.89/session. ANWB advertises special
     # network discounts, but without a universal public per-connector figure we
@@ -454,12 +661,11 @@ def build_pricing(
             cpo_source,
             note=anwb_note,
             price_range=shifted_range(cpo_rate_range),
+            route="msp_roaming",
+            relation="roaming",
         )
 
-    # Tap Electric Light: no monthly subscription. Tap publishes the plan as
-    # the charging-station tariff plus a 5% transaction fee per session. The
-    # percentage is kept as a separate component so the frontend can show the
-    # underlying CPO rate/range transparently instead of hiding the fee in €/kWh.
+    # Tap Electric Light: charging-station tariff plus a 5% transaction fee.
     if cpo_rate is not None:
         pricing["tap_light"] = make_quote(
             cpo_rate,
@@ -469,13 +675,14 @@ def build_pricing(
             note=merge_notes(cpo_note, "Tap Light rekent 5% transactiekosten over het gemodelleerde laadpunttarief."),
             price_range=shifted_range(cpo_rate_range),
             transaction_percentage=0.05,
+            route="msp_roaming",
+            relation="roaming",
         )
 
-    # Vattenfall: no start fee on own InCharge network, EUR 0.35/session on
-    # other networks. Roaming kWh rates are shown in the Vattenfall app and can
-    # differ from the CPO base tariff, so confidence is downgraded for roaming.
+    # Vattenfall: own InCharge network versus roaming is matched by OCPI party
+    # where possible. Roaming kWh rates can differ from the CPO base tariff.
     if cpo_rate is not None:
-        own_vattenfall = "vattenfall" in op or "incharge" in op or "nuon" in op
+        own_vattenfall = is_msp_home_network("vattenfall", operator_name, party_id)
         vf_confidence = base_confidence if own_vattenfall else downgrade_confidence(base_confidence)
         vf_note = cpo_note if own_vattenfall else merge_notes(
             cpo_note,
@@ -488,11 +695,13 @@ def build_pricing(
             cpo_source,
             note=vf_note,
             price_range=shifted_range(cpo_rate_range),
+            route="msp_home" if own_vattenfall else "msp_roaming",
+            relation="own_network" if own_vattenfall else "roaming",
         )
 
     # E-Flux Flex: EUR 0.31/session, plus EUR 0.024/kWh outside E-Flux.
     if cpo_rate is not None:
-        own_eflux = "e-flux" in op or "e flux" in op
+        own_eflux = is_msp_home_network("eflux_flex", operator_name, party_id)
         markup = 0.0 if own_eflux else 0.024
         ef_confidence = base_confidence if own_eflux else downgrade_confidence(base_confidence)
         ef_note = cpo_note if own_eflux else merge_notes(
@@ -506,12 +715,15 @@ def build_pricing(
             cpo_source,
             note=ef_note,
             price_range=shifted_range(cpo_rate_range, markup),
+            route="msp_home" if own_eflux else "msp_roaming",
+            relation="own_network" if own_eflux else "roaming",
         )
 
-    # Shell Recharge Basic publishes fixed price bands rather than CPO pass-through
-    # pricing for partner networks. Use the midpoint only as an explicit estimate.
+    # Shell Recharge Basic publishes fixed price bands. Shell/Ubitricity group
+    # ownership is not used as a pricing shortcut: only party TNM (or a strict
+    # name fallback when party_id is absent) counts as the Shell home network.
     is_dc = max_power_kw >= 50
-    own_shell = "shell" in op
+    own_shell = is_msp_home_network("shell_basic", operator_name, party_id)
     if is_dc:
         if own_shell:
             pricing["shell_basic"] = make_quote(
@@ -520,6 +732,8 @@ def build_pricing(
                 "medium",
                 "published_shell",
                 note="Gepubliceerd Shell Recharge Basic snellaadtarief in Nederland.",
+                route="msp_home",
+                relation="own_network",
             )
         else:
             pricing["shell_basic"] = make_quote(
@@ -529,6 +743,8 @@ def build_pricing(
                 "published_band",
                 note="Midden van Shells gepubliceerde DC-prijsband; exacte paalprijs staat in de Shell-app.",
                 price_range=[0.79, 0.85],
+                route="msp_roaming",
+                relation="roaming",
             )
     else:
         pricing["shell_basic"] = make_quote(
@@ -536,8 +752,12 @@ def build_pricing(
             0.35,
             "low",
             "published_band",
-            note="Midden van Shells gepubliceerde AC-prijsband; exacte paalprijs staat in de Shell-app.",
+            note=(
+                "Shell publiceert voor reguliere AC-laders een prijsband; de exacte paalprijs staat in de Shell-app."
+            ),
             price_range=[0.50, 0.60],
+            route="msp_home" if own_shell else "msp_roaming",
+            relation="own_network" if own_shell else "roaming",
         )
 
     # Laadkompas without subscription: CPO price + EUR 0.47/session.
@@ -549,6 +769,8 @@ def build_pricing(
             cpo_source,
             note=cpo_note,
             price_range=shifted_range(cpo_rate_range),
+            route="msp_roaming",
+            relation="roaming",
         )
 
     return pricing
@@ -596,15 +818,22 @@ def process_location(
         return None
 
     operator = (loc.get("operator") or {}).get("name", "Onbekend")
-    country_code = str(loc.get("country_code") or "")
-    party_id = str(loc.get("party_id") or "")
+    country_code = str(loc.get("country_code") or "").upper()
+    party_id = str(loc.get("party_id") or "").upper()
     name = loc.get("name") or loc.get("address") or "Laadpunt"
     address = loc.get("address", "")
     city = loc.get("city", "")
 
+    evse_ids = []
+    capabilities: set[str] = set()
     connectors = []
     for evse in loc.get("evses", []):
+        evse_id = evse.get("evse_id")
+        if evse_id:
+            evse_ids.append(str(evse_id))
+        capabilities.update(str(value).upper() for value in (evse.get("capabilities") or []) if value)
         status = evse.get("status", "UNKNOWN")
+
         for conn in evse.get("connectors", []):
             cpo_rate = None
             cpo_rate_range = None
@@ -612,8 +841,10 @@ def process_location(
             used_tariff_id = None
             source = "unknown"
             power_kw = connector_power_kw(conn)
+            direct_price_info = None
 
-            for tariff_id in conn.get("tariff_ids") or []:
+            tariff_ids = conn.get("tariff_ids") or []
+            for tariff_id in tariff_ids:
                 price_info = get_cpo_price_info(tariff_id, tariff_map, country_code, party_id)
                 if price_info is not None:
                     cpo_rate = price_info["rate"]
@@ -622,8 +853,14 @@ def process_location(
                     source = "ndw"
                     break
 
+            for tariff_id in tariff_ids:
+                ad_hoc_info = get_ad_hoc_price_info(tariff_id, tariff_map, country_code, party_id)
+                if ad_hoc_info is not None:
+                    direct_price_info = ad_hoc_info
+                    break
+
             # Targeted official fallback for the dominant public CPO in Huizen.
-            # It is used only after a direct NDW tariff lookup failed.
+            # It is used only after a direct regular NDW tariff lookup failed.
             if cpo_rate is None:
                 regional = totalenergies_mrae_fallback(operator, power_kw)
                 if regional:
@@ -648,6 +885,7 @@ def process_location(
                     "cpo_rate_range": cpo_rate_range,
                     "pricing_source": source,
                     "pricing_note": cpo_note,
+                    "direct_price_info": direct_price_info,
                 }
             )
 
@@ -659,9 +897,7 @@ def process_location(
     connector_types = list(dict.fromkeys(c["type"] for c in connectors if c["type"]))
     max_power = max((c["power_kw"] for c in connectors), default=0.0)
 
-    # Prefer a connector with a direct NDW tariff, then an operator median, then
-    # an unknown connector. This avoids using an arbitrary first connector when
-    # better tariff data exists elsewhere at the same location.
+    # Prefer a connector with a regular NDW tariff, then regional/median data.
     source_rank = {
         "ndw": 4,
         "totalenergies_mrae_dc": 3,
@@ -678,15 +914,21 @@ def process_location(
     if explicit_range:
         cpo_range = explicit_range
     else:
-        # Only compare rates derived from the same source as the representative.
-        # This avoids mixing a direct NDW tariff with a regional fallback that was
-        # used for another connector at the same location.
         known_rates = sorted({
             round(c["cpo_rate"], 4)
             for c in connectors
             if c["cpo_rate"] is not None and c["pricing_source"] == pricing_source
         })
         cpo_range = [known_rates[0], known_rates[-1]] if len(known_rates) > 1 else None
+
+    direct_candidates = [c["direct_price_info"] for c in connectors if c.get("direct_price_info")]
+    direct_price_info = direct_candidates[0] if direct_candidates else None
+    direct_supported, direct_reason = direct_payment_supported(
+        operator,
+        party_id,
+        capabilities,
+        has_ad_hoc_tariff=direct_price_info is not None,
+    )
 
     pricing = build_pricing(
         cpo_rate,
@@ -695,6 +937,8 @@ def process_location(
         max_power,
         cpo_rate_range=cpo_range,
         cpo_note=pricing_note,
+        party_id=party_id,
+        direct_price_info=direct_price_info,
     )
 
     last_updated_values = [
@@ -704,6 +948,21 @@ def process_location(
     ]
     last_updated = max(last_updated_values) if last_updated_values else None
 
+    direct_payment = {
+        "supported": direct_supported,
+        "reason": direct_reason,
+        "priced": direct_price_info is not None,
+    }
+    if direct_price_info:
+        direct_payment.update({
+            "tariff_id": direct_price_info.get("tariff_id"),
+            "rate": direct_price_info.get("rate"),
+            "rate_range": direct_price_info.get("range"),
+            "session": direct_price_info.get("session", 0.0),
+            "session_range": direct_price_info.get("session_range"),
+            "unmodelled_types": direct_price_info.get("unmodelled_types", []),
+        })
+
     return {
         "id": loc.get("id", ""),
         "name": name,
@@ -711,12 +970,17 @@ def process_location(
         "lat": lat,
         "lng": lng,
         "operator": operator,
+        "country_code": country_code,
+        "party_id": party_id,
+        "cpo_label": CPO_PARTY_NAMES.get(party_id, operator),
+        "evse_ids": sorted(set(evse_ids)),
         "connectors": connector_types,
         "max_power": max_power,
         "num_evses": len(loc.get("evses", [])),
         "available": available,
         "statuses": sorted(set(statuses)),
         "last_updated": last_updated,
+        "direct_payment": direct_payment,
         "pricing": pricing,
         "pricing_source": pricing_source,
         "pricing_note": pricing_note,
@@ -853,13 +1117,17 @@ def main() -> None:
     regional = sum(1 for r in results if r["pricing_source"] in {"totalenergies_mrae", "totalenergies_mrae_dc"})
     unknown = sum(1 for r in results if r["pricing_source"] == "unknown")
     comparison_ready = sum(1 for r in results if len(r["pricing"]) >= 2)
+    adhoc_priced = sum(1 for r in results if r.get("direct_payment", {}).get("priced"))
+    direct_payment_known = sum(1 for r in results if r.get("direct_payment", {}).get("supported"))
 
     print(f"  Locations in area:       {len(results)}")
     print(f"  Direct NDW CPO tariff:   {direct}")
     print(f"  Operator-median tariff:  {median}")
     print(f"  Official MRA-E fallback: {regional}")
     print(f"  Unknown CPO base tariff: {unknown}")
-    print(f"  2+ pass estimates:       {comparison_ready}")
+    print(f"  2+ price estimates:      {comparison_ready}")
+    print(f"  Explicit ad-hoc tariffs: {adhoc_priced}")
+    print(f"  Direct payment known:    {direct_payment_known}")
 
     operators = {}
     for result in results:
@@ -869,7 +1137,7 @@ def main() -> None:
         print(f"    {operator}: {count}")
 
     output = {
-        "schema_version": 3,
+        "schema_version": 4,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "source": "NDW open data (opendata.ndw.nu)",
         "regional_pricing": {
@@ -897,6 +1165,8 @@ def main() -> None:
             "regional_priced": regional,
             "unknown_base_rate": unknown,
             "comparison_ready": comparison_ready,
+            "adhoc_priced": adhoc_priced,
+            "direct_payment_known": direct_payment_known,
         },
         "locations": results,
     }

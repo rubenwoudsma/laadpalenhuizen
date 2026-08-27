@@ -1,6 +1,11 @@
 name: Update charging point data
 
 on:
+  push:
+    paths:
+      - "process.py"
+      - "tests/test_pricing.py"
+      - ".github/workflows/update.yml"
   schedule:
     # Run daily at 06:37 UTC. In the Netherlands this is 07:37 or 08:37 local time depending on DST.
     - cron: "37 6 * * *"
