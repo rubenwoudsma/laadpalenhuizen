@@ -81,7 +81,7 @@ De kernvergelijking bevat:
 
 ### Direct / QR
 
-Een expliciet connectorgebonden OCPI `AD_HOC_PAYMENT` tarief heeft prioriteit. OCPI staat ook een tarief zonder `Tariff.type` toe. Zo'n generiek tarief mag voor Direct / QR alleen worden hergebruikt wanneer de mogelijkheid tot direct betalen onafhankelijk via OCPI-capabilities of operatorinformatie is bevestigd. Een tarief zonder type bewijst dus nooit op zichzelf dat Direct / QR beschikbaar is. Als er geen bruikbaar NDW-tarief is kan een tijdens dezelfde datarun geverifieerde officiele CPO-bron aanvullen.
+De bronprioriteit voor Direct / QR is bewust strikt: (1) expliciet connectorgebonden OCPI `AD_HOC_PAYMENT`, (2) een tijdens dezelfde run geverifieerd officieel CPO Direct/QR-tarief, (3) pas daarna een generiek OCPI-tarief zonder `Tariff.type`. Zo'n generiek tarief mag alleen worden hergebruikt wanneer direct betalen onafhankelijk via OCPI-capabilities of operatorinformatie is bevestigd. Een tarief zonder type bewijst dus nooit op zichzelf dat Direct / QR beschikbaar is. Deze volgorde voorkomt dat een generiek OCPI-tarief een expliciete publieke Direct/QR-prijs maskeert.
 
 Huidige aanvullende logica:
 
@@ -105,6 +105,10 @@ Belangrijke huidige regels:
 | Laadkompas zonder abonnement | CPO-prijs + EUR 0,47 per sessie. |
 
 Eigen netwerk wordt primair via OCPI `party_id` bepaald. Ubitricity `UB2` wordt bijvoorbeeld niet automatisch als Shell `TNM` behandeld, ook al zijn de bedrijven commercieel aan elkaar gerelateerd.
+
+### P0.1 correctielaag
+
+Na de eerste schema-5 productierun zijn drie calibratieproblemen gecorrigeerd. De frontend weigert nu aantoonbaar `exclude`/`partial` routes te rangschikken en wordt met een versietag geladen zodat oude JavaScript niet naast nieuwe JSON kan blijven hangen. Officiele CPO-routeprijzen erven bovendien geen restrictions van een onafhankelijke NDW-basisprijs. In het kwaliteitsrapport worden blockers primair per connectorprofiel geteld, met quote-occurrences alleen als tweede impactmaat.
 
 ## Quality Model v2
 

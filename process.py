@@ -439,7 +439,7 @@ def harvest_official_pricing(fetcher=fetch_public_page) -> dict:
             "source_url": UBITRICITY_MRAE_DIRECT_SOURCE_URL,
             "source_checked_at": checked_at,
             "confidence": "high",
-            "note": "Officieel Ubitricity MRA-E ad-hoc tarief via QR. Lokale parkeer- of tijdkosten zijn niet inbegrepen.",
+            "note": "Officieel Ubitricity MRA-E Direct/QR-tarief. De laadtransactie wordt per kWh afgerekend; eventuele lokale parkeerkosten vallen buiten deze laadtransactie.",
         }
         if msp_rates:
             msp_by_party["UB2"] = {
@@ -450,10 +450,7 @@ def harvest_official_pricing(fetcher=fetch_public_page) -> dict:
                     "source_url": UBITRICITY_MRAE_DIRECT_SOURCE_URL,
                     "source_checked_at": checked_at,
                     "confidence": "medium",
-                    "note": (
-                        "Ubitricity publiceert voor MRA-E een netwerk-specifiek kWh-tarief voor deze laadpas. "
-                        "Eventuele aanvullende laadpas-, aansluit- of parkeerkosten zijn niet in dit kWh-bedrag opgenomen."
-                    ),
+                    "note": "Ubitricity publiceert voor MRA-E een netwerk-specifiek kWh-tarief voor deze laadpas.",
                 }
                 for pass_id, msp_rate in msp_rates.items()
             }
@@ -1334,21 +1331,24 @@ def build_pricing(
             if not anwb_override and any(token in op for token in ANWB_DISCOUNT_NETWORKS):
                 anwb_confidence = downgrade_confidence(anwb_confidence)
                 anwb_note = merge_notes(anwb_note, "ANWB noemt korting op dit netwerk; de app kan een lager tarief tonen.")
-            total_session = float(cpo_session or 0.0) + 0.89
+            route_session = float(anwb_override.get("session", 0.0)) if anwb_override else float(cpo_session or 0.0)
+            route_session_range = anwb_override.get("session_range") if anwb_override else cpo_session_range
+            route_unmodelled = list(anwb_override.get("unmodelled_types") or []) if anwb_override else base_unmodelled
+            total_session = route_session + 0.89
             anwb_discount = not anwb_override and any(token in op for token in ANWB_DISCOUNT_NETWORKS)
-            anwb_reasons = None if anwb_override else combined_reasons("potential_network_discount" if anwb_discount else "")
+            anwb_reasons = list(anwb_override.get("quality_reasons") or []) if anwb_override else combined_reasons("potential_network_discount" if anwb_discount else "")
             quote = make_quote(
                 anwb_rate, total_session, anwb_confidence, anwb_basis,
                 note=anwb_note,
                 price_range=anwb_range,
-                session_range=combined_session_range(cpo_session, cpo_session_range, 0.89),
+                session_range=combined_session_range(route_session, route_session_range, 0.89),
                 route="msp_roaming", relation="roaming",
-                cpo_session=cpo_session, msp_session=0.89,
-                unmodelled_costs=(base_unmodelled + (["mogelijke CPO sessie-/aansluitkosten niet uit NDW afleidbaar"] if anwb_override and cpo_rate is None else [])),
+                cpo_session=route_session, msp_session=0.89,
+                unmodelled_costs=route_unmodelled,
                 source_quality="high" if anwb_override else None,
                 price_specificity="network" if anwb_override else None,
                 quality_reasons=anwb_reasons,
-                energy_step_size_wh=None if anwb_override else cpo_energy_step_size_wh,
+                energy_step_size_wh=anwb_override.get("energy_step_size_wh") if anwb_override else cpo_energy_step_size_wh,
             )
             pricing["anwb_free"] = apply_source_metadata(quote, anwb_override)
 
@@ -1362,20 +1362,23 @@ def build_pricing(
                 tap_override.get("note") if tap_override else cpo_note,
                 "Tap Light rekent 5% transactiekosten over het gemodelleerde laadpaaltarief.",
             )
+            route_session = float(tap_override.get("session", 0.0)) if tap_override else float(cpo_session or 0.0)
+            route_session_range = tap_override.get("session_range") if tap_override else cpo_session_range
+            route_unmodelled = list(tap_override.get("unmodelled_types") or []) if tap_override else base_unmodelled
             quote = make_quote(
-                tap_rate, float(cpo_session or 0.0), tap_confidence, tap_basis,
+                tap_rate, route_session, tap_confidence, tap_basis,
                 note=tap_note,
                 price_range=tap_override.get("range") if tap_override else shifted_range(cpo_rate_range),
                 transaction_percentage=0.05,
-                session_range=cpo_session_range,
+                session_range=route_session_range,
                 route="msp_roaming", relation="roaming",
-                cpo_session=cpo_session,
+                cpo_session=route_session,
                 percentage_scope="cpo_subtotal",
-                unmodelled_costs=(base_unmodelled + (["mogelijke CPO sessie-/aansluitkosten niet uit NDW afleidbaar"] if tap_override and cpo_rate is None else [])),
+                unmodelled_costs=route_unmodelled,
                 source_quality="high" if tap_override else None,
                 price_specificity="network" if tap_override else None,
-                quality_reasons=None if tap_override else combined_reasons(),
-                energy_step_size_wh=None if tap_override else cpo_energy_step_size_wh,
+                quality_reasons=list(tap_override.get("quality_reasons") or []) if tap_override else combined_reasons(),
+                energy_step_size_wh=tap_override.get("energy_step_size_wh") if tap_override else cpo_energy_step_size_wh,
             )
             pricing["tap_light"] = apply_source_metadata(quote, tap_override)
 
@@ -1444,19 +1447,24 @@ def build_pricing(
         own_shell = is_msp_home_network("shell_basic", operator_name, party_id)
         shell_override = msp_overrides.get("shell_basic") if not is_dc else None
         if shell_override:
+            route_session = float(shell_override.get("session", 0.0))
+            route_session_range = shell_override.get("session_range")
+            route_unmodelled = list(shell_override.get("unmodelled_types") or [])
             quote = make_quote(
-                float(shell_override["rate"]), 0.35,
+                float(shell_override["rate"]), route_session + 0.35,
                 shell_override.get("confidence", "medium"),
                 shell_override.get("basis", "official_cpo_msp_rate"),
                 note=shell_override.get("note"),
                 price_range=shell_override.get("range"),
+                session_range=combined_session_range(route_session, route_session_range, 0.35),
                 route="msp_home" if own_shell else "msp_roaming",
                 relation="own_network" if own_shell else "roaming",
-                msp_session=0.35,
-                unmodelled_costs=(["mogelijke CPO sessie-/aansluitkosten niet uit NDW afleidbaar"] if cpo_rate is None else base_unmodelled),
+                cpo_session=route_session, msp_session=0.35,
+                unmodelled_costs=route_unmodelled,
                 source_quality="high",
                 price_specificity="network",
-                quality_reasons=["potential_msp_blocking_fee"],
+                quality_reasons=sorted(set((shell_override.get("quality_reasons") or []) + ["potential_msp_blocking_fee"])),
+                energy_step_size_wh=shell_override.get("energy_step_size_wh"),
             )
             pricing["shell_basic"] = apply_source_metadata(quote, shell_override)
         elif is_dc:
@@ -1771,25 +1779,6 @@ def process_location(
                 has_ad_hoc_tariff=direct_price_info is not None,
             )
 
-            # Tariff.type is optional in OCPI 2.2.1 and, when omitted, the
-            # tariff is valid for all sessions. That alone does not prove that
-            # ad-hoc payment is offered, so only reuse it when payment support
-            # is independently known from capabilities/operator documentation.
-            if direct_price_info is None and direct_supported_pre:
-                for tariff_id in tariff_ids:
-                    generic_info = get_ad_hoc_price_info(
-                        tariff_id, tariff_map, country_code, party_id, allow_unspecified=True
-                    )
-                    if generic_info is not None:
-                        generic_info = dict(generic_info)
-                        generic_info["basis"] = "ndw_ad_hoc_compatible"
-                        generic_info["note"] = merge_notes(
-                            generic_info.get("note"),
-                            "OCPI Tariff.type ontbreekt; volgens OCPI 2.2.1 is dit tarief voor alle sessies geldig. Direct betalen is afzonderlijk bevestigd.",
-                        )
-                        direct_price_info = generic_info
-                        break
-
             if cpo_info is None and (verified_rules is None or "totalenergies_mrae" in verified_rules):
                 regional = totalenergies_mrae_fallback(operator, current_type)
                 if regional:
@@ -1846,6 +1835,26 @@ def process_location(
                     cpo_energy_step_size_wh=cpo_energy_step_size_wh,
                     cpo_quality_reasons=cpo_quality_reasons,
                 )
+
+            # Source precedence for direct payment is deliberately strict:
+            # 1) explicit OCPI AD_HOC_PAYMENT, 2) verified official CPO direct
+            # price, 3) only then a generic OCPI tariff without Tariff.type.
+            # This prevents a generic tariff/restriction set from masking a
+            # more explicit operator-published direct price (e.g. Ubitricity).
+            if direct_price_info is None and direct_supported_pre:
+                for tariff_id in tariff_ids:
+                    generic_info = get_ad_hoc_price_info(
+                        tariff_id, tariff_map, country_code, party_id, allow_unspecified=True
+                    )
+                    if generic_info is not None:
+                        generic_info = dict(generic_info)
+                        generic_info["basis"] = "ndw_ad_hoc_compatible"
+                        generic_info["note"] = merge_notes(
+                            generic_info.get("note"),
+                            "OCPI Tariff.type ontbreekt; volgens OCPI 2.2.1 is dit tarief voor alle sessies geldig. Direct betalen is afzonderlijk bevestigd.",
+                        )
+                        direct_price_info = generic_info
+                        break
 
             direct_supported, direct_reason = direct_supported_pre, direct_reason_pre
             if direct_price_info and direct_price_info.get("basis") == "ndw_ad_hoc":

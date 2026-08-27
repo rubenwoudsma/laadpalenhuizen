@@ -158,13 +158,14 @@
       "id": "laadkompas_free",
       "provider": "Laadkompas",
       "plan": "Zonder abonnement",
-      "url": "https://laadkompas.nl/laadpas/zonder-abonnement/",
+      "url": "https://laadkompas.nl/campagne/laadpas/",
       "checks": [
         {
           "label": "starttarief blijft EUR 0,47 per sessie",
           "patterns": [
-            "(?:starttarief|tarief).{0,160}(?:€\\s*)?0[,.]47",
-            "(?:€\\s*)?0[,.]47.{0,160}per\\s+laadsessie"
+            "zonder\\s+abonnement.{0,420}(?:€\\s*)?0[,.]47.{0,160}(?:laadsessie|sessie)",
+            "(?:€\\s*)?0[,.]47.{0,100}per\\s+(?:gestarte\\s+)?laadsessie",
+            "starttarief.{0,80}(?:€\\s*)?0[,.]47"
           ]
         }
       ]
@@ -247,19 +248,20 @@
       "id": "vattenfall_direct_support",
       "provider": "Vattenfall InCharge",
       "plan": "Direct / QR support",
-      "url": "https://incharge.vattenfall.nl/veelgestelde-vragen/met-je-betaalpas-opladen",
+      "url": "https://incharge.vattenfall.nl/blog/snel-en-eenvoudig-laden-zonder-laadpas",
       "checks": [
         {
           "label": "direct betalen via QR en betaalpas wordt ondersteund",
           "patterns": [
-            "scant?\\s+de\\s+qr-code.{0,220}betaalgegevens",
-            "qr-code.{0,260}(?:pinpas|creditcard|betaalpas)"
+            "scan\\s+de\\s+qr-code.{0,220}betaalgegevens",
+            "zonder\\s+laadpas.{0,260}(?:pinpas|creditcard|betaalpas)"
           ]
         },
         {
-          "label": "beschikbaarheid is gekoppeld aan openbare palen met QR-sticker",
+          "label": "beschikbaarheid is gekoppeld aan openbare palen met QR-code",
           "patterns": [
-            "openbare\\s+laadpalen.{0,220}sticker\\s+met\\s+qr-code"
+            "openbare\\s+laadpalen.{0,180}(?:sticker\\s+met\\s+)?(?:een\\s+)?qr-code",
+            "qr-code.{0,220}openbare\\s+laadpalen"
           ]
         }
       ]

@@ -38,6 +38,17 @@ Status: gerealiseerd in Quality Model v2 / dataschema 5.
 - [x] Dagelijkse publieke broncontrole voor statische MSP-regels, per regel fail-closed.
 - [x] Quality report v2 valideert kernstatistieken onafhankelijk van de producer.
 
+### P0.1, productiecalibratie na eerste schema-5 run
+
+Status: gerealiseerd na analyse van de eerste live Quality Model v2 baseline.
+
+- [x] Frontend-contract op `decision_grade` vastgelegd, `exclude` en `partial` mogen nooit in ranking of winnaar terechtkomen.
+- [x] `app.js` versiegebonden geladen om oude frontendcode naast nieuwe schema-5 JSON te voorkomen.
+- [x] Direct/QR bronprioriteit aangescherpt naar expliciet OCPI ad-hoc, officiele CPO Direct/QR, daarna pas generiek typeloos OCPI.
+- [x] Officiele netwerk-specifieke MSP-prijzen erven geen ongerelateerde NDW-tariefrestricties meer.
+- [x] Quality blockers primair per connectorprofiel tellen, met prijsroute-occurrences als afzonderlijke impactmaat.
+- [x] Laadkompas- en Vattenfall-broncontrole naar beter uitleesbare officiele pagina's verplaatst.
+
 ### Acceptatie P0
 
 Na de eerste succesvolle productie-run:

@@ -143,6 +143,19 @@ class QualityReportTests(unittest.TestCase):
         self.assertEqual(report["decision_blockers"][0]["count"], 1)
         self.assertIn("starttarief", report["decision_blockers"][0]["reason"].lower())
 
+    def test_blockers_count_connector_profiles_separately_from_quote_occurrences(self):
+        dataset = self.sample_dataset()
+        profile = dataset["locations"][2]["connector_options"][0]
+        profile["pricing"]["second_route"] = self.quote(
+            "official_cpo_msp_rate", "exclude", "partial", "network", "high",
+            ["Vattenfall roaming starttarief onbekend"],
+        )
+        report = build_quality_report(dataset)
+        blocker = next(row for row in report["decision_blockers"] if "starttarief" in row["reason"].lower())
+        self.assertEqual(blocker["connector_profiles"], 1)
+        self.assertEqual(blocker["quote_occurrences"], 2)
+        self.assertEqual(blocker["count"], 1)
+
     def test_flags_stale_possible_operator_transition(self):
         report = build_quality_report(self.sample_dataset())
         self.assertEqual(report["freshness"]["older_than_7d"], 1)

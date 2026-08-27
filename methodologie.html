@@ -89,7 +89,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
     <li>Operator-mediaan alleen als diagnostische schatting, niet voor sessieranking.</li>
     <li>Anders blijft de prijs onbekend.</li>
   </ol>
-  <p>Voor Direct / QR gaat een expliciet OCPI <code>AD_HOC_PAYMENT</code> tarief altijd voor een aanvullende publieke bron. Een tarief zonder type mag pas als prijsbasis dienen nadat direct betalen los daarvan is bevestigd.</p>
+  <p>Voor Direct / QR geldt de vaste bronvolgorde: eerst een expliciet OCPI <code>AD_HOC_PAYMENT</code> tarief, daarna een in dezelfde run geverifieerde officiele CPO Direct/QR-prijs, en pas daarna een generiek OCPI-tarief zonder <code>Tariff.type</code>. Een tarief zonder type mag alleen als prijsbasis dienen nadat direct betalen los daarvan is bevestigd. Een expliciete routeprijs erft geen beperkingen van een onafhankelijk generiek NDW-tarief.</p>
 
   <h2>6. Aanvullende officiele CPO-bronnen</h2>
   <div class="card">
