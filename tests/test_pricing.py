@@ -955,3 +955,91 @@ class OcpiUnspecifiedTariffTypeP0Test(unittest.TestCase):
         self.assertTrue(profile["direct_payment"]["supported"])
         self.assertEqual(profile["pricing"]["direct_pay"]["basis"], "ndw_ad_hoc_compatible")
         self.assertEqual(profile["pricing"]["direct_pay"]["quality"]["decision_grade"], "reliable")
+
+
+class P01SourcePrecedenceTest(unittest.TestCase):
+    def ubitricity_location(self, tariff_ids):
+        return {
+            "id": "2378",
+            "country_code": "NL", "party_id": "UB2",
+            "coordinates": {"latitude": "52.2990918", "longitude": "5.2606067"},
+            "operator": {"name": "Ubitricity"}, "address": "Moeflon 31", "city": "Huizen",
+            "evses": [{
+                "uid": "1", "evse_id": "NL*UB2*E10025806", "status": "AVAILABLE",
+                "connectors": [{
+                    "id": "1", "standard": "IEC_62196_T2", "power_type": "AC_3_PHASE",
+                    "max_voltage": 230, "max_amperage": 32, "tariff_ids": tariff_ids,
+                }],
+            }],
+        }
+
+    def official_direct(self):
+        return {
+            "UB2": {
+                "mode": "fixed", "rate": 0.35, "session": 0.0,
+                "basis": "official_cpo_adhoc", "source_id": "ubitricity_mrae_direct",
+                "source_url": process.UBITRICITY_MRAE_DIRECT_SOURCE_URL, "confidence": "high",
+            }
+        }
+
+    def official_msp(self):
+        return {"UB2": {
+            "anwb_free": {"rate": 0.35, "basis": "official_cpo_msp_rate", "confidence": "medium"},
+            "tap_light": {"rate": 0.35, "basis": "official_cpo_msp_rate", "confidence": "medium"},
+            "shell_basic": {"rate": 0.55, "basis": "official_cpo_msp_rate", "confidence": "medium"},
+            "vattenfall": {"rate": 0.55, "basis": "official_cpo_msp_rate", "confidence": "medium"},
+        }}
+
+    def test_official_direct_beats_generic_unspecified_ocpi_tariff(self):
+        tariff = {
+            "country_code": "NL", "party_id": "UB2", "id": "generic", "currency": "EUR",
+            "elements": [{
+                "restrictions": {"start_time": "22:00", "end_time": "06:00"},
+                "price_components": [{"type": "ENERGY", "price": 0.3352, "step_size": 1}],
+            }],
+        }
+        result = process.process_location(
+            self.ubitricity_location(["generic"]), process.build_tariff_index([tariff]), {},
+            official_direct=self.official_direct(), official_msp=self.official_msp(),
+        )
+        profile = result["connector_options"][0]
+        direct = profile["pricing"]["direct_pay"]
+        self.assertEqual(direct["basis"], "official_cpo_adhoc")
+        self.assertEqual(direct["kwh"], 0.35)
+        self.assertEqual(direct["quality"]["decision_grade"], "reliable")
+        self.assertNotIn("TARIFF_RESTRICTIONS", direct["quality"]["unmodelled_costs"])
+
+    def test_official_ubitricity_msp_rates_do_not_inherit_unrelated_ndw_restrictions(self):
+        tariff = {
+            "country_code": "NL", "party_id": "UB2", "id": "generic", "currency": "EUR",
+            "elements": [{
+                "restrictions": {"start_time": "22:00", "end_time": "06:00"},
+                "price_components": [{"type": "ENERGY", "price": 0.3352, "step_size": 1}],
+            }],
+        }
+        result = process.process_location(
+            self.ubitricity_location(["generic"]), process.build_tariff_index([tariff]), {},
+            official_direct=self.official_direct(), official_msp=self.official_msp(),
+        )
+        pricing = result["connector_options"][0]["pricing"]
+        self.assertEqual(pricing["anwb_free"]["quality"]["decision_grade"], "reliable")
+        self.assertEqual(pricing["tap_light"]["quality"]["decision_grade"], "reliable")
+        self.assertEqual(pricing["anwb_free"]["quality"]["unmodelled_costs"], [])
+        self.assertEqual(pricing["tap_light"]["quality"]["unmodelled_costs"], [])
+        self.assertEqual(pricing["shell_basic"]["quality"]["decision_grade"], "indicative")
+        self.assertEqual(pricing["vattenfall"]["quality"]["decision_grade"], "exclude")
+        self.assertEqual(result["connector_options"][0]["decision_status"], "reliable")
+
+    def test_explicit_ndw_ad_hoc_still_beats_official_cpo_fallback(self):
+        tariff = {
+            "country_code": "NL", "party_id": "UB2", "id": "adhoc", "currency": "EUR",
+            "type": "AD_HOC_PAYMENT",
+            "elements": [{"price_components": [{"type": "ENERGY", "price": 0.36, "step_size": 1}]}],
+        }
+        result = process.process_location(
+            self.ubitricity_location(["adhoc"]), process.build_tariff_index([tariff]), {},
+            official_direct=self.official_direct(), official_msp=self.official_msp(),
+        )
+        direct = result["connector_options"][0]["pricing"]["direct_pay"]
+        self.assertEqual(direct["basis"], "ndw_ad_hoc")
+        self.assertEqual(direct["kwh"], 0.36)

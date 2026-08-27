@@ -151,7 +151,9 @@ def build_quality_report(dataset: dict[str, Any]) -> dict[str, Any]:
     unknown_base_counter: Counter[tuple[str, str]] = Counter()
     unknown_base_examples: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     blocker_counter = Counter()
+    blocker_profile_counter = Counter()
     decision_reason_counter = Counter()
+    decision_reason_profile_counter = Counter()
 
     profile_count = 0
     specific_base_profiles = 0
@@ -212,6 +214,8 @@ def build_quality_report(dataset: dict[str, Any]) -> dict[str, Any]:
                     direct_gap_counter[key] += 1
                     direct_gap_examples[key].append(profile_example(location, profile))
 
+            profile_blockers: set[str] = set()
+            profile_reasons: set[str] = set()
             for route_id, quote in (profile.get("pricing") or {}).items():
                 quality = quote.get("quality") or {}
                 complete = quality.get("cost_completeness") or "unknown"
@@ -222,11 +226,20 @@ def build_quality_report(dataset: dict[str, Any]) -> dict[str, Any]:
                 if route_id != "direct_pay" and quote.get("basis") == "official_cpo_msp_rate":
                     msp_quotes_official += 1
                 for reason in quality.get("reasons") or []:
-                    decision_reason_counter[str(reason)] += 1
+                    reason = str(reason)
+                    decision_reason_counter[reason] += 1
+                    profile_reasons.add(reason)
                 for reason in quality.get("unmodelled_costs") or []:
-                    blocker_counter[str(reason)] += 1
+                    reason = str(reason)
+                    blocker_counter[reason] += 1
+                    profile_blockers.add(reason)
                 if complete == "partial" and not quality.get("unmodelled_costs"):
                     blocker_counter["onvolledige kostencomponent"] += 1
+                    profile_blockers.add("onvolledige kostencomponent")
+            for reason in profile_reasons:
+                decision_reason_profile_counter[reason] += 1
+            for reason in profile_blockers:
+                blocker_profile_counter[reason] += 1
 
         if "reliable" in profile_grades:
             loc_grade = "reliable"
@@ -425,8 +438,18 @@ def build_quality_report(dataset: dict[str, Any]) -> dict[str, Any]:
             "quote_cost_completeness": dimension_rows(quote_completeness, ["complete", "partial", "unknown"]),
             "quote_decision_grade": dimension_rows(quote_decision, ["reliable", "indicative", "exclude"]),
         },
-        "decision_reasons": [{"reason": reason, "count": count} for reason, count in decision_reason_counter.most_common()],
-        "decision_blockers": [{"reason": reason, "count": count} for reason, count in blocker_counter.most_common()],
+        "decision_reasons": [{
+            "reason": reason,
+            "count": decision_reason_profile_counter.get(reason, 0),
+            "connector_profiles": decision_reason_profile_counter.get(reason, 0),
+            "quote_occurrences": count,
+        } for reason, count in decision_reason_counter.most_common()],
+        "decision_blockers": [{
+            "reason": reason,
+            "count": blocker_profile_counter.get(reason, 0),
+            "connector_profiles": blocker_profile_counter.get(reason, 0),
+            "quote_occurrences": count,
+        } for reason, count in blocker_counter.most_common()],
         "official_sources": {
             "total": len(official_sources),
             "ok": len(official_sources) - len(failed_sources),
@@ -488,8 +511,13 @@ def build_github_summary(report: dict[str, Any]) -> str:
         lines.append("")
     reasons = report.get("decision_reasons") or []
     if reasons:
-        lines += ["### Belangrijkste redenen voor indicatief/uitgesloten", "", "| Reden | Routes |", "| --- | ---: |"]
-        lines += [f"| `{row['reason']}` | {row['count']} |" for row in reasons[:8]]
+        lines += ["### Belangrijkste redenen voor indicatief/uitgesloten", "", "| Reden | Connectorprofielen | Prijsroutes |", "| --- | ---: | ---: |"]
+        lines += [f"| `{row['reason']}` | {row.get('connector_profiles', row['count'])} | {row.get('quote_occurrences', row['count'])} |" for row in reasons[:8]]
+        lines.append("")
+    blockers = report.get("decision_blockers") or []
+    if blockers:
+        lines += ["### Niet-gemodelleerde kosten/voorwaarden", "", "| Blokkade | Connectorprofielen | Prijsroutes |", "| --- | ---: | ---: |"]
+        lines += [f"| `{row['reason']}` | {row.get('connector_profiles', row['count'])} | {row.get('quote_occurrences', row['count'])} |" for row in blockers[:8]]
         lines.append("")
     if report["attention"]:
         lines += ["### Aandachtspunten", ""]
