@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Datakwaliteit van de laadpaal- en prijsvergelijking voor Huizen.">
+  <title>Datakwaliteit | Laadpalen Huizen</title>
+  <style>
+    :root {
+      --bg: #f4f7f5;
+      --card: #ffffff;
+      --ink: #17251f;
+      --muted: #617068;
+      --line: #dce5df;
+      --green: #167a4a;
+      --green-soft: #e8f5ee;
+      --amber: #9a6700;
+      --amber-soft: #fff7df;
+      --red: #b42318;
+      --red-soft: #fff0ee;
+      --blue: #1d5f91;
+      --blue-soft: #edf6fb;
+      --shadow: 0 8px 30px rgba(35, 58, 47, 0.07);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.5;
+    }
+    a { color: var(--green); }
+    header {
+      padding: 28px 24px 24px;
+      background: #173f31;
+      color: white;
+    }
+    .header-inner, main, footer { max-width: 1180px; margin: 0 auto; }
+    .eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .1em; opacity: .72; }
+    h1 { margin: 4px 0 4px; font-size: clamp(26px, 4vw, 38px); }
+    header p { margin: 0; max-width: 760px; color: rgba(255,255,255,.78); }
+    nav { margin-top: 16px; display: flex; gap: 14px; flex-wrap: wrap; font-size: 14px; }
+    nav a { color: white; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.35); }
+    main { padding: 24px; }
+    .status-line {
+      display: flex; justify-content: space-between; gap: 12px; align-items: center;
+      color: var(--muted); font-size: 13px; margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
+    .kpi { padding: 18px; }
+    .kpi-label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+    .kpi-value { font-size: 30px; font-weight: 750; margin-top: 4px; }
+    .kpi-sub { color: var(--muted); font-size: 13px; }
+    section { margin-top: 22px; }
+    section > h2 { margin: 0 0 10px; font-size: 20px; }
+    section > p.lead { margin: -3px 0 12px; color: var(--muted); font-size: 14px; }
+    .section-card { padding: 18px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+    tr:last-child td { border-bottom: 0; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+    .attention { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+    .attention-item { padding: 14px; border-radius: 12px; border: 1px solid var(--line); background: white; }
+    .attention-item.medium { background: var(--amber-soft); border-color: #efd78f; }
+    .attention-item.high { background: var(--red-soft); border-color: #efb6ae; }
+    .attention-item.info { background: var(--blue-soft); border-color: #b9dcec; }
+    .attention-title { font-weight: 700; }
+    .attention-meta { font-size: 13px; color: var(--muted); margin-top: 3px; }
+    .bar-row { display: grid; grid-template-columns: 85px 1fr 120px; gap: 12px; align-items: center; margin: 10px 0; }
+    .bar-track { height: 10px; border-radius: 999px; overflow: hidden; background: #e9eeeb; }
+    .bar-fill { height: 100%; background: var(--green); border-radius: inherit; }
+    .bar-row.medium .bar-fill { background: #d59a18; }
+    .bar-row.low .bar-fill { background: #c45a4a; }
+    .bar-value { text-align: right; color: var(--muted); font-size: 13px; }
+    .tag { display: inline-block; padding: 3px 7px; border-radius: 999px; background: #eef3f0; font-size: 11px; white-space: nowrap; }
+    .tag.transition { background: var(--amber-soft); color: #745100; }
+    details { border-top: 1px solid var(--line); padding: 10px 0 0; margin-top: 10px; }
+    details summary { cursor: pointer; font-weight: 650; }
+    .muted { color: var(--muted); }
+    .empty { padding: 16px; color: var(--muted); }
+    .notice { padding: 14px 16px; background: #edf4f0; border: 1px solid #cfe0d6; border-radius: 12px; color: #355447; font-size: 14px; }
+    footer { padding: 12px 24px 28px; color: var(--muted); font-size: 13px; }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .attention { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 620px) {
+      main { padding: 16px; }
+      header { padding: 22px 16px; }
+      .grid { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 70px 1fr; }
+      .bar-value { grid-column: 2; text-align: left; margin-top: -8px; }
+      .table-wrap { overflow-x: auto; }
+    }
+  </style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="eyebrow">Laadpalen Huizen</div>
+    <h1>Pricing & data quality</h1>
+    <p>Transparant overzicht van de dekking en betrouwbaarheid achter de prijsvergelijking. Dit rapport wordt automatisch uit dezelfde dagelijkse dataset opgebouwd als de kaart.</p>
+    <nav>
+      <a href="index.html">Terug naar de kaart</a>
+      <a href="methodologie.html">Methodologie</a>
+      <a href="https://github.com/rubenwoudsma/laadpalenhuizen/blob/main/ROADMAP.md">Roadmap</a>
+      <a href="https://github.com/rubenwoudsma/laadpalenhuizen">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="status-line">
+    <span id="generated-at">Rapport laden...</span>
+    <span>Geen kwaliteitsscore op basis van een verborgen formule: de onderliggende KPI's zijn leidend.</span>
+  </div>
+
+  <div class="grid" id="kpis"></div>
+
+  <section>
+    <h2>Aandacht voor de volgende iteratie</h2>
+    <p class="lead">Dit zijn signalen uit de actuele dataset. Ze bepalen waar aanvullende harvesting of opschoning de meeste gebruikerswaarde oplevert.</p>
+    <div class="attention" id="attention"></div>
+  </section>
+
+  <section>
+    <h2>Direct / QR dekking</h2>
+    <p class="lead">Waar direct betalen bekend is, maar nog geen reproduceerbaar bedrag beschikbaar is.</p>
+    <div class="card section-card table-wrap">
+      <table>
+        <thead><tr><th>CPO</th><th>party_id</th><th>Ongeprijsd</th><th>Voorbeelden</th></tr></thead>
+        <tbody id="direct-gaps"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>CPO-basistarief ontbreekt</h2>
+    <p class="lead">Deze locaties hebben nog geen bruikbaar regulier basistarief. Een losse Shell-prijsband telt hierbij niet als CPO-basistarief.</p>
+    <div class="card section-card table-wrap">
+      <table>
+        <thead><tr><th>CPO</th><th>party_id</th><th>Locaties</th><th>Voorbeelden</th></tr></thead>
+        <tbody id="unknown-base"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Confidence van prijsregels</h2>
+    <p class="lead">Confidence zegt iets over de herkomst van een prijsregel. Low is niet automatisch fout, maar verdient meer voorzichtigheid bij de vergelijking.</p>
+    <div class="card section-card" id="confidence"></div>
+  </section>
+
+  <section>
+    <h2>Prijsbronnen</h2>
+    <div class="card section-card table-wrap">
+      <table>
+        <thead><tr><th>Bronstrategie</th><th>Locaties</th><th>Aandeel</th></tr></thead>
+        <tbody id="pricing-sources"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2>Versheid van locatiestatus</h2>
+    <p class="lead">Een prijs kan correct zijn terwijl de status van het laadpunt oud is. Locaties ouder dan zeven dagen worden daarom afzonderlijk zichtbaar gemaakt.</p>
+    <div class="card section-card">
+      <div id="freshness-summary"></div>
+      <details id="stale-details">
+        <summary id="stale-summary">Toon locaties ouder dan zeven dagen</summary>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Adres</th><th>CPO</th><th>Status</th><th>Laatste update</th><th>Leeftijd</th></tr></thead>
+            <tbody id="stale-locations"></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <section>
+    <h2>Mogelijke dubbele of vervangen locaties</h2>
+    <p class="lead">Meerdere records op hetzelfde adres worden niet automatisch verwijderd. Vooral een oud record naast een recent record van een andere CPO kan wijzen op een operatorwissel.</p>
+    <div class="card section-card" id="duplicates"></div>
+  </section>
+
+  <section>
+    <div class="notice">
+      Dit rapport beoordeelt de kwaliteit van de beschikbare brondata en het prijsmodel. Het is geen garantie voor de uiteindelijke factuur. De prijs op de betaalpagina of in de laadapp blijft leidend bij het starten van een sessie.
+    </div>
+  </section>
+</main>
+
+<footer>
+  Gegenereerd uit <code>huizen-data.json</code>. De GitHub Action publiceert tegelijk een machineleesbare <code>pricing-quality.json</code> en dezelfde kern-KPI's in de Action summary.
+</footer>
+
+<script>
+  const fmt = new Intl.NumberFormat('nl-NL');
+
+  function esc(value) {
+    return String(value ?? '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function percent(value) {
+    return `${Number(value || 0).toLocaleString('nl-NL', {maximumFractionDigits: 1})}%`;
+  }
+
+  function dateTime(value) {
+    if (!value) return 'onbekend';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString('nl-NL', {dateStyle: 'medium', timeStyle: 'short'});
+  }
+
+  function examples(items) {
+    return (items || []).slice(0, 3).map(item => esc(item.address || item.name || item.id)).join('<br>') || '-';
+  }
+
+  function renderKpis(report) {
+    const coverage = report.coverage;
+    const direct = report.direct_payment;
+    const fresh = report.freshness;
+    const currentCount = Math.max(0, coverage.total_locations - fresh.older_than_24h - fresh.missing_or_invalid_timestamp);
+    const currentPct = coverage.total_locations ? (currentCount / coverage.total_locations) * 100 : 0;
+
+    const cards = [
+      ['Vergelijkbaar', percent(coverage.comparison_ready_pct), `${coverage.comparison_ready} van ${coverage.total_locations} locaties`],
+      ['Basistarief bekend', percent(coverage.base_tariff_known_pct), `${coverage.base_tariff_known} van ${coverage.total_locations} locaties`],
+      ['Direct geprijsd', percent(direct.priced_pct_of_known), `${direct.priced} van ${direct.known} direct-payment locaties`],
+      ['Status < 24 uur', percent(currentPct), `${currentCount} van ${coverage.total_locations} locaties`],
+    ];
+    document.getElementById('kpis').innerHTML = cards.map(([label, value, sub]) => `
+      <div class="card kpi"><div class="kpi-label">${label}</div><div class="kpi-value">${value}</div><div class="kpi-sub">${sub}</div></div>
+    `).join('');
+  }
+
+  function renderAttention(report) {
+    const target = document.getElementById('attention');
+    if (!report.attention.length) {
+      target.innerHTML = '<div class="attention-item"><div class="attention-title">Geen aandachtspunten</div></div>';
+      return;
+    }
+    target.innerHTML = report.attention.map(item => `
+      <div class="attention-item ${esc(item.severity)}">
+        <div class="attention-title">${esc(item.title)}</div>
+        <div class="attention-meta">${fmt.format(item.count)} signalen · ${esc(item.category)}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderOperatorRows(id, rows) {
+    const target = document.getElementById(id);
+    if (!rows.length) {
+      target.innerHTML = '<tr><td colspan="4" class="muted">Geen openstaande locaties.</td></tr>';
+      return;
+    }
+    target.innerHTML = rows.map(row => `
+      <tr>
+        <td>${esc(row.operator)}</td>
+        <td><code>${esc(row.party_id)}</code></td>
+        <td>${fmt.format(row.count)}</td>
+        <td>${examples(row.examples)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderConfidence(report) {
+    const c = report.confidence;
+    const rows = [
+      ['High', c.high, c.high_pct, 'high'],
+      ['Medium', c.medium, c.medium_pct, 'medium'],
+      ['Low', c.low, c.low_pct, 'low'],
+    ];
+    document.getElementById('confidence').innerHTML = rows.map(([label, count, pct, cls]) => `
+      <div class="bar-row ${cls}">
+        <strong>${label}</strong>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100, Number(pct || 0))}%"></div></div>
+        <div class="bar-value">${fmt.format(count)} · ${percent(pct)}</div>
+      </div>
+    `).join('') + `<div class="muted" style="margin-top:12px">Totaal ${fmt.format(c.total_quotes)} berekenbare prijsregels.</div>`;
+  }
+
+  function renderSources(report) {
+    document.getElementById('pricing-sources').innerHTML = report.pricing_sources.map(row => `
+      <tr><td><code>${esc(row.id)}</code></td><td>${fmt.format(row.locations)}</td><td>${percent(row.pct)}</td></tr>
+    `).join('');
+  }
+
+  function renderFreshness(report) {
+    const f = report.freshness;
+    document.getElementById('freshness-summary').innerHTML = `
+      <strong>${fmt.format(f.older_than_24h)}</strong> locaties ouder dan 24 uur ·
+      <strong>${fmt.format(f.older_than_7d)}</strong> ouder dan 7 dagen ·
+      <strong>${fmt.format(f.older_than_30d)}</strong> ouder dan 30 dagen
+    `;
+    document.getElementById('stale-summary').textContent = `Toon ${f.older_than_7d} locaties ouder dan zeven dagen`;
+    document.getElementById('stale-locations').innerHTML = (f.stale_locations_over_7d || []).map(row => `
+      <tr>
+        <td>${esc(row.address)}</td>
+        <td>${esc(row.operator)} <code>${esc(row.party_id)}</code></td>
+        <td>${(row.statuses || []).map(status => `<span class="tag">${esc(status)}</span>`).join(' ')}</td>
+        <td>${dateTime(row.last_updated)}</td>
+        <td>${Number(row.age_days).toLocaleString('nl-NL', {maximumFractionDigits: 1})} dagen</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderDuplicates(report) {
+    const d = report.potential_duplicates;
+    const target = document.getElementById('duplicates');
+    if (!d.groups.length) {
+      target.innerHTML = '<div class="muted">Geen adressen met meerdere records gevonden.</div>';
+      return;
+    }
+    const intro = `<div><strong>${d.group_count}</strong> adresgroepen met meerdere records, waarvan <strong>${d.possible_operator_transition_groups}</strong> mogelijk een CPO-wissel of vervangen record zijn.</div>`;
+    const groups = d.groups.map(group => {
+      const label = group.reason === 'possible_operator_transition' ? 'mogelijke CPO-wissel' : (group.reason === 'same_operator_multiple_records' ? 'meerdere records zelfde CPO' : 'meerdere CPO\'s');
+      const cls = group.reason === 'possible_operator_transition' ? 'transition' : '';
+      const rows = group.locations.map(location => `
+        <tr>
+          <td>${esc(location.operator)}</td>
+          <td><code>${esc(location.id)}</code></td>
+          <td>${(location.statuses || []).map(status => `<span class="tag">${esc(status)}</span>`).join(' ')}</td>
+          <td>${dateTime(location.last_updated)}</td>
+        </tr>
+      `).join('');
+      return `
+        <details>
+          <summary>${esc(group.address)} · ${group.count} records · <span class="tag ${cls}">${label}</span></summary>
+          <div class="table-wrap"><table><thead><tr><th>CPO</th><th>ID</th><th>Status</th><th>Laatste update</th></tr></thead><tbody>${rows}</tbody></table></div>
+        </details>
+      `;
+    }).join('');
+    target.innerHTML = intro + groups;
+  }
+
+  async function loadReport() {
+    try {
+      const response = await fetch(`pricing-quality.json?v=${Date.now()}`, {cache: 'no-store'});
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const report = await response.json();
+      document.getElementById('generated-at').textContent = `Dataset: ${dateTime(report.generated_at)}`;
+      renderKpis(report);
+      renderAttention(report);
+      renderOperatorRows('direct-gaps', report.direct_payment.unpriced_by_operator || []);
+      renderOperatorRows('unknown-base', report.unknown_base_tariff.by_operator || []);
+      renderConfidence(report);
+      renderSources(report);
+      renderFreshness(report);
+      renderDuplicates(report);
+    } catch (error) {
+      document.getElementById('generated-at').textContent = 'Quality report kon niet worden geladen.';
+      document.getElementById('kpis').innerHTML = `<div class="card kpi" style="grid-column:1/-1"><div class="kpi-label">Nog niet beschikbaar</div><div class="kpi-sub">${esc(error.message)}. Start de workflow Update charging point data om pricing-quality.json te genereren.</div></div>`;
+    }
+  }
+
+  loadReport();
+</script>
+</body>
+</html>

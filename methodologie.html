@@ -3,186 +3,176 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Methodologie · Laadpalen Wijchen</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+<meta name="description" content="Methodologie van Laadpalen Huizen: sessiekosten, CPO/MSP-routing, ad-hoc QR-betaling en NDW/OCPI-data.">
+<title>Methodologie | Laadpalen Huizen</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #f0f2f5;
-  --surface: #ffffff;
-  --border: #e4e7ed;
-  --text: #111827;
-  --text2: #374151;
-  --muted: #9ca3af;
-  --green: #16a34a;
-  --amber: #d97706;
-  --amber-bg: #fef3c7;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-body {
-  font-family: 'IBM Plex Sans', sans-serif;
-  background: var(--bg); color: var(--text);
-  min-height: 100vh; display: flex; flex-direction: column;
-}
-header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 20px; height: 52px;
-  background: var(--surface); border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-header a { text-decoration: none; color: inherit; }
-.wordmark { display:flex; align-items:center; gap:11px; }
-.wordmark-icon {
-  width:32px; height:32px; background:var(--text); border-radius:8px;
-  display:flex; align-items:center; justify-content:center; font-size:15px;
-}
-.wordmark-text h1 {
-  font-family:'IBM Plex Mono',monospace; font-size:12px; font-weight:700;
-  letter-spacing:-.2px; color:var(--text);
-}
-.wordmark-text span { font-size:10px; color:var(--muted); display:block; margin-top:1px; }
-.back-link {
-  font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted);
-  text-decoration:none;
-}
-.back-link:hover { color:var(--text2); }
-main {
-  flex:1; max-width:720px; width:100%; margin:0 auto;
-  padding:32px 20px 48px;
-}
-h2 {
-  font-family:'IBM Plex Mono',monospace; font-size:18px; font-weight:700;
-  margin-bottom:8px; margin-top:32px;
-}
-h2:first-child { margin-top:0; }
-h3 {
-  font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:600;
-  margin-bottom:4px; margin-top:20px;
-}
-p { font-size:14px; line-height:1.7; color:var(--text2); margin-bottom:12px; }
-ul, ol { font-size:14px; line-height:1.7; color:var(--text2); margin:0 0 12px 20px; }
-li { margin-bottom:4px; }
-code {
-  font-family:'IBM Plex Mono',monospace; font-size:12px;
-  background:var(--surface); border:1px solid var(--border);
-  padding:1px 5px; border-radius:4px;
-}
-table {
-  width:100%; border-collapse:collapse; margin:12px 0 16px;
-  font-size:13px;
-}
-th, td {
-  padding:6px 10px; text-align:left; border-bottom:1px solid var(--border);
-}
-th {
-  font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600;
-  text-transform:uppercase; letter-spacing:.5px; color:var(--muted);
-  background:var(--surface);
-}
-td { color:var(--text2); }
-.note {
-  background:var(--amber-bg); border:1px solid #fcd34d; border-radius:6px;
-  padding:10px 14px; font-size:12px; color:#92400e; margin:16px 0;
-  font-family:'IBM Plex Mono',monospace;
-}
-footer {
-  padding:5px 16px; background:var(--surface); border-top:1px solid var(--border);
-  display:flex; justify-content:center; align-items:center;
-  font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--muted); flex-shrink:0;
-}
-footer a { color:var(--muted); }
-@media (max-width: 767px) {
-  header { padding:0 12px; height:44px; }
-  main { padding:20px 14px 32px; }
-}
+:root { --text:#111827; --text2:#374151; --muted:#6b7280; --border:#e5e7eb; --surface:#fff; --surface2:#f8fafc; --green:#166534; --green-bg:#f0fdf4; --amber:#92400e; --amber-bg:#fffbeb; }
+* { box-sizing:border-box; }
+body { margin:0; background:#f3f4f6; color:var(--text); font-family:'IBM Plex Sans',sans-serif; line-height:1.62; }
+a { color:#1d4ed8; }
+header { background:#fff; border-bottom:1px solid var(--border); }
+.header-inner { max-width:980px; margin:0 auto; padding:18px 22px; display:flex; justify-content:space-between; align-items:center; gap:14px; }
+.brand { font:700 13px 'IBM Plex Mono',monospace; }
+.back { font-size:12px; text-decoration:none; color:var(--text2); }
+main { max-width:980px; margin:0 auto; padding:34px 22px 64px; }
+h1 { margin:0 0 8px; font:700 28px 'IBM Plex Mono',monospace; letter-spacing:-.8px; }
+h2 { margin:36px 0 12px; font:700 18px 'IBM Plex Mono',monospace; }
+h3 { margin:22px 0 8px; font-size:14px; }
+p, li { font-size:14px; color:var(--text2); }
+.lead { max-width:800px; color:var(--muted); }
+.card { margin:16px 0; padding:18px; background:var(--surface); border:1px solid var(--border); border-radius:10px; }
+.formula { padding:14px 16px; border-radius:8px; background:#111827; color:#fff; font:600 13px 'IBM Plex Mono',monospace; overflow-x:auto; }
+.route-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:16px 0; }
+.route { padding:14px; border:1px solid var(--border); border-radius:8px; background:#fff; }
+.route strong { display:block; margin-bottom:5px; font-size:13px; }
+.route span { color:var(--muted); font-size:12px; }
+.good { background:var(--green-bg); border-color:#bbf7d0; }
+.warning { background:var(--amber-bg); border-color:#fde68a; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+th, td { padding:9px 8px; border-bottom:1px solid var(--border); text-align:left; vertical-align:top; }
+th { background:var(--surface2); font:600 10px 'IBM Plex Mono',monospace; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); }
+code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
+.muted { color:var(--muted); font-size:12px; }
+.source-list li { margin-bottom:7px; }
+@media (max-width:720px) { .route-grid { grid-template-columns:1fr; } .header-inner, main { padding-left:14px; padding-right:14px; } table { font-size:11px; } }
 </style>
 </head>
 <body>
-
 <header>
-  <a href="/">
-    <div class="wordmark">
-      <div class="wordmark-icon">⚡</div>
-      <div class="wordmark-text">
-        <h1>Laadpalen Wijchen</h1>
-        <span>Wijchen · Gelderland</span>
-      </div>
-    </div>
-  </a>
-  <a href="/" class="back-link">&larr; Terug naar kaart</a>
+  <div class="header-inner">
+    <div class="brand">⚡ Laadpalen Huizen</div>
+    <a class="back" href="index.html">Terug naar de kaart</a>
+  </div>
 </header>
-
 <main>
-  <h2>Methodologie</h2>
-  <p>Deze pagina beschrijft hoe de data op Laadpalen Wijchen wordt verzameld, verwerkt en weergegeven. Alle code is open source en beschikbaar op <a href="https://github.com/jdevalk/laadpalenwijchen.nl">GitHub</a>.</p>
+  <h1>Methodologie</h1>
+  <p class="lead">De kaart is een vergelijkingshulpmiddel voor openbare laadpunten in Huizen. De kern is dat een laadpunt niet één prijs heeft. De betaalroute bepaalt mede wat de bestuurder uiteindelijk betaalt.</p>
 
-  <h2>Databronnen</h2>
+  <h2>1. Drie verschillende prijsroutes</h2>
+  <div class="route-grid">
+    <div class="route good"><strong>Direct / ad-hoc</strong><span>Betalen bij de CPO via bijvoorbeeld QR, webbetaling of betaalterminal, zonder MSP-contract.</span></div>
+    <div class="route"><strong>MSP eigen netwerk</strong><span>De laadpas of app wordt gebruikt op een CPO-netwerk dat aantoonbaar bij die MSP-route hoort.</span></div>
+    <div class="route"><strong>MSP roaming</strong><span>De MSP geeft toegang tot een andere CPO. Startkosten, opslag of een afwijkend roamingtarief kunnen gelden.</span></div>
+  </div>
+  <p>Deze routes worden niet samengevoegd. Een zakelijke of merkrelatie tussen twee bedrijven bewijst niet dat het consumententarief gelijk is. Dat is relevant bij Shell en Ubitricity: Ubitricity kan een eigen directe QR-route aanbieden terwijl de Shell Recharge app een afzonderlijk MSP-tarief toepast.</p>
 
-  <h3>NDW (Nationaal Dataportaal Wegverkeer)</h3>
-  <p>De primaire databron is NDW open data (<a href="https://opendata.ndw.nu">opendata.ndw.nu</a>). Elke dag om 06:00 UTC worden twee bestanden opgehaald:</p>
+  <h2>2. Sessiekosten</h2>
+  <p>De kaart sorteert niet uitsluitend op een kale kWh-prijs. De gebruiker kiest tussen 5 en 60 kWh, of gebruikt een snelle preset zoals ongeveer 25 kWh voor een Hyundai Inster van 20% naar 80%.</p>
+  <div class="formula">Total Session Cost = (Session kWh × kWh Rate × [1 + Percentage Fee]) + Start Fee</div>
+  <p>Voor een pas met 5% transactiekosten wordt de procentuele factor over de gemodelleerde energiekosten toegepast. Een vaste sessietoeslag wordt één keer per laadsessie toegevoegd.</p>
+
+  <h2>3. Prijsbanden en Top 3</h2>
+  <p>Wanneer de bron meerdere mogelijke ENERGY-prijzen bevat, bewaart de preprocessor de laagste en hoogste waarde. De browser rekent beide door naar een minimum- en maximumsessieprijs.</p>
+  <div class="card">
+    <p><strong>Top 3 groen:</strong> de drie berekenbare opties met de laagste middenschatting krijgen een groene markering. Dit is een snelle rangschikking, geen garantie dat nummer 1 altijd werkelijk goedkoper is.</p>
+    <p><strong>Harde winnaar:</strong> een optie wordt alleen eenduidig goedkoopst genoemd wanneer zijn maximale berekende sessieprijs lager ligt dan de minimale berekende prijs van alle andere berekenbare geselecteerde opties.</p>
+    <p><strong>Overlappende ranges:</strong> als prijsbanden elkaar overlappen, blijft zichtbaar welke optie de laagste middenschatting heeft, maar de kaart meldt dat er geen harde winnaar is.</p>
+  </div>
+
+  <h2>4. NDW DOT-NL en OCPI</h2>
+  <p>De primaire bron is de publieke laadpuntdata van NDW DOT-NL. `process.py` gebruikt de landelijke OCPI locatie- en tariefbestanden en filtert deze daarna op de gemeente Huizen.</p>
+  <p>Tarief-ID's zijn niet landelijk uniek. Daarom wordt een tarief eerst gekoppeld op de combinatie van <code>country_code</code>, <code>party_id</code> en <code>tariff_id</code>. Alleen wanneer een tarief-ID in de volledige dataset uniek is, mag de code terugvallen op alleen de ID.</p>
+
+  <h3>Regulier versus ad-hoc</h3>
+  <p>Een OCPI-tarief met type <code>AD_HOC_PAYMENT</code> wordt nooit gebruikt als regulier CPO-basistarief voor een MSP. Het wordt apart verwerkt als mogelijke <strong>Direct / QR</strong> prijsroute.</p>
+  <p>Van een ad-hoc tarief worden de componenten <code>ENERGY</code> en <code>FLAT</code> meegenomen. <code>TIME</code> en <code>PARKING_TIME</code> worden wel gedetecteerd maar nog niet naar een totaalbedrag vertaald, omdat daarvoor ook de laad- of parkeertijd nodig is.</p>
+
+  <h2>5. CPO-identiteit en eigen netwerk</h2>
+  <p>Voor bekende relaties gebruikt de prijslogica eerst de OCPI <code>party_id</code>. Alleen wanneer deze ontbreekt wordt een beperkte operatornaam-fallback gebruikt.</p>
+  <div class="card">
+    <table>
+      <thead><tr><th>MSP</th><th>CPO party_id</th><th>Route</th></tr></thead>
+      <tbody>
+        <tr><td>Vattenfall InCharge</td><td><code>NUO</code></td><td>Eigen netwerk</td></tr>
+        <tr><td>E-Flux by Road</td><td><code>EFL</code></td><td>Eigen netwerk</td></tr>
+        <tr><td>Shell Recharge</td><td><code>TNM</code></td><td>Eigen netwerk</td></tr>
+        <tr><td>Shell Recharge</td><td><code>UB2</code> [Ubitricity]</td><td>Roaming / aparte MSP-route</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>6. Direct betalen en aanvullende CPO-harvesting</h2>
+  <p>Een CPO kan direct betalen ondersteunen zonder dat de NDW-snapshot een apart berekenbaar ad-hoc tarief bevat. In dat geval probeert de preprocessor aanvullende <strong>officiële, publieke CPO-bronnen</strong> te verifiëren. Alleen een bron die tijdens de actuele datarun opnieuw herkenbaar is, mag een numerieke prijs toevoegen.</p>
+  <div class="card">
+    <table>
+      <thead><tr><th>CPO</th><th>party_id</th><th>Aanvullende bronlogica</th></tr></thead>
+      <tbody>
+        <tr><td>Ubitricity</td><td><code>UB2</code></td><td>De officiële MRA-E tariefpagina publiceert een apart ad-hoc QR-tarief én netwerk-specifieke kWh-prijzen voor meerdere laadpassen. De parser leest Direct / QR en, wanneer de tabel veilig kan worden gekoppeld, ANWB, Tap Electric, Shell Recharge en Vattenfall als afzonderlijke bronwaarden.</td></tr>
+        <tr><td>TotalEnergies</td><td><code>GFX</code></td><td>De officiële informatie bevestigt dat de CPO-basisprijs ook de ad-hoc/direct-payment prijs is. Na verificatie mag de reeds bepaalde CPO-prijs of prijsband daarom voor Direct / QR worden gebruikt.</td></tr>
+        <tr><td>Vattenfall</td><td><code>NUO</code></td><td>QR/direct betalen is publiek bevestigd, maar zonder reproduceerbare laadpuntprijs wordt nog geen numeriek bedrag afgeleid.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Een tijdelijke fout op een CPO-website blokkeert de dagelijkse NDW-run niet. De aanvullende bron krijgt dan status <code>unavailable</code>, de prijs wordt niet toegepast en de webapp rangschikt de optie niet op basis van een oude of zelfbedachte waarde. Bij Ubitricity zijn Direct / QR en de MSP-tabel bovendien losgekoppeld: een gewijzigde MSP-tabel mag een nog steeds valide direct tarief niet uitschakelen.</p>
+  <p>De bronprioriteit voor Direct / QR is bewust conservatief: een expliciet connector-gebonden NDW <code>AD_HOC_PAYMENT</code> tarief gaat voor. Alleen wanneer dat ontbreekt kan een op dat moment geverifieerde officiële CPO-regel aanvullen.</p>
+
+  <h2>7. MSP-regels</h2>
+  <div class="card">
+    <table>
+      <thead><tr><th>Optie</th><th>Huidig model</th></tr></thead>
+      <tbody>
+        <tr><td>ANWB zonder abonnement</td><td>Gemodelleerd CPO-tarief + €0,89 per sessie. Bekende netwerkkortingen worden niet zonder connector-specifieke bron afgetrokken.</td></tr>
+        <tr><td>Tap Electric Light</td><td>Gemodelleerd CPO-tarief + 5% transactiekosten.</td></tr>
+        <tr><td>Vattenfall InCharge</td><td>Eigen netwerk zonder gemodelleerde startsessie-toeslag, roaming + €0,35 per sessie. Roamingprijs krijgt lagere zekerheid wanneer alleen een CPO-basistarief bekend is.</td></tr>
+        <tr><td>E-Flux Flex</td><td>€0,31 per sessie, buiten E-Flux + €0,024/kWh. Mogelijke extra clearingkosten blijven als waarschuwing zichtbaar.</td></tr>
+        <tr><td>Shell Recharge Basic</td><td>Gepubliceerde Shell prijs of prijsband + €0,35 per sessie. Ubitricity wordt niet automatisch als Shell eigen netwerk behandeld.</td></tr>
+        <tr><td>Laadkompas zonder abonnement</td><td>Gemodelleerd CPO-tarief + €0,47 per sessie.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>8. Fallbacks</h2>
+  <p>Wanneer geen bruikbaar regulier NDW-tarief is gekoppeld, gebruikt de preprocessor alleen gecontroleerde fallbackstrategieën:</p>
   <ul>
-    <li><strong>Locaties</strong> &mdash; alle publieke laadpunten in Nederland met adres, operator, connectoren en vermogen.</li>
-    <li><strong>Tarieven</strong> &mdash; OCPI 2.2.1 tariefobjecten met energieprijzen per kWh, gekoppeld aan individuele connectoren.</li>
+    <li>een officiële regionale/concessieprijs waar die expliciet voor de operator en regio beschikbaar is;</li>
+    <li>een operator-mediaan wanneer voldoende landelijke waarnemingen bestaan en regionale prijsvariatie niet juist een bekende eigenschap is;</li>
+    <li>anders blijft het CPO-basistarief onbekend.</li>
   </ul>
-  <p>De data wordt gefilterd op een bounding box rond de gemeente Wijchen (lat 51.770&ndash;51.850, lng 5.670&ndash;5.810) die alle kernen van de gemeente omvat.</p>
+  <p>Voor TotalEnergies in Huizen blijft de bestaande officiële MRA-E fallback van toepassing wanneer NDW geen bruikbaar regulier tarief bevat. Voor AC wordt een prijsband gebruikt wanneer de exacte concessie niet uit de locatiegegevens kan worden afgeleid.</p>
 
-  <h3>Open Charge Map (OCM)</h3>
-  <p>Voor live beschikbaarheid wordt de Open Charge Map API elke 5 minuten client-side bevraagd. Laadpunten die in OCM voorkomen maar niet in NDW worden apart getoond als "Niet in NDW". Deze punten hebben geen tariefdata.</p>
+  <h2>9. Kaartlaag</h2>
+  <p>De standaardkaart gebruikt <strong>OpenFreeMap Positron</strong> als lichte vectorstijl via MapLibre GL en Leaflet. Deze rustige stijl legt meer nadruk op de laadpuntmarkers en benadert de lichte uitstraling van de eerdere CARTO-kaart, zonder CARTO-account of API-key.</p>
+  <p>Als de vectorlaag niet kan initialiseren, valt de browser automatisch terug op <code>https://tile.openstreetmap.org/{z}/{x}/{y}.png</code>. De kaart blijft daardoor bruikbaar als de extra kaartbibliotheek of vectorstijl tijdelijk niet beschikbaar is.</p>
 
-  <h2>Tariefberekening</h2>
-  <p>Per laadpunt worden de kosten voor 5 laadpassen berekend. De berekening hangt af van de beschikbaarheid van NDW-tariefdata.</p>
+  <h2>10. Pricing &amp; data quality</h2>
+  <p>Na iedere succesvolle datarun wordt uit dezelfde <code>huizen-data.json</code> automatisch een tweede dataset opgebouwd: <code>pricing-quality.json</code>. De pagina <a href="kwaliteit.html">Datakwaliteit</a> maakt deze KPI's leesbaar voor beheer en ontwikkeling.</p>
+  <p>Het kwaliteitsrapport meet prijsdekking, Direct / QR dekking, confidence van prijsregels, bronverdeling en bronverificatie. Daarnaast controleert het de ouderdom van <code>last_updated</code> en groepeert het meerdere records op hetzelfde genormaliseerde adres. Een oud record naast een recent record van een andere CPO wordt als mogelijke operatorwissel gemarkeerd, maar nooit automatisch verwijderd.</p>
+  <p>Er is bewust geen samengestelde kwaliteitsscore. Voor een gebruiker die daadwerkelijk bij een laadpaal staat zijn verschillende risico's afzonderlijk relevant: een ontbrekende prijs, een prijs met lage confidence, een verouderde status of een mogelijk dubbel record.</p>
 
-  <h3>Als NDW-tarief beschikbaar is</h3>
-  <p>Het CPO-tarief (energieprijs in &euro;/kWh) wordt uit het OCPI-tariefobject gehaald. Prijzen exclusief BTW worden met 21% verhoogd. Vervolgens:</p>
-  <table>
-    <tr><th>Pas</th><th>Berekening</th></tr>
-    <tr><td>Vattenfall</td><td>CPO-tarief (1:1 doorgifte)</td></tr>
-    <tr><td>Laadkompas</td><td>CPO-tarief (1:1, abonnement &euro;4,78/mnd)</td></tr>
-    <tr><td>Allego</td><td>Max. &euro;0,62/kWh op eigen palen (range &euro;0,41&ndash;&euro;0,62), CPO-tarief op overige (<a href="https://www.allego.eu/nl/prijzen/">bron</a>)</td></tr>
-    <tr><td>Shell Recharge</td><td>&euro;0,55/kWh vast tarief (niet-Shell palen) of CPO-tarief &times; 0,95 (eigen palen)</td></tr>
-    <tr><td>Chargemap</td><td>CPO-tarief &times; 1,12 (12% opslag)</td></tr>
-  </table>
+  <h2>11. Vervolg en roadmap</h2>
+  <p>Deze methodologie beschrijft bewust de <strong>huidige</strong> werking. Toekomstige verbeteringen staan niet meer als vrijblijvende technische fasen op deze pagina, maar als concrete prioriteiten met doel, aanpak en acceptatiecriteria in <a href="https://github.com/rubenwoudsma/laadpalenhuizen/blob/main/ROADMAP.md" rel="noopener">ROADMAP.md</a>.</p>
+  <p>De actuele quality report bepaalt mede de volgorde: eerst de grootste lokale prijs- en datagaten, daarna tijd- en parkeerkosten. Een overstap naar een realtime of serverless architectuur krijgt pas prioriteit wanneer de statische NDW-snapshot aantoonbaar onvoldoende is.</p>
 
-  <h3>Als NDW-tarief ontbreekt</h3>
-  <p>Wanneer er geen tariefdata beschikbaar is vanuit NDW (dit komt regelmatig voor), worden twee fallback-methoden gebruikt:</p>
-  <ol>
-    <li><strong>Landelijke mediaan</strong> &mdash; de mediaan van alle NDW-tarieven voor dezelfde operator in heel Nederland. Dit geeft een goede indicatie voor operators met een landelijk uniform tarief.</li>
-    <li><strong>Vaste schatting</strong> &mdash; een handmatig onderhouden tabel met tarieven per operator en per pas, gebaseerd op publiek bekende prijzen. Voor Vattenfall InCharge wordt het gepubliceerde tarief voor Gelderland &amp; Overijssel gebruikt (<a href="https://incharge.vattenfall.nl/onze-tarieven#publiektarief">bron</a>).</li>
-  </ol>
+  <h2>12. Automatische updates en tests</h2>
+  <p>De dagelijkse GitHub Action voert eerst de unit tests uit, genereert daarna <code>huizen-data.json</code> en bouwt vervolgens <code>pricing-quality.json</code>. De kern-KPI's worden ook toegevoegd aan de GitHub Actions summary. Beide gegenereerde JSON-bestanden worden in dezelfde data-commit bijgewerkt.</p>
+  <p>De workflow kan ook handmatig worden gestart en draait na wijzigingen aan de prijsprocessor, quality report generator of de relevante regressietests. De tariefbronmonitor blijft apart werken. Hij signaleert veranderingen op officiële MSP-pagina's, maar wijzigt nooit zelfstandig de prijsregels.</p>
 
-  <div class="note">Tarieven zijn altijd indicatief. Check altijd de app van je laadpas voor het actuele tarief voordat je gaat laden.</div>
+  <h2>13. Bekende beperkingen</h2>
+  <div class="card warning">
+    <ul>
+      <li>Een MSP-app kan een andere roamingprijs tonen dan het CPO-basistarief in NDW.</li>
+      <li>Een ad-hoc prijs kan pas betrouwbaar worden gerangschikt wanneer NDW of een tijdens de datarun geverifieerde officiële CPO-bron een numeriek tarief of reproduceerbare prijsregel levert.</li>
+      <li>Tijd-, parkeer-, idle- en blokkeerkosten zijn nog niet volledig onderdeel van het sessiemodel.</li>
+      <li>De beschikbaarheidsstatus is in deze statische architectuur een snapshot.</li>
+      <li>De betaalpagina, MSP-app en uiteindelijke factuur blijven leidend.</li>
+    </ul>
+  </div>
 
-  <h3>Bronvermelding in de interface</h3>
-  <p>Bij elk laadpunt wordt de bron van het tarief getoond:</p>
-  <ul>
-    <li><strong>NDW tarief</strong> &mdash; direct uit NDW-tariefdata, meest betrouwbaar.</li>
-    <li><strong>Schatting (mediaan)</strong> &mdash; gebaseerd op de landelijke mediaan voor de betreffende operator.</li>
-    <li><strong>Schatting (vaste tabel)</strong> &mdash; uit de handmatige fallback-tabel.</li>
+  <h2>14. Bronnen</h2>
+  <ul class="source-list">
+    <li><a href="https://docs.ndw.nu/en/elektrisch-rijden/" rel="noopener">NDW DOT-NL documentatie voor elektrisch rijden</a></li>
+    <li><a href="https://github.com/ocpi/ocpi" rel="noopener">Open Charge Point Interface [OCPI] specificatie</a></li>
+    <li><a href="https://www.huizen.nl/elektrisch-laden" rel="noopener">Gemeente Huizen, elektrisch laden</a></li>
+    <li><a href="https://ubitricity.com/nl/bestuurder/mrae-laadprijzen/" rel="noopener">Ubitricity MRA-E laadprijzen, inclusief ad-hoc QR</a></li>
+    <li><a href="https://totalenergies.nl/elektrisch-rijden/vind-laadpunt" rel="noopener">TotalEnergies publieke laad- en MRA-E prijsinformatie</a></li>
+    <li><a href="https://incharge.vattenfall.nl/veelgestelde-vragen/met-je-betaalpas-opladen" rel="noopener">Vattenfall InCharge, direct betalen via QR</a></li>
+    <li><a href="https://www.shell.nl/elektrisch-opladen/Tarieven.html" rel="noopener">Shell Recharge tarieven</a></li>
+    <li><a href="https://openfreemap.org/" rel="noopener">OpenFreeMap, Positron vectorstijl</a></li>
+    <li><a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap data en attributie</a></li>
   </ul>
-
-  <h2>Beschikbaarheid</h2>
-  <p>De live beschikbaarheidsstatus komt van Open Charge Map. Elk NDW-laadpunt wordt op basis van co&ouml;rdinaten gematcht met het dichtstbijzijnde OCM-resultaat (maximaal 15 meter afstand). Als er een match is, wordt de OCM-status overgenomen. Zonder match wordt de statische NDW-status getoond.</p>
-
-  <h2>Data-update</h2>
-  <p>Een GitHub Actions workflow draait dagelijks om 06:00 UTC. Het script downloadt de nieuwste NDW-data, verwerkt deze en commit het resultaat (<code>wijchen-data.json</code>) als er wijzigingen zijn. Cloudflare Pages deployt automatisch bij elke push naar <code>main</code>.</p>
-
-  <h2>Beperkingen</h2>
-  <ul>
-    <li>Niet alle laadpunten in NDW hebben tariefdata; voor sommige operators is de dekking beperkt.</li>
-    <li>Starttarieven, tijdtarieven en blokkeerkosten worden niet meegenomen in de berekening.</li>
-    <li>Het maandelijkse abonnement van Laadkompas (&euro;4,78) wordt niet verdisconteerd in de per-kWh prijs.</li>
-    <li>Beschikbaarheidsstatus van OCM kan vertraagd zijn of ontbreken voor sommige palen.</li>
-    <li>Laadpunten die alleen via OCM bekend zijn hebben geen tariefinformatie.</li>
-  </ul>
-
-  <h2>Open source</h2>
-  <p>De volledige broncode is beschikbaar op <a href="https://github.com/jdevalk/laadpalenwijchen.nl">github.com/jdevalk/laadpalenwijchen.nl</a>. Het dataverwerkingsscript (<code>process.py</code>) heeft geen externe dependencies &mdash; alleen Python 3.12 standaardbibliotheek.</p>
+  <p class="muted">De statische MSP-voorwaarden in de code hebben eigen verificatiedata en bron-URL's. Controleer altijd de live aanbiederprijs voordat je een laadsessie start.</p>
 </main>
-
-<footer>
-  <span><a href="/">Laadpalen Wijchen</a> · open source op <a href="https://github.com/jdevalk/laadpalenwijchen.nl">GitHub</a></span>
-</footer>
-
 </body>
 </html>

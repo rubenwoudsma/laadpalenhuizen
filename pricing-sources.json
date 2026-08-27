@@ -1,0 +1,241 @@
+{
+  "schema_version": 1,
+  "verified_at": "2026-08-27",
+  "selection_policy": {
+    "scope": "Kernvergelijking voor particuliere EV-rijders in Huizen",
+    "criteria": [
+      "Het plan heeft geen maandabonnement, zodat een losse sessie eerlijk vergelijkbaar is.",
+      "De aanbieder publiceert een tariefmodel dat reproduceerbaar genoeg is voor de kaart.",
+      "De pas heeft brede Nederlandse dekking of duidelijke lokale relevantie in Huizen.",
+      "De pas voegt qua prijsmodel of praktisch gebruik voldoende toe aan de bestaande kernselectie."
+    ],
+    "note": "De lijst is bewust niet uitputtend. Een nieuwe pas wordt pas toegevoegd als deze aan de criteria voldoet."
+  },
+  "sources": [
+    {
+      "id": "anwb_free",
+      "provider": "ANWB",
+      "plan": "Zonder abonnement",
+      "url": "https://www.anwb.nl/auto/elektrisch-rijden/laadpas-abonnement",
+      "checks": [
+        {
+          "label": "gratis plan zonder abonnement bestaat",
+          "patterns": [
+            "gratis\\s+laadpas\\s+zonder\\s+abonnement"
+          ]
+        },
+        {
+          "label": "starttarief is EUR 0,89 per sessie",
+          "patterns": [
+            "starttarief.{0,80}(?:€\\s*)?0[,.]89"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tap_light",
+      "provider": "Tap Electric",
+      "plan": "Light",
+      "url": "https://tapelectric.app/nl/laadpas/",
+      "checks": [
+        {
+          "label": "Light plan bestaat en heeft geen maandbedrag",
+          "patterns": [
+            "light.{0,180}(?:€\\s*)?0[,.]00.{0,40}/maand"
+          ]
+        },
+        {
+          "label": "Light rekent 5 procent transactiekosten",
+          "patterns": [
+            "light.{0,260}tarief\\s+van\\s+de\\s+laadpaal\\s*\\+?\\s*5\\s*%\\s+transactiekosten"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vattenfall",
+      "provider": "Vattenfall InCharge",
+      "plan": "Gratis laadpas",
+      "url": "https://incharge.vattenfall.nl/laadpas/",
+      "checks": [
+        {
+          "label": "laadpas heeft geen abonnementskosten",
+          "patterns": [
+            "geen\\s+abonnementskosten"
+          ]
+        },
+        {
+          "label": "roaming starttarief is EUR 0,35",
+          "patterns": [
+            "starttarief.{0,180}(?:€\\s*)?0[,.]35",
+            "(?:€\\s*)?0[,.]35.{0,180}(?:niet\\s+van\\s+ons|andere\\s+aanbieder)"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "eflux_flex",
+      "provider": "E-Flux by Road",
+      "plan": "Flex",
+      "url": "https://www.e-flux.io/nl/tarieven-laadpassen",
+      "checks": [
+        {
+          "label": "Flex starttarief is EUR 0,31 per sessie",
+          "patterns": [
+            "flex.{0,260}(?:€\\s*)?0[,.]31\\s+per\\s+laadsessie"
+          ]
+        },
+        {
+          "label": "Flex roamingopslag is EUR 0,024 per kWh",
+          "patterns": [
+            "flex.{0,360}(?:€\\s*)?0[,.]024\\s*/?\\s*kwh"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "shell_basic",
+      "provider": "Shell Recharge",
+      "plan": "Basic",
+      "url": "https://www.shell.nl/elektrisch-opladen/Tarieven.html",
+      "checks": [
+        {
+          "label": "Basic heeft geen maandelijkse kosten",
+          "patterns": [
+            "shell\\s+recharge\\s+basic.{0,500}geen\\s+maandelijkse\\s+kosten",
+            "geen\\s+maandelijkse\\s+kosten.{0,500}shell\\s+recharge\\s+basic"
+          ]
+        },
+        {
+          "label": "AC roamingband blijft EUR 0,50 / 0,55 / 0,60",
+          "patterns": [
+            "ac\\s*:?.{0,220}0[,.]50.{0,220}0[,.]55.{0,220}0[,.]60"
+          ]
+        },
+        {
+          "label": "DC roamingband blijft EUR 0,79 / 0,82 / 0,85",
+          "patterns": [
+            "dc\\s*:?.{0,220}0[,.]79.{0,220}0[,.]82.{0,220}0[,.]85"
+          ]
+        },
+        {
+          "label": "transactiekosten blijven EUR 0,35 per sessie",
+          "patterns": [
+            "(?:€\\s*)?0[,.]35.{0,120}transactiekosten.{0,120}(?:laadsessie|sessie)",
+            "transactiekosten.{0,120}(?:€\\s*)?0[,.]35"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "laadkompas_free",
+      "provider": "Laadkompas",
+      "plan": "Zonder abonnement",
+      "url": "https://laadkompas.nl/laadpas/zonder-abonnement/",
+      "checks": [
+        {
+          "label": "starttarief blijft EUR 0,47 per sessie",
+          "patterns": [
+            "(?:starttarief|tarief).{0,160}(?:€\\s*)?0[,.]47",
+            "(?:€\\s*)?0[,.]47.{0,160}per\\s+laadsessie"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "totalenergies_mrae",
+      "provider": "TotalEnergies",
+      "plan": "MRA-E regionale fallback",
+      "url": "https://totalenergies.nl/elektrisch-rijden/vind-laadpunt",
+      "checks": [
+        {
+          "label": "MRA-E 2 t/m 5 blijft EUR 0,48 incl. btw",
+          "patterns": [
+            "mra-e\\s+2\\s*(?:t/m|t\\s+m)\\s*5.{0,160}(?:€\\s*)?0[,.]48"
+          ]
+        },
+        {
+          "label": "MRA-E 6 blijft EUR 0,36 incl. btw",
+          "patterns": [
+            "mra-e\\s+6.{0,120}(?:€\\s*)?0[,.]36"
+          ]
+        },
+        {
+          "label": "MRA-E 6 dynamisch bevat EUR 0,34 en 0,36",
+          "patterns": [
+            "mra-e\\s+6.{0,80}dynamische.{0,300}0[,.]34.{0,160}0[,.]36"
+          ]
+        },
+        {
+          "label": "MRA-E DC blijft EUR 0,54 incl. btw",
+          "patterns": [
+            "flevoland.{0,80}noord-holland.{0,80}utrecht.{0,80}mra-e.{0,120}(?:€\\s*)?0[,.]54"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ubitricity_mrae_direct",
+      "provider": "Ubitricity",
+      "plan": "Direct / QR MRA-E",
+      "url": "https://ubitricity.com/nl/bestuurder/mrae-laadprijzen/",
+      "checks": [
+        {
+          "label": "ad-hoc QR tarief is EUR 0,35 per kWh",
+          "patterns": [
+            "ad\\s*hoc\\s+opladen.{0,220}per\\s+kwh.{0,100}0[,.]35",
+            "ad\\s*hoc\\s+opladen.{0,260}0[,.]35\\s*€"
+          ]
+        },
+        {
+          "label": "geselecteerde MSPs staan nog in de RFID/App tabel",
+          "patterns": [
+            "anwb.{0,220}tap\\s+electric.{0,320}shell\\s+recharge.{0,180}vattenfall\\s+incharge"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "totalenergies_direct_payment",
+      "provider": "TotalEnergies",
+      "plan": "Direct / QR",
+      "url": "https://totalenergies.nl/nieuwsoverzicht/blogs-klantverhalen/totalenergies-betreurt-onverwachte-toeslag-van-laaddienstverlener-voor-e",
+      "checks": [
+        {
+          "label": "CPO-basisprijs is ook ad-hoc/direct-payment prijs",
+          "patterns": [
+            "basisprijs.{0,100}cpo[- ]?prijs.{0,160}(?:ad[- ]?hoc|direct\\s+payment).{0,80}prijs"
+          ]
+        },
+        {
+          "label": "laadpas-toeslag geldt niet voor direct payment",
+          "patterns": [
+            "toeslag.{0,220}geldt\\s+niet.{0,140}(?:betaal|credit)kaart.{0,140}(?:direct\\s+payment|ad[- ]?hoc)",
+            "(?:direct\\s+payment|ad[- ]?hoc).{0,220}toeslag\\s+geldt\\s+niet"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vattenfall_direct_support",
+      "provider": "Vattenfall InCharge",
+      "plan": "Direct / QR support",
+      "url": "https://incharge.vattenfall.nl/veelgestelde-vragen/met-je-betaalpas-opladen",
+      "checks": [
+        {
+          "label": "direct betalen via QR en betaalpas wordt ondersteund",
+          "patterns": [
+            "scant?\\s+de\\s+qr-code.{0,220}betaalgegevens",
+            "qr-code.{0,260}(?:pinpas|creditcard|betaalpas)"
+          ]
+        },
+        {
+          "label": "beschikbaarheid is gekoppeld aan openbare palen met QR-sticker",
+          "patterns": [
+            "openbare\\s+laadpalen.{0,220}sticker\\s+met\\s+qr-code"
+          ]
+        }
+      ]
+    }
+  ]
+}
