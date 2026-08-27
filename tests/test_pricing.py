@@ -292,6 +292,200 @@ class PricingRulesTest(unittest.TestCase):
         self.assertEqual(result["pricing"]["direct_pay"]["kwh"], 0.36)
         self.assertEqual(result["pricing"]["direct_pay"]["session"], 0.35)
 
+    def test_ubitricity_public_page_parser_extracts_ad_hoc_rate(self):
+        page = process.normalize_public_page(
+            "<main><h2>Ad Hoc Opladen</h2><p>via QR-code op scherm</p>"
+            "<span>Per kWh</span><strong>0,35€</strong></main>"
+        )
+        self.assertEqual(process.parse_ubitricity_mrae_direct_rate(page), 0.35)
+
+    def test_ubitricity_public_page_parser_extracts_selected_msp_rates(self):
+        page = process.normalize_public_page(
+            "<section><h2>RFID / Apps*</h2><span>Per kWh</span>"
+            "<ol><li>ANWB</li><li>Greenchoice</li><li>Tap Electric</li><li>Essent</li>"
+            "<li>MoveMove</li><li>Green Caravan</li><li>Eneco</li>"
+            "<li>Shell Recharge (App)</li><li>Vattenfall Incharge</li><li>MKB Brandstof</li></ol>"
+            "<ul><li>0,35€</li><li>0,35€</li><li>0,35€</li><li>0,35€</li><li>0,35€</li>"
+            "<li>0,36€</li><li>0,54€</li><li>0,55€</li><li>0,55€</li><li>0,69€</li></ul>"
+            "<p>De getoonde tarieven zijn gebaseerd op de laadtarieven per kWh.</p></section>"
+        )
+        self.assertEqual(process.parse_ubitricity_mrae_msp_rates(page), {
+            "anwb_free": 0.35,
+            "tap_light": 0.35,
+            "shell_basic": 0.55,
+            "vattenfall": 0.55,
+        })
+
+    def test_totalenergies_public_page_parser_confirms_direct_rule(self):
+        page = process.normalize_public_page(
+            "<p>Het laadtarief bestaat uit een basisprijs (CPO-prijs), "
+            "dit is ook de ad-hoc of direct payment prijs.</p>"
+        )
+        self.assertTrue(process.parse_totalenergies_direct_rule(page))
+
+    def test_official_source_harvest_builds_party_rules(self):
+        pages = {
+            process.UBITRICITY_MRAE_DIRECT_SOURCE_URL: (
+                "ad hoc opladen via qr-code op scherm per kwh 0,35€ "
+                "rfid / apps per kwh 1. anwb 2. greenchoice 3. tap electric 4. essent "
+                "5. movemove 6. green caravan 7. eneco 8. shell recharge (app) "
+                "9. vattenfall incharge 10. mkb brandstof "
+                "0,35€ 0,35€ 0,35€ 0,35€ 0,35€ 0,36€ 0,54€ 0,55€ 0,55€ 0,69€ "
+                "de getoonde tarieven zijn gebaseerd op de laadtarieven per kwh"
+            ),
+            process.TOTALENERGIES_DIRECT_RULE_SOURCE_URL: (
+                "het laadtarief bestaat uit een basisprijs (cpo-prijs), "
+                "dit is ook de ad-hoc of direct payment prijs"
+            ),
+        }
+        harvest = process.harvest_official_pricing(fetcher=lambda url: pages[url])
+        self.assertEqual(harvest["direct_by_party"]["UB2"]["rate"], 0.35)
+        self.assertEqual(harvest["direct_by_party"]["GFX"]["mode"], "mirror_cpo")
+        self.assertEqual(harvest["msp_by_party"]["UB2"]["anwb_free"]["rate"], 0.35)
+        self.assertEqual(harvest["msp_by_party"]["UB2"]["shell_basic"]["rate"], 0.55)
+        self.assertTrue(all(source["status"] == "ok" for source in harvest["sources"]))
+
+    def test_ubitricity_direct_survives_msp_table_layout_change(self):
+        pages = {
+            process.UBITRICITY_MRAE_DIRECT_SOURCE_URL: "ad hoc opladen via qr-code op scherm per kwh 0,35€",
+            process.TOTALENERGIES_DIRECT_RULE_SOURCE_URL: (
+                "het laadtarief bestaat uit een basisprijs (cpo-prijs), "
+                "dit is ook de ad-hoc of direct payment prijs"
+            ),
+        }
+        harvest = process.harvest_official_pricing(fetcher=lambda url: pages[url])
+        self.assertEqual(harvest["direct_by_party"]["UB2"]["rate"], 0.35)
+        self.assertNotIn("UB2", harvest["msp_by_party"])
+        source = next(item for item in harvest["sources"] if item["party_id"] == "UB2")
+        self.assertEqual(source["status"], "ok")
+        self.assertEqual(source["msp_table_status"], "unavailable")
+
+    def test_ubitricity_official_source_creates_direct_quote_when_ndw_has_none(self):
+        info = process.supplemental_direct_price_info(
+            "UB2",
+            0.335,
+            [0.32, 0.35],
+            "ndw",
+            {
+                "UB2": {
+                    "mode": "fixed",
+                    "rate": 0.35,
+                    "session": 0.0,
+                    "basis": "official_cpo_adhoc",
+                    "source_url": process.UBITRICITY_MRAE_DIRECT_SOURCE_URL,
+                    "confidence": "high",
+                }
+            },
+        )
+        pricing = process.build_pricing(
+            0.335,
+            "ndw",
+            "Ubitricity",
+            22,
+            party_id="UB2",
+            direct_price_info=info,
+        )
+        self.assertEqual(pricing["direct_pay"]["kwh"], 0.35)
+        self.assertEqual(pricing["direct_pay"]["basis"], "official_cpo_adhoc")
+        self.assertEqual(pricing["direct_pay"]["source_url"], process.UBITRICITY_MRAE_DIRECT_SOURCE_URL)
+
+    def test_ubitricity_official_msp_rates_override_generic_roaming_estimates(self):
+        overrides = {
+            "anwb_free": {
+                "rate": 0.35,
+                "basis": "official_cpo_msp_rate",
+                "source_url": process.UBITRICITY_MRAE_DIRECT_SOURCE_URL,
+                "confidence": "medium",
+            },
+            "tap_light": {
+                "rate": 0.35,
+                "basis": "official_cpo_msp_rate",
+                "source_url": process.UBITRICITY_MRAE_DIRECT_SOURCE_URL,
+                "confidence": "medium",
+            },
+            "shell_basic": {
+                "rate": 0.55,
+                "basis": "official_cpo_msp_rate",
+                "source_url": process.UBITRICITY_MRAE_DIRECT_SOURCE_URL,
+                "confidence": "medium",
+            },
+            "vattenfall": {
+                "rate": 0.55,
+                "basis": "official_cpo_msp_rate",
+                "source_url": process.UBITRICITY_MRAE_DIRECT_SOURCE_URL,
+                "confidence": "medium",
+            },
+        }
+        pricing = process.build_pricing(
+            0.335,
+            "ndw",
+            "Ubitricity",
+            22,
+            party_id="UB2",
+            msp_price_overrides=overrides,
+        )
+        self.assertEqual(pricing["anwb_free"]["kwh"], 0.35)
+        self.assertEqual(pricing["anwb_free"]["session"], 0.89)
+        self.assertEqual(pricing["tap_light"]["kwh"], 0.35)
+        self.assertEqual(pricing["tap_light"]["percentage"], 0.05)
+        self.assertEqual(pricing["shell_basic"]["kwh"], 0.55)
+        self.assertNotIn("range", pricing["shell_basic"])
+        self.assertEqual(pricing["vattenfall"]["kwh"], 0.55)
+        self.assertEqual(pricing["vattenfall"]["session"], 0.35)
+        self.assertEqual(pricing["vattenfall"]["basis"], "official_cpo_msp_rate")
+
+    def test_totalenergies_official_direct_rule_mirrors_cpo_range(self):
+        info = process.supplemental_direct_price_info(
+            "GFX",
+            0.41,
+            [0.34, 0.48],
+            "totalenergies_mrae",
+            {
+                "GFX": {
+                    "mode": "mirror_cpo",
+                    "basis": "official_cpo_direct_rule",
+                    "source_url": process.TOTALENERGIES_DIRECT_RULE_SOURCE_URL,
+                }
+            },
+        )
+        self.assertEqual(info["rate"], 0.41)
+        self.assertEqual(info["range"], [0.34, 0.48])
+        self.assertEqual(info["confidence"], "low")
+
+    def test_process_location_uses_official_direct_rule_only_after_ndw_lookup(self):
+        loc = {
+            "id": "te-official-direct",
+            "country_code": "NL",
+            "party_id": "GFX",
+            "coordinates": {"latitude": "52.29", "longitude": "5.24"},
+            "operator": {"name": "TotalEnergies"},
+            "address": "Teststraat 4",
+            "city": "Huizen",
+            "evses": [{
+                "status": "AVAILABLE",
+                "connectors": [{
+                    "standard": "IEC_62196_T2",
+                    "max_electric_power": 17000,
+                    "tariff_ids": [],
+                }],
+            }],
+        }
+        official = {
+            "GFX": {
+                "mode": "mirror_cpo",
+                "basis": "official_cpo_direct_rule",
+                "source_url": process.TOTALENERGIES_DIRECT_RULE_SOURCE_URL,
+            }
+        }
+        result = process.process_location(
+            loc, process.build_tariff_index([]), {}, official_direct=official
+        )
+        self.assertTrue(result["direct_payment"]["priced"])
+        self.assertEqual(result["direct_payment"]["reason"], "official_operator_source")
+        self.assertEqual(result["pricing"]["direct_pay"]["range"], [0.34, 0.48])
+        self.assertEqual(result["pricing"]["direct_pay"]["basis"], "official_cpo_direct_rule")
+
+
 
 if __name__ == "__main__":
     unittest.main()

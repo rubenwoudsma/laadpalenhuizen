@@ -29,13 +29,16 @@ Run: python3 process.py
 from __future__ import annotations
 
 import gzip
+import html
 import json
 import os
+import re
 import statistics
 import sys
 import urllib.error
 import urllib.request
 from datetime import datetime, timezone
+from html.parser import HTMLParser
 from typing import Optional
 
 # CONFIG
@@ -84,6 +87,16 @@ TOTALENERGIES_MRAE_VERIFIED_AT = "2026-08-12"
 TOTALENERGIES_MRAE_SOURCE_URL = "https://totalenergies.nl/elektrisch-rijden/vind-laadpunt"
 HUIZEN_CHARGING_SOURCE_URL = "https://www.huizen.nl/elektrisch-laden"
 LAADWERK_SOURCE_URL = "https://www.laadwerk.nl/diensten/laadinfra"
+
+# Supplemental official CPO sources are harvested on every data run. They are
+# deliberately limited to rules that can be verified from a public operator
+# page without logging in or reverse engineering an app. NDW remains the first
+# source for connector-specific OCPI tariffs.
+UBITRICITY_MRAE_DIRECT_SOURCE_URL = "https://ubitricity.com/nl/bestuurder/mrae-laadprijzen/"
+TOTALENERGIES_DIRECT_RULE_SOURCE_URL = (
+    "https://totalenergies.nl/nieuwsoverzicht/blogs-klantverhalen/"
+    "totalenergies-betreurt-onverwachte-toeslag-van-laaddienstverlener-voor-e"
+)
 
 # OCPI party IDs make CPO matching more reliable than operator-name matching.
 # The list is deliberately limited to operators relevant to Huizen or current
@@ -274,6 +287,284 @@ def fetch_gz(url: str) -> bytes:
         compressed = response.read()
     print(f"{len(compressed) / 1024:.0f} KB compressed")
     return gzip.decompress(compressed)
+
+
+class VisibleTextExtractor(HTMLParser):
+    """Extract visible text from a public tariff page without dependencies."""
+
+    IGNORED_TAGS = {"script", "style", "noscript", "template", "svg"}
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.parts: list[str] = []
+        self._ignored_depth = 0
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        if tag.lower() in self.IGNORED_TAGS:
+            self._ignored_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag.lower() in self.IGNORED_TAGS and self._ignored_depth:
+            self._ignored_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if self._ignored_depth == 0 and data.strip():
+            self.parts.append(data)
+
+
+def normalize_public_page(raw_html: str) -> str:
+    """Return stable lower-case visible text for operator tariff parsing."""
+    parser = VisibleTextExtractor()
+    parser.feed(raw_html)
+    text = html.unescape(" ".join(parser.parts)).replace("\xa0", " ")
+    return re.sub(r"\s+", " ", text).strip().lower()
+
+
+def fetch_public_page(url: str, timeout: int = 30) -> str:
+    """Fetch one public CPO page and return normalized visible text."""
+    headers = {
+        **HEADERS,
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "nl-NL,nl;q=0.9,en;q=0.6",
+    }
+    request = urllib.request.Request(url, headers=headers)
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        charset = response.headers.get_content_charset() or "utf-8"
+        raw = response.read().decode(charset, errors="replace")
+    return normalize_public_page(raw)
+
+
+def parse_ubitricity_mrae_direct_rate(page_text: str) -> Optional[float]:
+    """Extract the Ubitricity MRA-E ad-hoc QR price per kWh."""
+    text = re.sub(r"\s+", " ", (page_text or "").lower())
+    patterns = [
+        r"ad\s*hoc\s+opladen.{0,180}?per\s*kwh.{0,80}?([0-9]+[,.][0-9]{2,4})\s*€",
+        r"ad\s*hoc\s+opladen.{0,220}?([0-9]+[,.][0-9]{2,4})\s*€",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if match:
+            return round(float(match.group(1).replace(",", ".")), 4)
+    return None
+
+
+def parse_ubitricity_mrae_msp_rates(page_text: str) -> dict[str, float]:
+    """Extract selected MSP kWh rates from the Ubitricity MRA-E table.
+
+    The public page lists providers first and their kWh prices in the same
+    order. We only accept the table when all expected provider labels are
+    present in order and enough euro amounts follow the last provider. This is
+    intentionally strict, a layout change should disable the supplement rather
+    than silently map a price to the wrong MSP.
+    """
+    text = re.sub(r"\s+", " ", (page_text or "").lower())
+    start = text.find("rfid / apps")
+    if start < 0:
+        return {}
+    segment = text[start:]
+    footnote = segment.find("de getoonde tarieven")
+    if footnote >= 0:
+        segment = segment[:footnote]
+
+    providers = [
+        ("anwb_free", "anwb"),
+        ("greenchoice", "greenchoice"),
+        ("tap_light", "tap electric"),
+        ("essent", "essent"),
+        ("movemove", "movemove"),
+        ("green_caravan", "green caravan"),
+        ("eneco", "eneco"),
+        ("shell_basic", "shell recharge"),
+        ("vattenfall", "vattenfall incharge"),
+        ("mkb_brandstof", "mkb brandstof"),
+    ]
+
+    positions = []
+    cursor = 0
+    for _, label in providers:
+        position = segment.find(label, cursor)
+        if position < 0:
+            return {}
+        positions.append(position)
+        cursor = position + len(label)
+
+    price_text = segment[cursor:]
+    raw_rates = re.findall(r"([0-9]+[,.][0-9]{2,4})\s*€", price_text)
+    if len(raw_rates) < len(providers):
+        return {}
+
+    values = [round(float(value.replace(",", ".")), 4) for value in raw_rates[:len(providers)]]
+    all_rates = {provider_id: rate for (provider_id, _), rate in zip(providers, values)}
+    return {
+        provider_id: all_rates[provider_id]
+        for provider_id in ("anwb_free", "tap_light", "shell_basic", "vattenfall")
+    }
+
+
+def parse_totalenergies_direct_rule(page_text: str) -> bool:
+    """Verify that TotalEnergies states CPO base price equals direct price."""
+    text = re.sub(r"\s+", " ", (page_text or "").lower())
+    return bool(re.search(
+        r"basisprijs.{0,100}cpo[- ]?prijs.{0,140}(?:ad[- ]?hoc|direct\s+payment).{0,70}prijs",
+        text,
+        flags=re.IGNORECASE,
+    ))
+
+
+def harvest_official_pricing(fetcher=fetch_public_page) -> dict:
+    """Harvest public operator rules that can safely supplement NDW pricing.
+
+    Failures are intentionally non-fatal. A transient CPO website problem must
+    not block the daily NDW snapshot. A source is only applied when the expected
+    wording or numeric value can be verified in the current run.
+    """
+    checked_at = datetime.now(timezone.utc).isoformat()
+    direct_by_party: dict[str, dict] = {}
+    msp_by_party: dict[str, dict] = {}
+    results: list[dict] = []
+
+    try:
+        page = fetcher(UBITRICITY_MRAE_DIRECT_SOURCE_URL)
+        rate = parse_ubitricity_mrae_direct_rate(page)
+        msp_rates = parse_ubitricity_mrae_msp_rates(page)
+        if rate is None:
+            raise ValueError("ad-hoc kWh price not found")
+        direct_by_party["UB2"] = {
+            "mode": "fixed",
+            "rate": rate,
+            "session": 0.0,
+            "basis": "official_cpo_adhoc",
+            "source_id": "ubitricity_mrae_direct",
+            "source_url": UBITRICITY_MRAE_DIRECT_SOURCE_URL,
+            "source_checked_at": checked_at,
+            "confidence": "high",
+            "note": "Officieel Ubitricity MRA-E ad-hoc tarief via QR. Lokale parkeer- of tijdkosten zijn niet inbegrepen.",
+        }
+        if msp_rates:
+            msp_by_party["UB2"] = {
+                pass_id: {
+                    "rate": msp_rate,
+                    "basis": "official_cpo_msp_rate",
+                    "source_id": "ubitricity_mrae_direct",
+                    "source_url": UBITRICITY_MRAE_DIRECT_SOURCE_URL,
+                    "source_checked_at": checked_at,
+                    "confidence": "medium",
+                    "note": (
+                        "Ubitricity publiceert voor MRA-E een netwerk-specifiek kWh-tarief voor deze laadpas. "
+                        "Eventuele aanvullende laadpas-, aansluit- of parkeerkosten zijn niet in dit kWh-bedrag opgenomen."
+                    ),
+                }
+                for pass_id, msp_rate in msp_rates.items()
+            }
+        results.append({
+            "id": "ubitricity_mrae_direct",
+            "party_id": "UB2",
+            "status": "ok",
+            "rate": rate,
+            "msp_rates": msp_rates,
+            "msp_table_status": "ok" if msp_rates else "unavailable",
+            "source_url": UBITRICITY_MRAE_DIRECT_SOURCE_URL,
+        })
+    except Exception as exc:
+        results.append({
+            "id": "ubitricity_mrae_direct",
+            "party_id": "UB2",
+            "status": "unavailable",
+            "error": str(exc),
+            "source_url": UBITRICITY_MRAE_DIRECT_SOURCE_URL,
+        })
+
+    try:
+        page = fetcher(TOTALENERGIES_DIRECT_RULE_SOURCE_URL)
+        if not parse_totalenergies_direct_rule(page):
+            raise ValueError("direct-payment equals CPO-price rule not found")
+        direct_by_party["GFX"] = {
+            "mode": "mirror_cpo",
+            "basis": "official_cpo_direct_rule",
+            "source_id": "totalenergies_direct_payment",
+            "source_url": TOTALENERGIES_DIRECT_RULE_SOURCE_URL,
+            "source_checked_at": checked_at,
+            "note": "TotalEnergies publiceert dat de CPO-basisprijs ook de ad-hoc/direct-payment prijs is.",
+        }
+        results.append({
+            "id": "totalenergies_direct_payment",
+            "party_id": "GFX",
+            "status": "ok",
+            "mode": "mirror_cpo",
+            "source_url": TOTALENERGIES_DIRECT_RULE_SOURCE_URL,
+        })
+    except Exception as exc:
+        results.append({
+            "id": "totalenergies_direct_payment",
+            "party_id": "GFX",
+            "status": "unavailable",
+            "error": str(exc),
+            "source_url": TOTALENERGIES_DIRECT_RULE_SOURCE_URL,
+        })
+
+    return {
+        "checked_at": checked_at,
+        "direct_by_party": direct_by_party,
+        "msp_by_party": msp_by_party,
+        "sources": results,
+    }
+
+
+# Backwards-compatible name for tests or scripts created before MSP supplements
+# were added. New code should use harvest_official_pricing().
+def harvest_official_direct_pricing(fetcher=fetch_public_page) -> dict:
+    return harvest_official_pricing(fetcher=fetcher)
+
+
+def supplemental_direct_price_info(
+    party_id: str,
+    cpo_rate: Optional[float],
+    cpo_rate_range: Optional[list[float]],
+    cpo_source: str,
+    official_direct: Optional[dict],
+) -> Optional[dict]:
+    """Build an ad-hoc price from a verified public CPO source."""
+    source = (official_direct or {}).get((party_id or "").upper())
+    if not source:
+        return None
+
+    if source.get("mode") == "fixed":
+        rate = source.get("rate")
+        if rate is None:
+            return None
+        return {
+            "rate": float(rate),
+            "range": source.get("range"),
+            "session": float(source.get("session", 0.0)),
+            "session_range": source.get("session_range"),
+            "unmodelled_types": [],
+            "basis": source.get("basis", "official_cpo_adhoc"),
+            "source_id": source.get("source_id"),
+            "source_url": source.get("source_url"),
+            "source_checked_at": source.get("source_checked_at"),
+            "confidence": source.get("confidence", "high"),
+            "note": source.get("note"),
+        }
+
+    if source.get("mode") == "mirror_cpo" and cpo_rate is not None:
+        confidence = confidence_for_source(cpo_source)
+        if cpo_rate_range and len(cpo_rate_range) == 2 and abs(cpo_rate_range[1] - cpo_rate_range[0]) > 1e-9:
+            confidence = downgrade_confidence(confidence)
+        return {
+            "rate": float(cpo_rate),
+            "range": cpo_rate_range,
+            "session": 0.0,
+            "session_range": None,
+            "unmodelled_types": [],
+            "basis": source.get("basis", "official_cpo_direct_rule"),
+            "source_id": source.get("source_id"),
+            "source_url": source.get("source_url"),
+            "source_checked_at": source.get("source_checked_at"),
+            "confidence": confidence,
+            "note": source.get("note"),
+        }
+
+    return None
 
 
 def price_component_including_vat(component: dict, expected_type: Optional[str] = None) -> Optional[float]:
@@ -599,6 +890,14 @@ def make_quote(
     return quote
 
 
+def apply_source_metadata(quote: dict, source: Optional[dict]) -> dict:
+    """Copy safe provenance fields from a harvested source to a quote."""
+    for key in ("source_id", "source_url", "source_checked_at"):
+        if source and source.get(key):
+            quote[key] = source[key]
+    return quote
+
+
 def build_pricing(
     cpo_rate: Optional[float],
     cpo_source: str,
@@ -608,6 +907,7 @@ def build_pricing(
     cpo_note: Optional[str] = None,
     party_id: str = "",
     direct_price_info: Optional[dict] = None,
+    msp_price_overrides: Optional[dict] = None,
 ) -> dict:
     """Build direct-payment and MSP price components for one location.
 
@@ -618,86 +918,115 @@ def build_pricing(
     """
     pricing: dict[str, dict] = {}
     op = operator_key(operator_name)
+    msp_overrides = msp_price_overrides or {}
     base_confidence = confidence_for_source(cpo_source)
     if cpo_rate_range and len(cpo_rate_range) == 2 and abs(cpo_rate_range[1] - cpo_rate_range[0]) > 1e-9:
         base_confidence = downgrade_confidence(base_confidence)
 
     if direct_price_info:
-        direct_confidence = "high"
-        if direct_price_info.get("range") or direct_price_info.get("session_range"):
+        direct_confidence = direct_price_info.get("confidence") or "high"
+        if direct_price_info.get("confidence") is None and (
+            direct_price_info.get("range") or direct_price_info.get("session_range")
+        ):
             direct_confidence = "medium"
-        direct_note = None
+        direct_note = direct_price_info.get("note")
         if direct_price_info.get("unmodelled_types"):
             direct_confidence = downgrade_confidence(direct_confidence)
-            direct_note = "Tijd- of parkeerkosten staan in het OCPI-tarief maar zijn niet in het sessietotaal opgenomen."
-        pricing["direct_pay"] = make_quote(
+            direct_note = merge_notes(
+                direct_note,
+                "Tijd- of parkeerkosten staan in het tarief maar zijn niet in het sessietotaal opgenomen.",
+            )
+        direct_quote = make_quote(
             direct_price_info["rate"],
             direct_price_info.get("session", 0.0),
             direct_confidence,
-            "ndw_ad_hoc",
+            direct_price_info.get("basis", "ndw_ad_hoc"),
             note=direct_note,
             price_range=direct_price_info.get("range"),
             session_range=direct_price_info.get("session_range"),
             route="ad_hoc",
             relation="cpo_direct",
         )
+        pricing["direct_pay"] = apply_source_metadata(direct_quote, direct_price_info)
 
-    # ANWB free plan: CPO price + EUR 0.89/session. ANWB advertises special
-    # network discounts, but without a universal public per-connector figure we
-    # do not subtract an invented amount here.
-    if cpo_rate is not None:
-        anwb_confidence = base_confidence
-        anwb_note = cpo_note
-        if any(token in op for token in ANWB_DISCOUNT_NETWORKS):
+    # ANWB free plan: use a network-specific official MSP rate when a CPO
+    # publishes one, otherwise fall back to CPO price + EUR 0.89/session.
+    anwb_override = msp_overrides.get("anwb_free")
+    if cpo_rate is not None or anwb_override:
+        anwb_rate = float(anwb_override["rate"]) if anwb_override else cpo_rate
+        anwb_confidence = anwb_override.get("confidence", "medium") if anwb_override else base_confidence
+        anwb_note = anwb_override.get("note") if anwb_override else cpo_note
+        anwb_basis = anwb_override.get("basis", cpo_source) if anwb_override else cpo_source
+        anwb_range = anwb_override.get("range") if anwb_override else shifted_range(cpo_rate_range)
+        if not anwb_override and any(token in op for token in ANWB_DISCOUNT_NETWORKS):
             anwb_confidence = downgrade_confidence(anwb_confidence)
             anwb_note = merge_notes(
-                cpo_note,
+                anwb_note,
                 "ANWB noemt korting op dit netwerk; de app kan een lager tarief tonen.",
             )
-        pricing["anwb_free"] = make_quote(
-            cpo_rate,
+        quote = make_quote(
+            anwb_rate,
             0.89,
             anwb_confidence,
-            cpo_source,
+            anwb_basis,
             note=anwb_note,
-            price_range=shifted_range(cpo_rate_range),
+            price_range=anwb_range,
             route="msp_roaming",
             relation="roaming",
         )
+        pricing["anwb_free"] = apply_source_metadata(quote, anwb_override)
 
-    # Tap Electric Light: charging-station tariff plus a 5% transaction fee.
-    if cpo_rate is not None:
-        pricing["tap_light"] = make_quote(
-            cpo_rate,
+    # Tap Electric Light: official network-specific kWh rate when available,
+    # plus Tap's published 5% transaction fee.
+    tap_override = msp_overrides.get("tap_light")
+    if cpo_rate is not None or tap_override:
+        tap_rate = float(tap_override["rate"]) if tap_override else cpo_rate
+        tap_confidence = tap_override.get("confidence", "medium") if tap_override else base_confidence
+        tap_basis = tap_override.get("basis", cpo_source) if tap_override else cpo_source
+        tap_note = merge_notes(
+            tap_override.get("note") if tap_override else cpo_note,
+            "Tap Light rekent 5% transactiekosten over het gemodelleerde kWh-tarief.",
+        )
+        quote = make_quote(
+            tap_rate,
             0.0,
-            base_confidence,
-            cpo_source,
-            note=merge_notes(cpo_note, "Tap Light rekent 5% transactiekosten over het gemodelleerde laadpunttarief."),
-            price_range=shifted_range(cpo_rate_range),
+            tap_confidence,
+            tap_basis,
+            note=tap_note,
+            price_range=tap_override.get("range") if tap_override else shifted_range(cpo_rate_range),
             transaction_percentage=0.05,
             route="msp_roaming",
             relation="roaming",
         )
+        pricing["tap_light"] = apply_source_metadata(quote, tap_override)
 
-    # Vattenfall: own InCharge network versus roaming is matched by OCPI party
-    # where possible. Roaming kWh rates can differ from the CPO base tariff.
-    if cpo_rate is not None:
+    # Vattenfall: own InCharge network versus roaming is matched by OCPI party.
+    # A verified CPO-published MSP rate can replace the generic roaming estimate.
+    vf_override = msp_overrides.get("vattenfall")
+    if cpo_rate is not None or vf_override:
         own_vattenfall = is_msp_home_network("vattenfall", operator_name, party_id)
-        vf_confidence = base_confidence if own_vattenfall else downgrade_confidence(base_confidence)
-        vf_note = cpo_note if own_vattenfall else merge_notes(
-            cpo_note,
-            "Roaming kWh-tarief kan in de InCharge-app afwijken van het CPO-basistarief.",
+        vf_rate = float(vf_override["rate"]) if vf_override else cpo_rate
+        vf_confidence = vf_override.get("confidence", "medium") if vf_override else (
+            base_confidence if own_vattenfall else downgrade_confidence(base_confidence)
         )
-        pricing["vattenfall"] = make_quote(
-            cpo_rate,
+        vf_basis = vf_override.get("basis", cpo_source) if vf_override else cpo_source
+        vf_note = vf_override.get("note") if vf_override else cpo_note
+        if not own_vattenfall and not vf_override:
+            vf_note = merge_notes(
+                vf_note,
+                "Roaming kWh-tarief kan in de InCharge-app afwijken van het CPO-basistarief.",
+            )
+        quote = make_quote(
+            vf_rate,
             0.0 if own_vattenfall else 0.35,
             vf_confidence,
-            cpo_source,
+            vf_basis,
             note=vf_note,
-            price_range=shifted_range(cpo_rate_range),
+            price_range=vf_override.get("range") if vf_override else shifted_range(cpo_rate_range),
             route="msp_home" if own_vattenfall else "msp_roaming",
             relation="own_network" if own_vattenfall else "roaming",
         )
+        pricing["vattenfall"] = apply_source_metadata(quote, vf_override)
 
     # E-Flux Flex: EUR 0.31/session, plus EUR 0.024/kWh outside E-Flux.
     if cpo_rate is not None:
@@ -719,12 +1048,25 @@ def build_pricing(
             relation="own_network" if own_eflux else "roaming",
         )
 
-    # Shell Recharge Basic publishes fixed price bands. Shell/Ubitricity group
-    # ownership is not used as a pricing shortcut: only party TNM (or a strict
-    # name fallback when party_id is absent) counts as the Shell home network.
+    # Shell Recharge Basic publishes fixed price bands. A verified CPO-published
+    # Shell MSP rate takes precedence for that network. Shell/Ubitricity group
+    # ownership still does not imply a home-network relationship.
     is_dc = max_power_kw >= 50
     own_shell = is_msp_home_network("shell_basic", operator_name, party_id)
-    if is_dc:
+    shell_override = msp_overrides.get("shell_basic") if not is_dc else None
+    if shell_override:
+        quote = make_quote(
+            float(shell_override["rate"]),
+            0.35,
+            shell_override.get("confidence", "medium"),
+            shell_override.get("basis", "official_cpo_msp_rate"),
+            note=shell_override.get("note"),
+            price_range=shell_override.get("range"),
+            route="msp_home" if own_shell else "msp_roaming",
+            relation="own_network" if own_shell else "roaming",
+        )
+        pricing["shell_basic"] = apply_source_metadata(quote, shell_override)
+    elif is_dc:
         if own_shell:
             pricing["shell_basic"] = make_quote(
                 0.78,
@@ -804,6 +1146,8 @@ def process_location(
     tariff_map: dict,
     operator_median: Optional[dict] = None,
     boundary: Optional[list] = None,
+    official_direct: Optional[dict] = None,
+    official_msp: Optional[dict] = None,
 ) -> Optional[dict]:
     coords = loc.get("coordinates", {})
     try:
@@ -923,12 +1267,27 @@ def process_location(
 
     direct_candidates = [c["direct_price_info"] for c in connectors if c.get("direct_price_info")]
     direct_price_info = direct_candidates[0] if direct_candidates else None
+
+    # Explicit OCPI ad-hoc tariffs remain authoritative. Only if NDW has no
+    # connector-specific ad-hoc tariff do we use a currently verified official
+    # operator source.
+    if direct_price_info is None:
+        direct_price_info = supplemental_direct_price_info(
+            party_id,
+            cpo_rate,
+            cpo_range,
+            pricing_source,
+            official_direct,
+        )
+
     direct_supported, direct_reason = direct_payment_supported(
         operator,
         party_id,
         capabilities,
         has_ad_hoc_tariff=direct_price_info is not None,
     )
+    if direct_price_info and direct_price_info.get("basis") != "ndw_ad_hoc":
+        direct_reason = "official_operator_source"
 
     pricing = build_pricing(
         cpo_rate,
@@ -939,6 +1298,7 @@ def process_location(
         cpo_note=pricing_note,
         party_id=party_id,
         direct_price_info=direct_price_info,
+        msp_price_overrides=(official_msp or {}).get(party_id),
     )
 
     last_updated_values = [
@@ -961,6 +1321,10 @@ def process_location(
             "session": direct_price_info.get("session", 0.0),
             "session_range": direct_price_info.get("session_range"),
             "unmodelled_types": direct_price_info.get("unmodelled_types", []),
+            "basis": direct_price_info.get("basis", "ndw_ad_hoc"),
+            "source_id": direct_price_info.get("source_id"),
+            "source_url": direct_price_info.get("source_url"),
+            "source_checked_at": direct_price_info.get("source_checked_at"),
         })
 
     return {
@@ -1064,7 +1428,7 @@ def totalenergies_diagnostics(locations: list, tariff_map: dict, boundary: Optio
 def main() -> None:
     print("=== NDW Huizen preprocessor ===")
 
-    print("\n[1/4] Downloading NDW data files...")
+    print("\n[1/5] Downloading NDW data files...")
     try:
         locations_raw = fetch_gz(LOCATIONS_URL)
         tariffs_raw = fetch_gz(TARIFFS_URL)
@@ -1072,7 +1436,7 @@ def main() -> None:
         print(f"\nERROR: Could not download NDW data: {exc}")
         sys.exit(1)
 
-    print("\n[2/4] Parsing OCPI data...")
+    print("\n[2/5] Parsing OCPI data...")
     locations_data = json.loads(locations_raw)
     tariffs_data = json.loads(tariffs_raw)
     locations = unwrap_ocpi_list(locations_data, "locations")
@@ -1086,7 +1450,7 @@ def main() -> None:
     print(f"  Globally unique IDs:    {len(tariff_map['unique']):,}")
     print(f"  Reused tariff IDs:      {tariff_map['id_collisions']:,}")
 
-    print("\n[3/4] Building operator medians...")
+    print("\n[3/5] Building operator medians...")
     operator_median, operator_rates = build_operator_medians(locations, tariff_map)
     print(f"  Operators with median ({MIN_OPERATOR_MEDIAN_SAMPLES}+ samples): {len(operator_median)}")
 
@@ -1105,10 +1469,31 @@ def main() -> None:
     print(f"    connectors tariff_ids:  {te_diag['with_tariff_ids']}")
     print(f"    resolved ENERGY tariff: {te_diag['resolved_energy_tariff']}")
 
-    print("\n[4/4] Filtering to gemeente Huizen...")
+    print("\n[4/5] Harvesting official CPO pricing sources...")
+    official_harvest = harvest_official_pricing()
+    for source in official_harvest["sources"]:
+        if source["status"] == "ok":
+            detail = f" rate={source['rate']:.4f}" if source.get("rate") is not None else ""
+            msp_detail = ""
+            if source.get("msp_table_status") == "ok":
+                msp_detail = f" msp_rates={len(source.get('msp_rates', {}))}"
+            elif source.get("msp_table_status") == "unavailable":
+                msp_detail = " msp_rates=unavailable"
+            print(f"  OK {source['id']} ({source['party_id']}){detail}{msp_detail}")
+        else:
+            print(f"  WARNING {source['id']}: {source.get('error', 'unavailable')}")
+
+    print("\n[5/5] Filtering to gemeente Huizen...")
     results = []
     for loc in locations:
-        processed = process_location(loc, tariff_map, operator_median, boundary)
+        processed = process_location(
+            loc,
+            tariff_map,
+            operator_median,
+            boundary,
+            official_direct=official_harvest["direct_by_party"],
+            official_msp=official_harvest["msp_by_party"],
+        )
         if processed:
             results.append(processed)
 
@@ -1118,7 +1503,23 @@ def main() -> None:
     unknown = sum(1 for r in results if r["pricing_source"] == "unknown")
     comparison_ready = sum(1 for r in results if len(r["pricing"]) >= 2)
     adhoc_priced = sum(1 for r in results if r.get("direct_payment", {}).get("priced"))
+    adhoc_priced_ndw = sum(
+        1 for r in results
+        if r.get("pricing", {}).get("direct_pay", {}).get("basis") == "ndw_ad_hoc"
+    )
+    adhoc_priced_official = sum(
+        1 for r in results
+        if r.get("pricing", {}).get("direct_pay", {}).get("basis") in {
+            "official_cpo_adhoc", "official_cpo_direct_rule"
+        }
+    )
     direct_payment_known = sum(1 for r in results if r.get("direct_payment", {}).get("supported"))
+    msp_quotes_official = sum(
+        1
+        for r in results
+        for pass_id, quote in r.get("pricing", {}).items()
+        if pass_id != "direct_pay" and quote.get("basis") == "official_cpo_msp_rate"
+    )
 
     print(f"  Locations in area:       {len(results)}")
     print(f"  Direct NDW CPO tariff:   {direct}")
@@ -1126,8 +1527,11 @@ def main() -> None:
     print(f"  Official MRA-E fallback: {regional}")
     print(f"  Unknown CPO base tariff: {unknown}")
     print(f"  2+ price estimates:      {comparison_ready}")
-    print(f"  Explicit ad-hoc tariffs: {adhoc_priced}")
+    print(f"  Priced ad-hoc routes:    {adhoc_priced}")
+    print(f"    from NDW OCPI:         {adhoc_priced_ndw}")
+    print(f"    from official CPO:     {adhoc_priced_official}")
     print(f"  Direct payment known:    {direct_payment_known}")
+    print(f"  Official CPO MSP quotes: {msp_quotes_official}")
 
     operators = {}
     for result in results:
@@ -1139,7 +1543,11 @@ def main() -> None:
     output = {
         "schema_version": 4,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "source": "NDW open data (opendata.ndw.nu)",
+        "source": "NDW open data plus verified public CPO pricing sources",
+        "official_pricing_harvest": {
+            "checked_at": official_harvest["checked_at"],
+            "sources": official_harvest["sources"],
+        },
         "regional_pricing": {
             "totalenergies_mrae": {
                 "ac_range": list(TOTALENERGIES_MRAE_AC_RANGE),
@@ -1166,7 +1574,10 @@ def main() -> None:
             "unknown_base_rate": unknown,
             "comparison_ready": comparison_ready,
             "adhoc_priced": adhoc_priced,
+            "adhoc_priced_ndw": adhoc_priced_ndw,
+            "adhoc_priced_official": adhoc_priced_official,
             "direct_payment_known": direct_payment_known,
+            "msp_quotes_official": msp_quotes_official,
         },
         "locations": results,
     }

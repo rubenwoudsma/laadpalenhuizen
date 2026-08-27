@@ -8,10 +8,28 @@ const MAX_KWH = 60;
 const DIRECT_PASS_ID = 'direct_pay';
 
 const map = L.map('map', { center: HUIZEN, zoom: 14, zoomControl: true });
-L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-  maxZoom: 19,
-}).addTo(map);
+
+function addBaseMap() {
+  // OpenFreeMap Positron keeps the quiet, light visual style of the former
+  // CARTO basemap without an account or API key. The raster OSM layer is a
+  // defensive fallback if MapLibre or the vector layer cannot be initialized.
+  if (typeof L.maplibreGL === 'function' && typeof maplibregl !== 'undefined') {
+    try {
+      return L.maplibreGL({
+        style: 'https://tiles.openfreemap.org/styles/positron',
+      }).addTo(map);
+    } catch (error) {
+      console.warn('OpenFreeMap could not be initialized, using OpenStreetMap fallback.', error);
+    }
+  }
+
+  return L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+  }).addTo(map);
+}
+
+addBaseMap();
 
 let passes = [];
 let points = [];
@@ -154,11 +172,20 @@ function knownDirectPayment(pt) {
 function unknownQuoteDetail(pt, pass) {
   if (pass?.id === DIRECT_PASS_ID) {
     if (knownDirectPayment(pt)) {
-      return 'Direct betalen is beschikbaar, maar er staat geen apart berekenbaar ad-hoc tarief in deze snapshot. Scan de QR-code voor het live bedrag.';
+      return 'Direct betalen is bevestigd, maar voor dit laadpunt is nog geen machineleesbaar of openbaar tarief gevonden. Deze optie telt daarom niet mee in de ranking.';
     }
-    return 'Geen directe betaalroute met berekenbaar tarief bevestigd in de huidige data.';
+    return 'Geen directe betaalroute met berekenbaar tarief bevestigd in de huidige bronnen.';
   }
   return 'Geen betrouwbare prijs voor deze betaalroute beschikbaar.';
+}
+
+function safeSourceUrl(value) {
+  try {
+    const url = new URL(String(value || ''));
+    return url.protocol === 'https:' ? url.href : null;
+  } catch (_) {
+    return null;
+  }
 }
 
 function quoteDetail(quote) {
@@ -177,6 +204,10 @@ function quoteDetail(quote) {
     parts.push('geen starttarief');
   }
   parts.push(confidenceLabel(quote.confidence));
+  const sourceUrl = safeSourceUrl(quote.source_url);
+  if (sourceUrl) {
+    parts.push(`<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">officiële bron</a>`);
+  }
   return parts.join(' · ');
 }
 
@@ -666,7 +697,9 @@ async function init() {
     document.getElementById('data-age').textContent = formatAge(data.generated_at);
 
     const adHoc = data.stats?.adhoc_priced ?? points.filter(point => point.pricing?.direct_pay?.kwh != null).length;
-    document.getElementById('footer-stats').textContent = `· ${data.stats?.ndw_priced ?? 0} NDW-tarieven · ${adHoc} ad-hoc tarieven · ${data.stats?.regional_priced ?? 0} regionale indicaties`;
+    const adHocOfficial = data.stats?.adhoc_priced_official ?? 0;
+    const directDetail = adHocOfficial > 0 ? `, ${adHocOfficial} via officiële CPO-bronnen` : '';
+    document.getElementById('footer-stats').textContent = `· ${data.stats?.ndw_priced ?? 0} NDW-tarieven · ${adHoc} direct/QR${directDetail} · ${data.stats?.regional_priced ?? 0} regionale indicaties`;
 
     markers = points.map(pt => {
       const marker = L.marker([pt.lat, pt.lng], { icon: makeIcon(pt) })

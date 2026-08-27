@@ -12,7 +12,7 @@ class PricingMonitorTest(unittest.TestCase):
     def test_config_is_valid(self):
         config = monitor.load_config(ROOT / "pricing-sources.json")
         self.assertEqual(config["schema_version"], 1)
-        self.assertEqual(len(config["sources"]), 7)
+        self.assertEqual(len(config["sources"]), 10)
         self.assertIn("tap_light", {source["id"] for source in config["sources"]})
 
     def test_normalize_page_removes_markup_and_whitespace(self):
@@ -39,6 +39,9 @@ class PricingMonitorTest(unittest.TestCase):
             "shell_basic": "Shell Recharge Basic Geen maandelijkse kosten. DC: € 0,79 / kWh - € 0,82 / kWh - € 0,85 / kWh. AC: € 0,50 / kWh - € 0,55 / kWh - € 0,60 / kWh. € 0,35 transactiekosten per laadsessie.",
             "laadkompas_free": "Laadpas zonder abonnement. Het tarief is € 0,47 per laadsessie.",
             "totalenergies_mrae": "Provincies Flevoland, Noord-Holland en Utrecht MRA-E 2 t/m 5 €0,40 €0,48. MRA-E 6 €0,30 €0,36. MRA-E 6 - Dynamische tarieven €0,34 €0,36. Snelladers DC Provincies Flevoland, Noord-Holland en Utrecht (MRA-E) €0,45 €0,54.",
+            "ubitricity_mrae_direct": "Ad Hoc Opladen via QR-code op scherm. Per kWh 0,35€. RFID / Apps Per kWh: ANWB, Greenchoice, Tap Electric, Essent, MoveMove, Green Caravan, Eneco, Shell Recharge (App), Vattenfall Incharge, MKB Brandstof.",
+            "totalenergies_direct_payment": "Het laadtarief bestaat uit een basisprijs (CPO-prijs), dit is ook de ad-hoc of direct payment prijs. De extra toeslag geldt niet bij betaling met een gewone betaal/creditkaart (Direct Payment, ook wel Ad-Hoc).",
+            "vattenfall_direct_support": "Met je betaalpas opladen: scan de QR-code en vul je betaalgegevens in. Je kan dit gebruiken op onze openbare laadpalen zolang ze een sticker met QR-code hebben.",
         }
         for source in config["sources"]:
             with self.subTest(source=source["id"]):

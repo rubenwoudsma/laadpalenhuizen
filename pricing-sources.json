@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "verified_at": "2026-08-12",
+  "verified_at": "2026-08-27",
   "selection_policy": {
     "scope": "Kernvergelijking voor particuliere EV-rijders in Huizen",
     "criteria": [
@@ -170,6 +170,69 @@
           "label": "MRA-E DC blijft EUR 0,54 incl. btw",
           "patterns": [
             "flevoland.{0,80}noord-holland.{0,80}utrecht.{0,80}mra-e.{0,120}(?:€\\s*)?0[,.]54"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ubitricity_mrae_direct",
+      "provider": "Ubitricity",
+      "plan": "Direct / QR MRA-E",
+      "url": "https://ubitricity.com/nl/bestuurder/mrae-laadprijzen/",
+      "checks": [
+        {
+          "label": "ad-hoc QR tarief is EUR 0,35 per kWh",
+          "patterns": [
+            "ad\\s*hoc\\s+opladen.{0,220}per\\s+kwh.{0,100}0[,.]35",
+            "ad\\s*hoc\\s+opladen.{0,260}0[,.]35\\s*€"
+          ]
+        },
+        {
+          "label": "geselecteerde MSPs staan nog in de RFID/App tabel",
+          "patterns": [
+            "anwb.{0,220}tap\\s+electric.{0,320}shell\\s+recharge.{0,180}vattenfall\\s+incharge"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "totalenergies_direct_payment",
+      "provider": "TotalEnergies",
+      "plan": "Direct / QR",
+      "url": "https://totalenergies.nl/nieuwsoverzicht/blogs-klantverhalen/totalenergies-betreurt-onverwachte-toeslag-van-laaddienstverlener-voor-e",
+      "checks": [
+        {
+          "label": "CPO-basisprijs is ook ad-hoc/direct-payment prijs",
+          "patterns": [
+            "basisprijs.{0,100}cpo[- ]?prijs.{0,160}(?:ad[- ]?hoc|direct\\s+payment).{0,80}prijs"
+          ]
+        },
+        {
+          "label": "laadpas-toeslag geldt niet voor direct payment",
+          "patterns": [
+            "toeslag.{0,220}geldt\\s+niet.{0,140}(?:betaal|credit)kaart.{0,140}(?:direct\\s+payment|ad[- ]?hoc)",
+            "(?:direct\\s+payment|ad[- ]?hoc).{0,220}toeslag\\s+geldt\\s+niet"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vattenfall_direct_support",
+      "provider": "Vattenfall InCharge",
+      "plan": "Direct / QR support",
+      "url": "https://incharge.vattenfall.nl/veelgestelde-vragen/met-je-betaalpas-opladen",
+      "checks": [
+        {
+          "label": "direct betalen via QR en betaalpas wordt ondersteund",
+          "patterns": [
+            "scant?\\s+de\\s+qr-code.{0,220}betaalgegevens",
+            "qr-code.{0,260}(?:pinpas|creditcard|betaalpas)"
+          ]
+        },
+        {
+          "label": "beschikbaarheid is gekoppeld aan openbare palen met QR-sticker",
+          "patterns": [
+            "openbare\\s+laadpalen.{0,220}sticker\\s+met\\s+qr-code"
           ]
         }
       ]

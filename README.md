@@ -48,7 +48,16 @@ De selectie is bewust beperkt. Een MSP wordt alleen opgenomen wanneer de prijslo
 
 OCPI ondersteunt een specifiek tarieftype `AD_HOC_PAYMENT`. `process.py` houdt zo'n tarief apart van reguliere CPO/MSP-tarieven en verwerkt daarnaast een eventuele `FLAT` component als vaste sessiekosten.
 
-Wanneer NDW wel bevestigt dat direct betalen mogelijk is, maar geen apart berekenbaar ad-hoc tarief bevat, toont de webapp **Direct / QR** als beschikbare of mogelijke route zonder een prijs te verzinnen. De optie wordt dan niet in de Top 3 gerangschikt. De gebruiker moet de live prijs na het scannen van de QR-code controleren.
+NDW blijft de eerste bron voor een expliciet connector-gebonden ad-hoc tarief. Wanneer dat ontbreekt kan de dagelijkse preprocessor aanvullende officiele CPO-bronnen controleren. Een aanvullende prijs wordt alleen gebruikt als de publieke bron tijdens diezelfde run opnieuw kan worden geverifieerd. Een gewijzigde of tijdelijk onbereikbare operatorpagina blokkeert de NDW-update niet, de aanvullende prijs vervalt dan veilig.
+
+Momenteel zijn twee directe numerieke aanvullingen geimplementeerd:
+
+- **Ubitricity `UB2`**, de officiele MRA-E pagina publiceert een afzonderlijk Direct / QR tarief per kWh;
+- **TotalEnergies `GFX`**, de officiele bron bevestigt dat de CPO-basisprijs ook de ad-hoc/direct-payment prijs is, waardoor de reeds bepaalde CPO-prijs of prijsband voor Direct / QR mag worden hergebruikt.
+
+Dezelfde Ubitricity MRA-E pagina publiceert daarnaast netwerk-specifieke kWh-prijzen voor verschillende veelgebruikte MSP's. Voor de huidige kernselectie harvest de preprocessor daarom ook ANWB, Tap Electric, Shell Recharge en Vattenfall op `UB2`. Bekende vaste of procentuele MSP-kosten blijven daarna afzonderlijk onderdeel van de sessieberekening. Als de tabelstructuur niet meer veilig kan worden gekoppeld, vervallen alleen deze MSP-overrides en blijft het afzonderlijk gevonden Direct / QR tarief bruikbaar.
+
+Vattenfall direct betalen via QR wordt als betaalmogelijkheid gemonitord, maar krijgt nog geen numerieke Direct / QR prijs zolang geen reproduceerbare laadpuntprijs publiek kan worden gekoppeld. Ongeprijsde routes tellen niet mee in de Top 3.
 
 ## CPO versus MSP
 
@@ -109,38 +118,19 @@ GitHub Pages
 
 De applicatie heeft daarom geen runtime backend, database of betaalde kaart-API nodig.
 
-## API-roadmap
+## Roadmap
 
-### Fase 1, huidige statische architectuur verder aanscherpen
+De methodologie beschrijft hoe de applicatie vandaag werkt. Concrete vervolgstappen staan in [ROADMAP.md](ROADMAP.md), met per onderwerp een doel, aanpak en acceptatiecriteria.
 
-Blijf NDW DOT-NL als primaire bron gebruiken en bouw op stabiele identifiers, vooral `country_code`, `party_id`, locatie-ID, EVSE-ID en `tariff_ids`. Bewaar reguliere en ad-hoc tarieven strikt gescheiden en sla per prijs ook een bron, update-tijd en betrouwbaarheid op.
+De volgorde is bewust functioneel in plaats van technisch:
 
-### Fase 2, NDW API / GeoJSON en frequentere updates
+1. Direct / QR prijsdekking verder vergroten met officiele CPO-bronnen;
+2. automatisch rapporteren waar prijsdekking ontbreekt of terugloopt;
+3. tijd-, parkeer- en idle-kosten aan het sessiemodel toevoegen;
+4. regionale fallbacktarieven verder automatiseren;
+5. pas daarna NDW API/PULL of een serverless laag overwegen als de snapshotarchitectuur aantoonbaar tekortschiet.
 
-NDW documenteert naast volledige downloads ook GeoJSON/OCPI API-ontwikkeling en een ontwikkeling richting OCPI PULL/PUSH. Zodra die interfaces stabiel genoeg zijn, kan de landelijke download worden vervangen of aangevuld met een geografische Huizen-query en frequentere tarief/status-updates.
-
-Voor deze repository is een **server-side snapshot via GitHub Actions** voorlopig robuuster dan rechtstreeks vanuit de browser naar externe laad-API's bellen. Dit voorkomt CORS-problemen, beschermt eventuele API-credentials en houdt GitHub Pages volledig statisch.
-
-### Fase 3, directe CPO-prijzen als aparte bronlaag
-
-Voor ad-hoc tarieven zijn CPO-bronnen uiteindelijk belangrijker dan een afgeleid MSP-tarief. Voeg per CPO een adapter toe wanneer een stabiele publieke feed of endpoint beschikbaar is. De bronprioriteit kan dan worden:
-
-```text
-1. Explicit live/official CPO ad-hoc tariff
-2. NDW OCPI AD_HOC_PAYMENT tariff
-3. Official regional/concession tariff
-4. No numeric direct-payment estimate
-```
-
-Een QR-route zonder betrouwbare prijs blijft zichtbaar, maar wordt niet als goedkoopste gerangschikt.
-
-### Fase 4, Open Charge Map als secundaire verrijking
-
-Open Charge Map kan nuttig zijn voor POI-verrijking, alternatieve operatornamen en ID-reconciliatie. Gebruik het niet als primaire tariefautoriteit wanneer NDW of de CPO zelf een actuelere Nederlandse prijsbron heeft.
-
-### Fase 5, werkelijk realtime vergelijken
-
-Als later prijzen direct bij het openen van de kaart moeten worden opgehaald, voeg dan een kleine serverless/edge API met caching toe. Die laag kan NDW en CPO-adapters combineren en aan de browser één genormaliseerd prijsobject leveren. De huidige `huizen-data.json` structuur is bedoeld als tussenstap naar zo'n model.
+Open Charge Map kan later als metadata- en ID-verrijking worden onderzocht, maar niet als primaire prijsautoriteit zolang NDW of de CPO zelf een actuelere Nederlandse bron levert.
 
 ## TotalEnergies en regionale fallback
 
@@ -150,13 +140,15 @@ Er wordt geen generieke fallbackprijs ingevuld om toch een winnaar te kunnen ton
 
 ## Kaartlaag
 
-De kaart gebruikt Leaflet met de standaard OpenStreetMap rasterlaag:
+De kaart gebruikt Leaflet met **OpenFreeMap Positron** als standaard vectorstijl, gerenderd via MapLibre GL. Dit geeft een lichte, rustige basiskaart die dichter bij de eerdere CARTO-uitstraling ligt, zonder account of API-key.
+
+Als de vectorlaag niet kan worden geinitialiseerd, valt `app.js` automatisch terug op de standaard OpenStreetMap rasterlaag:
 
 ```text
 https://tile.openstreetmap.org/{z}/{x}/{y}.png
 ```
 
-Daarvoor is geen CartoDB API-key nodig. De OpenStreetMap-attributie blijft zichtbaar. Voor een kleine gemeentelijke toepassing is dit praktisch, maar bij sterk groeiend verkeer hoort een eigen tile-provider of gehoste tileservice bij de schaalstrategie.
+Zo blijft de kaart ook bij een tijdelijke fout in de extra vectorlaag bruikbaar.
 
 ## Automatische updates
 
@@ -209,9 +201,10 @@ node --check app.js
 .github/workflows/pricing-monitor.yml  Maandelijkse controle van tariefbronnen
 index.html                             Paginastructuur en styling
 app.js                                 Kaart, filters, sessiecalculator en ranking
-methodologie.html                      Uitleg over model, bronnen en beperkingen
+methodologie.html                      Uitleg over huidig model, bronnen en beperkingen
+ROADMAP.md                             Concrete ontwikkelprioriteiten en acceptatiecriteria
 process.py                             NDW/OCPI-preprocessor en prijsregels
-pricing-sources.json                   Bronvoorwaarden voor statische MSP-regels
+pricing-sources.json                   Gecontroleerde MSP- en CPO-prijsbronnen
 scripts/check_pricing_sources.py       Controle van officiële tariefpagina's
 huizen-data.json                       Gegenereerde laadpuntdata
 huizen-boundary.geojson                Gemeentegrens Huizen
@@ -223,7 +216,7 @@ tests/                                 Regressietests voor prijsmodel en bronmon
 - MSP roamingtarieven kunnen afwijken van een CPO-basistarief en soms alleen in de MSP-app zichtbaar zijn.
 - Tijd-, parkeer-, idle- en blokkeerkosten worden gesignaleerd maar nog niet volledig naar een sessietotaal omgerekend.
 - De beschikbaarheidsstatus in deze statische versie is een snapshot, niet continu realtime.
-- Een directe QR-optie zonder expliciet tarief wordt bewust niet numeriek geschat.
+- Een directe QR-optie zonder expliciet NDW-tarief of tijdens de run geverifieerde officiele CPO-prijsregel wordt bewust niet numeriek geschat.
 - De uiteindelijke prijs op de betaalpagina, in de MSP-app of op de factuur blijft leidend.
 
 Meer details staan in [Methodologie](methodologie.html).

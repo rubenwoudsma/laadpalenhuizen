@@ -93,9 +93,20 @@ code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
     </table>
   </div>
 
-  <h2>6. Direct betalen zonder gepubliceerd tarief</h2>
-  <p>Een CPO kan direct betalen ondersteunen zonder dat de NDW-snapshot een apart berekenbaar ad-hoc tarief bevat. De webapp mag die route dan wel tonen, maar niet voorzien van een zelfbedachte prijs. De rij vermeldt dat de gebruiker de QR-code of betaalpagina moet openen voor het live bedrag.</p>
-  <p>Ubitricity is als bekende directe betaalroute opgenomen op basis van de publieke documentatie van de operator. Een numerieke prijs wordt pas gerangschikt wanneer de dataset een expliciete prijs bevat.</p>
+  <h2>6. Direct betalen en aanvullende CPO-harvesting</h2>
+  <p>Een CPO kan direct betalen ondersteunen zonder dat de NDW-snapshot een apart berekenbaar ad-hoc tarief bevat. In dat geval probeert de preprocessor aanvullende <strong>officiële, publieke CPO-bronnen</strong> te verifiëren. Alleen een bron die tijdens de actuele datarun opnieuw herkenbaar is, mag een numerieke prijs toevoegen.</p>
+  <div class="card">
+    <table>
+      <thead><tr><th>CPO</th><th>party_id</th><th>Aanvullende bronlogica</th></tr></thead>
+      <tbody>
+        <tr><td>Ubitricity</td><td><code>UB2</code></td><td>De officiële MRA-E tariefpagina publiceert een apart ad-hoc QR-tarief én netwerk-specifieke kWh-prijzen voor meerdere laadpassen. De parser leest Direct / QR en, wanneer de tabel veilig kan worden gekoppeld, ANWB, Tap Electric, Shell Recharge en Vattenfall als afzonderlijke bronwaarden.</td></tr>
+        <tr><td>TotalEnergies</td><td><code>GFX</code></td><td>De officiële informatie bevestigt dat de CPO-basisprijs ook de ad-hoc/direct-payment prijs is. Na verificatie mag de reeds bepaalde CPO-prijs of prijsband daarom voor Direct / QR worden gebruikt.</td></tr>
+        <tr><td>Vattenfall</td><td><code>NUO</code></td><td>QR/direct betalen is publiek bevestigd, maar zonder reproduceerbare laadpuntprijs wordt nog geen numeriek bedrag afgeleid.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Een tijdelijke fout op een CPO-website blokkeert de dagelijkse NDW-run niet. De aanvullende bron krijgt dan status <code>unavailable</code>, de prijs wordt niet toegepast en de webapp rangschikt de optie niet op basis van een oude of zelfbedachte waarde. Bij Ubitricity zijn Direct / QR en de MSP-tabel bovendien losgekoppeld: een gewijzigde MSP-tabel mag een nog steeds valide direct tarief niet uitschakelen.</p>
+  <p>De bronprioriteit voor Direct / QR is bewust conservatief: een expliciet connector-gebonden NDW <code>AD_HOC_PAYMENT</code> tarief gaat voor. Alleen wanneer dat ontbreekt kan een op dat moment geverifieerde officiële CPO-regel aanvullen.</p>
 
   <h2>7. MSP-regels</h2>
   <div class="card">
@@ -122,16 +133,12 @@ code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
   <p>Voor TotalEnergies in Huizen blijft de bestaande officiële MRA-E fallback van toepassing wanneer NDW geen bruikbaar regulier tarief bevat. Voor AC wordt een prijsband gebruikt wanneer de exacte concessie niet uit de locatiegegevens kan worden afgeleid.</p>
 
   <h2>9. Kaartlaag</h2>
-  <p>Leaflet gebruikt rechtstreeks de standaard OpenStreetMap rasterlaag <code>https://tile.openstreetmap.org/{z}/{x}/{y}.png</code> met zichtbare OpenStreetMap-attributie. Er is geen CartoDB-account of API-key nodig.</p>
+  <p>De standaardkaart gebruikt <strong>OpenFreeMap Positron</strong> als lichte vectorstijl via MapLibre GL en Leaflet. Deze rustige stijl legt meer nadruk op de laadpuntmarkers en benadert de lichte uitstraling van de eerdere CARTO-kaart, zonder CARTO-account of API-key.</p>
+  <p>Als de vectorlaag niet kan initialiseren, valt de browser automatisch terug op <code>https://tile.openstreetmap.org/{z}/{x}/{y}.png</code>. De kaart blijft daardoor bruikbaar als de extra kaartbibliotheek of vectorstijl tijdelijk niet beschikbaar is.</p>
 
-  <h2>10. API-roadmap</h2>
-  <ol>
-    <li><strong>Nu:</strong> NDW DOT-NL OCPI snapshots blijven de genormaliseerde bron voor locatie, CPO-identiteit, status en tarieven.</li>
-    <li><strong>Volgende stap:</strong> gebruik NDW GeoJSON/bbox of OCPI PULL/PUSH zodra die interfaces stabiel genoeg zijn voor frequentere Huizen-updates.</li>
-    <li><strong>CPO-adapters:</strong> voeg officiële directe prijsfeeds toe wanneer operators deze stabiel aanbieden, vooral voor ad-hoc QR-prijzen.</li>
-    <li><strong>Open Charge Map:</strong> alleen gebruiken als secundaire POI/ID-verrijking wanneer dat de matching verbetert, niet als primaire Nederlandse tariefbron.</li>
-    <li><strong>Realtime fase:</strong> introduceer zo nodig een kleine serverless cache/API. Browsercalls rechtstreeks naar meerdere CPO's zijn minder robuust door CORS, rate limits en eventuele credentials.</li>
-  </ol>
+  <h2>10. Vervolg en roadmap</h2>
+  <p>Deze methodologie beschrijft bewust de <strong>huidige</strong> werking. Toekomstige verbeteringen staan niet meer als vrijblijvende technische fasen op deze pagina, maar als concrete prioriteiten met doel, aanpak en acceptatiecriteria in <a href="https://github.com/rubenwoudsma/laadpalenhuizen/blob/main/ROADMAP.md" rel="noopener">ROADMAP.md</a>.</p>
+  <p>De eerstvolgende inhoudelijke prioriteiten zijn: meer officiële Direct / QR prijzen automatisch harvesten, inzichtelijk maken waar prijsdekking nog ontbreekt, daarna tijd- en parkeerkosten modelleren. Een overstap naar een realtime of serverless architectuur krijgt pas prioriteit wanneer de statische NDW-snapshot aantoonbaar onvoldoende is.</p>
 
   <h2>11. Automatische updates en tests</h2>
   <p>De dagelijkse GitHub Action voert eerst de unit tests uit en genereert daarna <code>huizen-data.json</code>. De workflow kan ook handmatig worden gestart en draait na wijzigingen aan de prijsprocessor of de prijsregressietests, zodat een codewijziging via de GitHub Web Interface direct een nieuwe dataset kan opleveren.</p>
@@ -141,7 +148,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
   <div class="card warning">
     <ul>
       <li>Een MSP-app kan een andere roamingprijs tonen dan het CPO-basistarief in NDW.</li>
-      <li>Een ad-hoc prijs kan pas betrouwbaar worden gerangschikt wanneer de bron een numeriek tarief levert.</li>
+      <li>Een ad-hoc prijs kan pas betrouwbaar worden gerangschikt wanneer NDW of een tijdens de datarun geverifieerde officiële CPO-bron een numeriek tarief of reproduceerbare prijsregel levert.</li>
       <li>Tijd-, parkeer-, idle- en blokkeerkosten zijn nog niet volledig onderdeel van het sessiemodel.</li>
       <li>De beschikbaarheidsstatus is in deze statische architectuur een snapshot.</li>
       <li>De betaalpagina, MSP-app en uiteindelijke factuur blijven leidend.</li>
@@ -153,9 +160,12 @@ code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
     <li><a href="https://docs.ndw.nu/en/elektrisch-rijden/" rel="noopener">NDW DOT-NL documentatie voor elektrisch rijden</a></li>
     <li><a href="https://github.com/ocpi/ocpi" rel="noopener">Open Charge Point Interface [OCPI] specificatie</a></li>
     <li><a href="https://www.huizen.nl/elektrisch-laden" rel="noopener">Gemeente Huizen, elektrisch laden</a></li>
-    <li><a href="https://www.ubitricity.com/nl/" rel="noopener">Ubitricity Nederland, directe laad- en betaalinformatie</a></li>
+    <li><a href="https://ubitricity.com/nl/bestuurder/mrae-laadprijzen/" rel="noopener">Ubitricity MRA-E laadprijzen, inclusief ad-hoc QR</a></li>
+    <li><a href="https://totalenergies.nl/elektrisch-rijden/vind-laadpunt" rel="noopener">TotalEnergies publieke laad- en MRA-E prijsinformatie</a></li>
+    <li><a href="https://incharge.vattenfall.nl/veelgestelde-vragen/met-je-betaalpas-opladen" rel="noopener">Vattenfall InCharge, direct betalen via QR</a></li>
     <li><a href="https://www.shell.nl/elektrisch-opladen/Tarieven.html" rel="noopener">Shell Recharge tarieven</a></li>
-    <li><a href="https://operations.osmfoundation.org/policies/tiles/" rel="noopener">OpenStreetMap Tile Usage Policy</a></li>
+    <li><a href="https://openfreemap.org/" rel="noopener">OpenFreeMap, Positron vectorstijl</a></li>
+    <li><a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap data en attributie</a></li>
   </ul>
   <p class="muted">De statische MSP-voorwaarden in de code hebben eigen verificatiedata en bron-URL's. Controleer altijd de live aanbiederprijs voordat je een laadsessie start.</p>
 </main>
