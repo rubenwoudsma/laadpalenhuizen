@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-27T18:40:20.715622+00:00",
+  "generated_at": "2026-08-27T18:43:18.017331+00:00",
   "input_schema_version": 5,
   "legacy_profile_fallback": false,
   "coverage": {
@@ -15,7 +15,7 @@
     "comparison_ready": 127,
     "comparison_ready_pct": 66.8,
     "fully_reliable_locations": 19,
-    "available_snapshot": 148
+    "available_snapshot": 147
   },
   "connector_coverage": {
     "total_profiles": 209,
@@ -605,7 +605,7 @@
   },
   "pricing_rule_verification": {
     "mode": "daily_verified_fail_closed",
-    "checked_at": "2026-08-27T18:40:07.663500+00:00",
+    "checked_at": "2026-08-27T18:43:07.835649+00:00",
     "all_ok": false,
     "disabled_rules": [
       "laadkompas_free",
@@ -1373,7 +1373,7 @@
     "recomputed_stats": {
       "total": 190,
       "connector_profiles": 209,
-      "available_snapshot": 148,
+      "available_snapshot": 147,
       "comparison_ready": 127,
       "decision_ready": 19,
       "indicative_only": 108,
