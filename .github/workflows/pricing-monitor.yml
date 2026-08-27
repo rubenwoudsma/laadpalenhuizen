@@ -28,7 +28,10 @@ jobs:
           python-version: "3.x"
 
       - name: Run regression tests
-        run: python3 -m unittest discover -s tests
+        run: |
+          python3 -m unittest discover -s tests
+          python3 -m py_compile process.py scripts/check_pricing_sources.py scripts/generate_quality_report.py
+          node --check app.js
 
       - name: Verify official pricing sources
         id: monitor
