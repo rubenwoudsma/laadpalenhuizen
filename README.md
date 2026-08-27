@@ -1,251 +1,257 @@
 # Laadpalen Huizen
 
-Een statische webapp voor openbare laadpunten in de gemeente Huizen. Het doel is niet alleen te tonen waar een laadpunt staat, maar vooral welke betaalroute voor een concrete laadsessie naar verwachting het goedkoopst is.
+Een statische webapp voor openbare laadpunten in de gemeente Huizen. Het doel is niet alleen tonen waar een laadpunt staat, maar vooral een zo betrouwbaar mogelijke vergelijking geven van de totale kosten van een concrete laadsessie.
 
-**Live website:** https://rubenwoudsma.github.io/laadpalenhuizen/
+Live website: https://rubenwoudsma.github.io/laadpalenhuizen/
 
-## Wat de kaart vergelijkt
+## Kernprincipe
 
-De kaart vergelijkt drie verschillende prijsroutes als aparte opties:
+Betrouwbaarheid gaat voor dekking. De site geeft daarom drie soorten uitkomsten:
 
-1. **Direct / QR [ad-hoc]**, rechtstreeks betalen bij de CPO zonder laadpas of MSP-contract.
-2. **MSP op eigen netwerk**, wanneer de gekozen laadpasaanbieder aantoonbaar op het eigen CPO-netwerk wordt gebruikt.
-3. **MSP roaming**, wanneer de laadpas via een andere CPO loopt en roamingvoorwaarden of transactiekosten gelden.
+1. **Betrouwbare vergelijking**: voldoende complete en specifieke prijsinformatie om een harde rangschikking te ondersteunen.
+2. **Indicatieve vergelijking**: een bedrag of prijsband is bruikbaar als schatting, maar niet specifiek of volledig genoeg voor een harde winnaar.
+3. **Onvoldoende informatie**: bekende kosten of voorwaarden ontbreken, daarom wordt de route niet gerangschikt.
 
-Een gedeeld merk of dezelfde bedrijvengroep is niet voldoende om twee routes als hetzelfde tarief te behandelen. De code gebruikt waar mogelijk de OCPI `party_id` voor CPO-identificatie. Daardoor wordt bijvoorbeeld Ubitricity niet automatisch als een Shell Recharge eigen-netwerktarief behandeld.
+Een onbekende prijs blijft onbekend. De applicatie vult geen kosten in alleen om een complete Top 3 te kunnen tonen.
 
-## Sessiekosten in plaats van alleen €/kWh
+## Connectorniveau, niet locatieniveau
 
-De rangschikking wordt berekend voor de hoeveelheid energie die de gebruiker zelf kiest:
+Vanaf dataschema 5 wordt de prijsberekening per connectorprofiel uitgevoerd. Dat is belangrijk omdat binnen een locatie AC, DC, vermogen, beschikbaarheid en gekoppelde OCPI-tarieven kunnen verschillen.
 
-```text
-Total Session Cost = (Session kWh × kWh Rate × Percentage Multiplier) + Start Fee
-```
+De processor gebruikt bij voorkeur rechtstreeks uit OCPI:
 
-De browser ondersteunt 5 tot 60 kWh via een slider. Er zijn daarnaast snelle presets, waaronder:
+- `Connector.power_type` voor AC/DC;
+- `Connector.tariff_ids` voor de bij die connector geldige tarieven;
+- `Connector.max_electric_power`, of anders spanning x stroom x aantal fasen voor het vermogen;
+- EVSE- en connectorstatus voor de actuele snapshot.
 
-```text
-Hyundai Inster 20% -> 80% ≈ 25 kWh
-```
+Laadvermogen wordt nooit meer gebruikt om AC of DC te raden. Als `power_type` ontbreekt, wordt alleen een beperkte standaard-inferentie gebruikt wanneer het connectortype de stroomsoort ondubbelzinnig maakt. Anders blijft de stroomsoort onbekend.
 
-Als een tarief een prijsband heeft, wordt die volledige band doorgerekend naar de sessiekosten. De Top 3 op basis van de geschatte middelkosten wordt groen gemarkeerd. Een optie krijgt alleen een harde aanduiding als goedkoopste wanneer zijn hoogste berekende prijs nog lager is dan de laagste berekende prijs van alle andere opties. Bij overlappende prijsbanden blijft de kaart expliciet onzeker.
+Wanneer een locatie meerdere prijsverschillende connectorprofielen heeft, vraagt de browser eerst welke aansluiting wordt gebruikt. Er wordt dan niet stilzwijgend een representatieve locatieprijs gekozen.
 
-## Ondersteunde betaalopties
+## Sessiekosten
 
-De kernvergelijking bevat momenteel:
-
-- Direct / QR, zonder laadpas, wanneer een directe betaalroute is bevestigd;
-- ANWB, Zonder abonnement;
-- Tap Electric, Light;
-- Vattenfall InCharge, Gratis laadpas;
-- E-Flux by Road, Flex;
-- Shell Recharge, Basic;
-- Laadkompas, Zonder abonnement.
-
-De selectie is bewust beperkt. Een MSP wordt alleen opgenomen wanneer de prijslogica publiek genoeg is om reproduceerbaar te modelleren en de optie voldoende lokale of Nederlandse relevantie heeft.
-
-## Direct betalen en OCPI `AD_HOC_PAYMENT`
-
-OCPI ondersteunt een specifiek tarieftype `AD_HOC_PAYMENT`. `process.py` houdt zo'n tarief apart van reguliere CPO/MSP-tarieven en verwerkt daarnaast een eventuele `FLAT` component als vaste sessiekosten.
-
-NDW blijft de eerste bron voor een expliciet connector-gebonden ad-hoc tarief. Wanneer dat ontbreekt kan de dagelijkse preprocessor aanvullende officiele CPO-bronnen controleren. Een aanvullende prijs wordt alleen gebruikt als de publieke bron tijdens diezelfde run opnieuw kan worden geverifieerd. Een gewijzigde of tijdelijk onbereikbare operatorpagina blokkeert de NDW-update niet, de aanvullende prijs vervalt dan veilig.
-
-Momenteel zijn twee directe numerieke aanvullingen geimplementeerd:
-
-- **Ubitricity `UB2`**, de officiele MRA-E pagina publiceert een afzonderlijk Direct / QR tarief per kWh;
-- **TotalEnergies `GFX`**, de officiele bron bevestigt dat de CPO-basisprijs ook de ad-hoc/direct-payment prijs is, waardoor de reeds bepaalde CPO-prijs of prijsband voor Direct / QR mag worden hergebruikt.
-
-Dezelfde Ubitricity MRA-E pagina publiceert daarnaast netwerk-specifieke kWh-prijzen voor verschillende veelgebruikte MSP's. Voor de huidige kernselectie harvest de preprocessor daarom ook ANWB, Tap Electric, Shell Recharge en Vattenfall op `UB2`. Bekende vaste of procentuele MSP-kosten blijven daarna afzonderlijk onderdeel van de sessieberekening. Als de tabelstructuur niet meer veilig kan worden gekoppeld, vervallen alleen deze MSP-overrides en blijft het afzonderlijk gevonden Direct / QR tarief bruikbaar.
-
-Vattenfall direct betalen via QR wordt als betaalmogelijkheid gemonitord, maar krijgt nog geen numerieke Direct / QR prijs zolang geen reproduceerbare laadpuntprijs publiek kan worden gekoppeld. Ongeprijsde routes tellen niet mee in de Top 3.
-
-## CPO versus MSP
-
-Voor bekende eigen-netwerkrelaties wordt eerst de OCPI CPO `party_id` gebruikt. De relevante mappings staan in `process.py`.
-
-Voorbeelden:
+De basisberekening is:
 
 ```text
-Vattenfall MSP + CPO party NUO  -> own network
-E-Flux MSP + CPO party EFL      -> own network
-Shell MSP + CPO party TNM       -> own network
-Shell MSP + CPO party UB2       -> roaming, not automatically own network
+CPO-afrekenenergie = gekozen kWh afgerond op ENERGY step_size
+CPO-energie = CPO-afrekenenergie x CPO-kWh-tarief
+MSP-kWh-opslag = gekozen kWh x eventuele MSP-opslag per kWh
+sessietotaal = CPO-energie + vaste CPO-kosten + MSP-kosten/opslag
 ```
 
-Als `party_id` ontbreekt, gebruikt de code alleen een conservatieve operatornaam-fallback. Een onbekende relatie wordt niet als eigen netwerk aangenomen.
+De browser ondersteunt 5 tot 60 kWh en rekent prijsbanden volledig door. Een harde winnaar wordt alleen getoond wanneer:
 
-## Databron en prijsarchitectuur
+- minimaal twee geselecteerde betaalroutes berekenbaar zijn;
+- alle geselecteerde routes volledig gemodelleerd en `reliable` zijn;
+- de maximale prijs van de winnaar lager is dan de minimale prijs van iedere andere route.
 
-De primaire bron is **NDW DOT-NL**, de Nederlandse publieke toegang tot actuele data over publiek toegankelijke laadpunten. De huidige GitHub Action downloadt de landelijke OCPI snapshots:
+Anders toont de site alleen een laagste indicatie.
+
+## OCPI-kostencomponenten
+
+De processor ondersteunt nu:
+
+- `ENERGY`: prijs per kWh, inclusief de OCPI `step_size` voor afrekening in Wh-blokken;
+- `FLAT`: vaste CPO-kosten per sessie;
+- OCPI-btw semantiek: `price` is exclusief btw en een expliciete `vat` wordt toegevoegd. Als `vat` ontbreekt schrijft OCPI voor dat geen btw van toepassing is, er wordt dus geen Nederlands percentage verzonnen;
+- valuta: alleen expliciete EUR-tarieven kunnen volledig betrouwbaar zijn. Een expliciet niet-EUR tarief wordt niet als euro getoond. Ontbreekt `currency`, dan blijft een numerieke Nederlandse feedwaarde hooguit indicatief.
+
+Ontbreekt een verplichte of eenduidige ENERGY-`step_size`, dan blijft een berekening hooguit indicatief. Een ongeldige prijscomponent, ongeldige expliciete btw-waarde, onbekende prijsdimensie, dubbele prijsdimensie in hetzelfde element of conflicterende afrekenstappen blokkeren de ranking. Een geldig FLAT-only tarief, inclusief OCPI's `FLAT = 0` voor gratis laden, blijft wel volledig berekenbaar. Bij een unrestricted tarief wordt per prijsdimensie het eerste TariffElement gebruikt, conform de OCPI-volgorderegel. Bekende componenten die nog niet veilig in een sessietotaal kunnen worden verwerkt blokkeren eveneens de ranking van die route:
+
+- `TIME`;
+- `PARKING_TIME`;
+- `MIN_PRICE`;
+- `MAX_PRICE`;
+- OCPI `TariffRestrictions`.
+
+Dit is bewust fail-closed. Een zichtbaar bedrag kan nog steeds als informatie worden getoond, maar wordt niet gebruikt om een winnaar aan te wijzen.
+
+## Betaalroutes
+
+De kernvergelijking bevat:
+
+- Direct / QR, indien een ad-hoc betaalroute en berekenbare prijs zijn bevestigd;
+- ANWB zonder abonnement;
+- Tap Electric Light;
+- Vattenfall InCharge gratis laadpas;
+- E-Flux by Road Flex;
+- Shell Recharge Basic;
+- Laadkompas zonder abonnement.
+
+### Direct / QR
+
+Een expliciet connectorgebonden OCPI `AD_HOC_PAYMENT` tarief heeft prioriteit. OCPI staat ook een tarief zonder `Tariff.type` toe. Zo'n generiek tarief mag voor Direct / QR alleen worden hergebruikt wanneer de mogelijkheid tot direct betalen onafhankelijk via OCPI-capabilities of operatorinformatie is bevestigd. Een tarief zonder type bewijst dus nooit op zichzelf dat Direct / QR beschikbaar is. Als er geen bruikbaar NDW-tarief is kan een tijdens dezelfde datarun geverifieerde officiele CPO-bron aanvullen.
+
+Huidige aanvullende logica:
+
+- Ubitricity `UB2`: officieel MRA-E Direct/QR tarief en netwerk-specifieke MSP-kWh-prijzen;
+- TotalEnergies `GFX`: geverifieerde regel dat de CPO-basisprijs ook de direct-payment prijs is;
+- Vattenfall `NUO`: QR/direct betalen is bevestigd, maar zonder reproduceerbare numerieke laadpuntprijs wordt geen prijs verzonnen.
+
+## MSP-regels en onzekerheid
+
+Een publieke MSP-regel is alleen actief wanneer de bijbehorende bron tijdens de dagelijkse run nog herkenbaar is. Bij een mislukte broncontrole wordt alleen die prijsregel uitgeschakeld, de NDW-update en andere prijsroutes blijven werken.
+
+Belangrijke huidige regels:
+
+| MSP | Huidige modellering |
+| --- | --- |
+| ANWB zonder abonnement | CPO-prijs + EUR 0,89 per sessie. Bekende netwerkkortingen bij onder andere TotalEnergies, Ubitricity en Equans worden zonder exact netwerktarief niet verzonnen, de route wordt dan indicatief. |
+| Tap Electric Light | Gemodelleerd CPO-subtotaal + 5 procent transactiekosten. |
+| Vattenfall InCharge | Eigen netwerk op `NUO` zonder extra MSP-starttarief. Generieke roaming wordt niet geprijsd zolang het gepubliceerde starttarief geen reproduceerbaar numeriek bedrag heeft. |
+| E-Flux Flex | EUR 0,31 per sessie, buiten E-Flux + EUR 0,024/kWh. De mogelijke extra EUR 0,48 clearingtoeslag wordt als sessieband meegenomen. |
+| Shell Recharge Basic | Gepubliceerd Shell snellaadtarief op eigen netwerk, of de gepubliceerde AC/DC roamingband bij andere aanbieders, + EUR 0,35 per sessie. Voor eigen-netwerk AC wordt geen roamingband hergebruikt. Omdat Shell extra/blokkeerkosten per laadpunt of aanbieder noemt, blijft een statische Shell-route indicatief. |
+| Laadkompas zonder abonnement | CPO-prijs + EUR 0,47 per sessie. |
+
+Eigen netwerk wordt primair via OCPI `party_id` bepaald. Ubitricity `UB2` wordt bijvoorbeeld niet automatisch als Shell `TNM` behandeld, ook al zijn de bedrijven commercieel aan elkaar gerelateerd.
+
+## Quality Model v2
+
+Iedere prijsquote heeft vier afzonderlijke kwaliteitsdimensies:
+
+- `source_quality`: hoe betrouwbaar is de bron zelf, `high`, `medium` of `low`;
+- `price_specificity`: hoe specifiek is de prijs, `connector`, `network`, `regional`, `national`, `operator_estimate` of `unknown`;
+- `cost_completeness`: zijn alle bekende kosten gemodelleerd, `complete` of `partial`;
+- `decision_grade`: mag deze quote een harde keuze ondersteunen, `reliable`, `indicative` of `exclude`.
+
+Hierdoor wordt een officiele regionale prijsband niet meer simpelweg als `low confidence` behandeld. De bron kan uitstekend zijn terwijl de locatiespecificiteit beperkt is. Dat onderscheid is zichtbaar in `pricing-quality.json` en op `kwaliteit.html`.
+
+## Databron en datastroom
+
+Primaire bron: NDW DOT-NL OCPI snapshots.
 
 ```text
 https://opendata.ndw.nu/charging_point_locations_ocpi.json.gz
 https://opendata.ndw.nu/charging_point_tariffs_ocpi.json.gz
 ```
 
-De preprocessor bewaart onder andere:
-
-- locatie en gemeentegrens;
-- CPO-naam en OCPI `party_id`;
-- EVSE-ID's, bijvoorbeeld `NL*UB2*...`;
-- connectoren, vermogen en status;
-- reguliere OCPI ENERGY-tarieven;
-- expliciete `AD_HOC_PAYMENT` tarieven;
-- vaste `FLAT` bedragen waar beschikbaar;
-- de herkomst en betrouwbaarheid van de prijs;
-- de berekende MSP-route [eigen netwerk of roaming].
-
-### Huidige datastroom
+Datastroom:
 
 ```text
-NDW DOT-NL OCPI snapshots
+NDW OCPI + geverifieerde publieke prijsbronnen
         |
         v
 GitHub Actions
+        |
+        +--> dagelijkse broncontrole statische MSP-regels
         |
         v
 process.py
         |
         v
-huizen-data.json
+huizen-data.json [schema 5]
         |
-        +--> scripts/generate_quality_report.py --> pricing-quality.json
-        |                                      |
-        |                                      +--> kwaliteit.html + GitHub Actions summary
+        +--> scripts/generate_quality_report.py
+        |           |
+        |           +--> pricing-quality.json [schema 2]
+        |           +--> GitHub Actions summary
+        |
         v
-index.html + app.js
+index.html + app.js + kwaliteit.html
         |
         v
 GitHub Pages
 ```
 
-De applicatie heeft daarom geen runtime backend, database of betaalde kaart-API nodig.
+De applicatie heeft geen runtime backend of database.
 
-## Roadmap
+## Datakwaliteit
 
-De methodologie beschrijft hoe de applicatie vandaag werkt. Concrete vervolgstappen staan in [ROADMAP.md](ROADMAP.md), met per onderwerp een doel, aanpak en acceptatiecriteria.
+`kwaliteit.html` is de beheerpagina voor betrouwbaarheid en dekking. Het rapport meet onder andere:
 
-De volgorde is bewust functioneel in plaats van technisch:
+- reliable, indicative en insufficient locaties;
+- reliable, indicative en insufficient connectorprofielen;
+- Direct/QR ondersteund, geprijsd en ongeprijsd;
+- verdeling van bronkwaliteit, prijs-specificiteit, kostenvolledigheid en decision grade;
+- prijsbronnen en statische prijsregels die tijdens de run niet konden worden geverifieerd;
+- bekende kostencomponenten die ranking blokkeren;
+- statusdata ouder dan 24 uur, 7 dagen en 30 dagen;
+- adressen met meerdere records en mogelijke CPO-wissels;
+- interne consistentie tussen `huizen-data.json` en het onafhankelijk herberekende kwaliteitsrapport.
 
-1. Direct / QR prijsdekking verder vergroten met officiele CPO-bronnen;
-2. de nieuwe pricing quality report gebruiken om de grootste lokale gaten eerst aan te pakken;
-3. mogelijke dubbele of vervangen laadpuntrecords onderzoeken en veilig opschonen;
-4. tijd-, parkeer- en idle-kosten aan het sessiemodel toevoegen;
-5. regionale fallbacktarieven verder automatiseren;
-6. pas daarna NDW API/PULL of een serverless laag overwegen als de snapshotarchitectuur aantoonbaar tekortschiet.
+Er is bewust geen samengestelde score van bijvoorbeeld 82/100. Een score zou verschillende soorten risico onterecht samenvoegen.
 
-Open Charge Map kan later als metadata- en ID-verrijking worden onderzocht, maar niet als primaire prijsautoriteit zolang NDW of de CPO zelf een actuelere Nederlandse bron levert.
+## Status is een snapshot
 
+De kaart is statisch. De huidige workflow haalt NDW-data periodiek op en de getoonde beschikbaarheid is daarom een snapshot, geen gegarandeerde realtime status. De UI noemt dit expliciet. Een latere roadmapstap onderzoekt of statusinformatie vaker moet worden vernieuwd zonder de eenvoudige statische architectuur voor prijsdata op te geven.
 
-## Pricing & data quality
+## Fallbacks
 
-Na iedere datarun genereert `scripts/generate_quality_report.py` automatisch `pricing-quality.json`. De pagina [Datakwaliteit](kwaliteit.html) maakt deze informatie leesbaar zonder de ruwe dataset te hoeven openen.
+Wanneer geen bruikbaar regulier connector-tarief uit NDW beschikbaar is, gebruikt de processor alleen gecontroleerde alternatieven:
 
-Het rapport meet onder andere:
+1. een geverifieerde officiele regionale CPO-prijs wanneer die eenduidig past;
+2. een operator-mediaan alleen als diagnostische schatting wanneer voldoende landelijke voorbeelden bestaan;
+3. anders blijft de basisprijs onbekend.
 
-- welk deel van de locaties minimaal twee berekenbare prijsopties heeft;
-- welk deel een bruikbaar CPO-basistarief heeft;
-- welk deel van de bekende Direct / QR locaties daadwerkelijk geprijsd is;
-- high, medium en low confidence van alle prijsregels;
-- officiele prijsbronnen die tijdens de run niet konden worden geverifieerd;
-- locaties met statusdata ouder dan 24 uur, 7 dagen en 30 dagen;
-- adressen met meerdere records, inclusief een apart signaal voor een mogelijke CPO-wissel wanneer een oud record naast een recent record van een andere operator staat.
-
-Er is bewust geen verborgen totaalscore. De afzonderlijke KPI's en aandachtspunten moeten zichtbaar maken waar de volgende verbetering de meeste waarde voor een gebruiker bij de laadpaal oplevert.
-
-## TotalEnergies en regionale fallback
-
-Voor TotalEnergies-locaties in Huizen gebruikt de kaart, wanneer NDW geen bruikbaar direct regulier tarief levert, de officiële MRA-E prijsinformatie voor Noord-Holland, Flevoland en Utrecht. Voor reguliere AC-laders blijft dit bewust een prijsband wanneer niet betrouwbaar is vast te stellen welke concessie of dynamische prijs bij de connector hoort.
-
-Er wordt geen generieke fallbackprijs ingevuld om toch een winnaar te kunnen tonen.
-
-## Kaartlaag
-
-De kaart gebruikt Leaflet met **OpenFreeMap Positron** als standaard vectorstijl, gerenderd via MapLibre GL. Dit geeft een lichte, rustige basiskaart die dichter bij de eerdere CARTO-uitstraling ligt, zonder account of API-key.
-
-Als de vectorlaag niet kan worden geinitialiseerd, valt `app.js` automatisch terug op de standaard OpenStreetMap rasterlaag:
-
-```text
-https://tile.openstreetmap.org/{z}/{x}/{y}.png
-```
-
-Zo blijft de kaart ook bij een tijdelijke fout in de extra vectorlaag bruikbaar.
+Een operator-mediaan wordt niet gebruikt voor een sessieranking, omdat lokale vaste, tijd- of afrondingscomponenten daarmee onbekend kunnen blijven. Andere fallbacks hebben een lagere `price_specificity` en krijgen daarom niet automatisch dezelfde decision grade als een connector-specifiek NDW-tarief.
 
 ## Automatische updates
 
-`.github/workflows/update.yml` draait:
+`.github/workflows/update.yml`:
 
-- dagelijks om 06:37 UTC;
-- handmatig via `workflow_dispatch`;
-- automatisch na een wijziging aan `process.py`, `tests/test_pricing.py` of de update-workflow zelf.
+1. draait unit tests;
+2. controleert de actuele publieke MSP-prijsregels en schrijft tijdelijk `pricing-source-status.json`;
+3. haalt NDW-data en aanvullende CPO-bronnen op;
+4. genereert `huizen-data.json`;
+5. genereert `pricing-quality.json`;
+6. schrijft de kwaliteits-KPI's naar de GitHub Actions summary;
+7. commit beide gegenereerde JSON-bestanden als ze zijn gewijzigd.
 
-De workflow voert eerst de tests uit, haalt vervolgens actuele NDW-data op en genereert daarna ook `pricing-quality.json`. De belangrijkste kwaliteits-KPI's worden direct in de GitHub Actions summary gezet. `huizen-data.json` en `pricing-quality.json` worden samen teruggeschreven wanneer een van beide is veranderd. Een commit die alleen deze gegenereerde bestanden wijzigt start de workflow niet opnieuw.
+Een mislukte publieke MSP-broncontrole schakelt die ene statische regel fail-closed uit. De gehele kaartupdate wordt daardoor niet onnodig geblokkeerd.
 
-`.github/workflows/pricing-monitor.yml` controleert maandelijks de publieke tariefpagina's uit `pricing-sources.json`. De monitor signaleert mogelijke wijzigingen, maar past tarieven nooit automatisch aan.
+`.github/workflows/pricing-monitor.yml` blijft daarnaast de periodieke bronmonitor en maakt wijzigingen zichtbaar.
 
-## Lokaal draaien
+## Lokaal testen
 
 ```bash
-git clone https://github.com/rubenwoudsma/laadpalenhuizen.git
-cd laadpalenhuizen
+python3 -m unittest discover -s tests -q
+python3 -m py_compile process.py scripts/check_pricing_sources.py scripts/generate_quality_report.py
+node --check app.js
+```
+
+Lokale webserver:
+
+```bash
 python3 -m http.server 8000
 ```
 
-Open daarna:
-
-```text
-http://localhost:8000/
-```
-
-Data en kwaliteitsrapport opnieuw genereren:
-
-```bash
-python3 process.py
-python3 scripts/generate_quality_report.py --summary pricing-quality-summary.md
-```
-
-Tests draaien:
-
-```bash
-python3 -m unittest discover -s tests
-```
-
-JavaScript syntax controleren wanneer Node.js beschikbaar is:
-
-```bash
-node --check app.js
-```
+Open daarna `http://localhost:8000/`.
 
 ## Projectstructuur
 
 ```text
-.github/workflows/update.yml           NDW-data update en regeneratie
-.github/workflows/pricing-monitor.yml  Maandelijkse controle van tariefbronnen
-index.html                             Paginastructuur en styling
-app.js                                 Kaart, filters, sessiecalculator en ranking
-methodologie.html                      Uitleg over huidig model, bronnen en beperkingen
-kwaliteit.html                         Menselijk leesbaar pricing- en datakwaliteitsdashboard
-ROADMAP.md                             Concrete ontwikkelprioriteiten en acceptatiecriteria
-process.py                             NDW/OCPI-preprocessor en prijsregels
-pricing-sources.json                   Gecontroleerde MSP- en CPO-prijsbronnen
-scripts/check_pricing_sources.py       Controle van officiële tariefpagina's
-scripts/generate_quality_report.py     Genereert quality JSON en GitHub Actions summary
-huizen-data.json                       Gegenereerde laadpuntdata
-pricing-quality.json                   Gegenereerde kwaliteits-KPI's en aandachtspunten
-huizen-boundary.geojson                Gemeentegrens Huizen
-tests/                                 Regressietests voor prijsmodel en bronmonitor
+.github/workflows/
+  pricing-monitor.yml
+  update.yml
+scripts/
+  check_pricing_sources.py
+  generate_quality_report.py
+tests/
+  test_pricing.py
+  test_pricing_monitor.py
+  test_quality_report.py
+app.js
+huizen-boundary.geojson
+huizen-data.json
+index.html
+kwaliteit.html
+methodologie.html
+pricing-quality.json
+pricing-sources.json
+process.py
+README.md
+ROADMAP.md
 ```
 
-## Beperkingen
+## Roadmap en definitie van stabiel
 
-- MSP roamingtarieven kunnen afwijken van een CPO-basistarief en soms alleen in de MSP-app zichtbaar zijn.
-- Tijd-, parkeer-, idle- en blokkeerkosten worden gesignaleerd maar nog niet volledig naar een sessietotaal omgerekend.
-- De beschikbaarheidsstatus in deze statische versie is een snapshot, niet continu realtime.
-- Een directe QR-optie zonder expliciet NDW-tarief of tijdens de run geverifieerde officiele CPO-prijsregel wordt bewust niet numeriek geschat.
-- De uiteindelijke prijs op de betaalpagina, in de MSP-app of op de factuur blijft leidend.
-
-Meer details staan in [Methodologie](methodologie.html).
+Zie [ROADMAP.md](ROADMAP.md). Het doel is niet 100 procent prijsdekking. Het eindproduct is stabiel wanneer de site consequent onderscheid maakt tussen betrouwbare, indicatieve en onvoldoende informatie, geen bekende kosten weglaat in een harde ranking, alle statische prijsregels controleert en wijzigingen reproduceerbaar met tests kan verwerken.
 
 ## Herkomst
 
-Dit project is ontstaan vanuit de open source repository `jdevalk/laadpalenwijchen.nl`. Inmiddels volgt Laadpalen Huizen bewust een eigen koers met een eigen datamodel, harvesting van officiele CPO-bronnen, sessieprijsvergelijking, datakwaliteitsrapportage en een eigen roadmap. De oorspronkelijke repository is daarmee vooral historische herkomst en geen functionele upstream meer.
+Het project is oorspronkelijk ontstaan uit `jdevalk/laadpalenwijchen.nl`. Inmiddels heeft Laadpalen Huizen een eigen prijsmodel, connectorniveau-datamodel, bronharvesting, kwaliteitsrapportage en roadmap. De Wijchen-repository is daarom historische herkomst en geen functionele upstream meer.
+
+## Disclaimer
+
+De kaart is een hulpmiddel. CPO- en MSP-tarieven kunnen wijzigen en apps kunnen aanvullende locatie-specifieke kosten tonen. Controleer voor het starten van een laadsessie altijd de prijs op het laadpunt, de betaalpagina of in de app van de gekozen aanbieder.

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Check official pricing pages against the assumptions used by the site.
+"""Verify the public pricing assumptions used by Laadpalen Huizen.
 
-This script intentionally does not edit pricing code or data. It only verifies
-that the public source pages still contain the commercial conditions encoded in
-``pricing-sources.json``. GitHub Actions can use a non-zero exit status to open
-an issue for manual review.
+The checker never changes a tariff. It produces a human-readable report and,
+optionally, a machine-readable status file consumed by the daily data pipeline.
+A failed source check therefore disables the affected static pricing rule for
+that run instead of silently continuing with an unverified assumption.
 """
 
 from __future__ import annotations
@@ -17,17 +17,15 @@ import sys
 import time
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 
 DEFAULT_CONFIG = Path(__file__).resolve().parents[1] / "pricing-sources.json"
-USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36 laadpalenhuizen-pricing-monitor/1.0"
+USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/126 Safari/537.36 laadpalenhuizen-pricing-monitor/2.0"
 
 
 class TextExtractor(HTMLParser):
-    # Script/style/template payloads often contain duplicate or generated page text.
-    # Including those blobs makes otherwise stable visible phrases appear thousands
-    # of characters apart and causes false tariff mismatches.
     IGNORED_TAGS = {"script", "style", "noscript", "template", "svg"}
 
     def __init__(self) -> None:
@@ -49,7 +47,6 @@ class TextExtractor(HTMLParser):
 
 
 def normalize_page(raw_html: str) -> str:
-    """Convert HTML to a stable lower-case, single-line text representation."""
     parser = TextExtractor()
     parser.feed(raw_html)
     text = html.unescape(" ".join(parser.parts)).replace("\xa0", " ")
@@ -78,7 +75,6 @@ def fetch_page(url: str, attempts: int = 3, timeout: int = 30) -> str:
 
 
 def evaluate_source(source: dict, page_text: str) -> list[str]:
-    """Return labels of checks that are not found in normalized page text."""
     missing = []
     for check in source.get("checks", []):
         patterns = check.get("patterns") or []
@@ -126,12 +122,25 @@ def build_report(results: list[dict], verified_at: str) -> str:
         lines.append("")
     if failures:
         lines.extend([
-            "## Wat nu?",
+            "## Gevolg voor de dagelijkse vergelijking",
             "",
-            "Controleer de officiële bron handmatig. Pas de prijsregel en de monitorconfiguratie alleen aan als de commerciële voorwaarden daadwerkelijk zijn gewijzigd. De monitor wijzigt nooit automatisch tarieven in de applicatie.",
+            "De bijbehorende statische prijsregel wordt voor die dagelijkse run fail-closed uitgeschakeld. Officiële NDW/CPO-data blijft wel verwerkt worden. Controleer de bron handmatig voordat de aanname of monitor wordt aangepast.",
             "",
         ])
     return "\n".join(lines)
+
+
+def build_status(results: list[dict], verified_at: str, checked_at: str | None = None) -> dict:
+    checked_at = checked_at or datetime.now(timezone.utc).isoformat()
+    return {
+        "schema_version": 1,
+        "checked_at": checked_at,
+        "config_verified_at": verified_at,
+        "all_ok": all(result["status"] == "ok" for result in results),
+        "enabled_rule_ids": [result["id"] for result in results if result["status"] == "ok"],
+        "disabled_rule_ids": [result["id"] for result in results if result["status"] != "ok"],
+        "results": results,
+    }
 
 
 def run(config: dict, fetcher=fetch_page) -> tuple[list[dict], bool]:
@@ -147,7 +156,7 @@ def run(config: dict, fetcher=fetch_page) -> tuple[list[dict], bool]:
             page_text = normalize_page(fetcher(source["url"]))
             missing = evaluate_source(source, page_text)
             results.append({**base, "status": "mismatch" if missing else "ok", "missing": missing})
-        except Exception as exc:  # network failures must be visible in CI
+        except Exception as exc:
             results.append({**base, "status": "fetch_error", "error": str(exc), "missing": []})
     return results, all(result["status"] == "ok" for result in results)
 
@@ -156,14 +165,26 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", type=Path, default=DEFAULT_CONFIG)
     parser.add_argument("--report", type=Path, default=None)
+    parser.add_argument("--json-status", type=Path, default=None)
+    parser.add_argument(
+        "--allow-failures",
+        action="store_true",
+        help="Write/report failures but return success so the data pipeline can fail closed per rule.",
+    )
     args = parser.parse_args()
 
     config = load_config(args.config)
     results, ok = run(config)
-    report = build_report(results, config.get("verified_at", "onbekend"))
+    verified_at = config.get("verified_at", "onbekend")
+    report = build_report(results, verified_at)
     print(report)
     if args.report:
         args.report.write_text(report + "\n", encoding="utf-8")
+    if args.json_status:
+        status = build_status(results, verified_at)
+        args.json_status.write_text(json.dumps(status, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if args.allow_failures:
+        return 0
     return 0 if ok else 1
 
 

@@ -222,6 +222,18 @@ header {
   padding:2px 5px;
   color:var(--text2);
 }
+
+.connector-selector { margin-top:8px; padding:8px; border:1px solid var(--border); border-radius:8px; background:var(--surface2); }
+.connector-selector.compact { margin:8px 0 2px; padding:6px; }
+.connector-selector-title { margin-bottom:5px; font:600 8px 'IBM Plex Mono',monospace; text-transform:uppercase; letter-spacing:.55px; color:var(--muted); }
+.connector-options { display:flex; gap:5px; flex-wrap:wrap; }
+.connector-choice { border:1px solid var(--border2); background:#fff; border-radius:7px; padding:5px 7px; cursor:pointer; font-size:9px; color:var(--text2); text-align:left; }
+.connector-choice span { display:block; margin-top:2px; font:400 7px 'IBM Plex Mono',monospace; color:var(--muted); }
+.connector-choice.active { border-color:var(--text); box-shadow:inset 0 0 0 1px var(--text); background:#fff; }
+.quality-reliable { border-color:#86efac; background:#f0fdf4; color:#166534; }
+.quality-indicative { border-color:#99f6e4; background:#f0fdfa; color:#115e59; }
+.quality-insufficient { border-color:#fde68a; background:#fffbeb; color:#92400e; }
+
 .best-row {
   margin-top:9px;
   display:flex;
@@ -402,7 +414,7 @@ footer a:hover { color:var(--text); }
   <div class="header-right">
     <div class="header-stats">
       <div class="hstat"><div class="hstat-val" id="stat-total">-</div><div class="hstat-lbl">Laadpunten</div></div>
-      <div class="hstat"><div class="hstat-val" id="stat-comparable">-</div><div class="hstat-lbl">Vergelijkbaar</div></div>
+      <div class="hstat"><div class="hstat-val" id="stat-comparable">-</div><div class="hstat-lbl">Betrouwbaar</div></div>
       <div class="hstat"><div class="hstat-val" id="stat-free">-</div><div class="hstat-lbl">Vrij</div></div>
     </div>
     <span class="data-age" id="data-age">data laden</span>
@@ -430,7 +442,7 @@ footer a:hover { color:var(--text); }
           <button type="button" class="reset-btn" id="reset-passes">Reset</button>
         </div>
         <div class="pass-chips" id="pass-chips"></div>
-        <div class="selection-note">Direct / QR staat naast laadpassen en apps. Alleen opties met een berekenbaar tarief doen mee aan de rangschikking.</div>
+        <div class="selection-note">Direct / QR staat naast laadpassen en apps. Alleen volledig berekenbare kosten doen mee. Een harde winnaar verschijnt alleen als alle geselecteerde routes betrouwbaar zijn.</div>
       </div>
 
       <div class="control-row">
@@ -466,7 +478,7 @@ footer a:hover { color:var(--text); }
 
 <footer>
   <span>Bron: NDW DOT-NL, dagelijkse snapshot <span id="footer-stats"></span></span>
-  <span>Tarieven blijven indicatief, controleer de prijs vóór starten · <a href="methodologie.html">Methodologie</a> · <a href="kwaliteit.html">Datakwaliteit</a> · <a href="https://github.com/rubenwoudsma/laadpalenhuizen">GitHub</a></span>
+  <span>Groen = betrouwbare vergelijking, ~ = indicatief. Status is een snapshot, controleer prijs en beschikbaarheid vóór starten · <a href="methodologie.html">Methodologie</a> · <a href="kwaliteit.html">Datakwaliteit</a> · <a href="https://github.com/rubenwoudsma/laadpalenhuizen">GitHub</a></span>
 </footer>
 
 <div class="loader" id="loader">Laadpunten en tarieven laden...</div>
