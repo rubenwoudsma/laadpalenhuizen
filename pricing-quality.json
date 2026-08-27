@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-27T18:38:47.861023+00:00",
+  "generated_at": "2026-08-27T18:40:20.715622+00:00",
   "input_schema_version": 5,
   "legacy_profile_fallback": false,
   "coverage": {
@@ -605,7 +605,7 @@
   },
   "pricing_rule_verification": {
     "mode": "daily_verified_fail_closed",
-    "checked_at": "2026-08-27T18:38:35.649704+00:00",
+    "checked_at": "2026-08-27T18:40:07.663500+00:00",
     "all_ok": false,
     "disabled_rules": [
       "laadkompas_free",
