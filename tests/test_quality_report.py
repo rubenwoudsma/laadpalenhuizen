@@ -129,6 +129,18 @@ class QualityReportTests(unittest.TestCase):
         self.assertEqual(report["direct_payment"]["unpriced_by_operator"][0]["party_id"], "GAP")
         self.assertEqual(report["base_pricing"]["unknown_profiles"], 1)
 
+    def test_data_quality_kpis_are_separate_from_decision_quality(self):
+        report = build_quality_report(self.sample_dataset())
+        data_quality = report["data_quality"]
+        self.assertEqual(data_quality["high_quality_source_profiles"], 3)
+        self.assertEqual(data_quality["base_tariff_known_profiles"], 2)
+        self.assertEqual(data_quality["direct_priced_profiles"], 1)
+        self.assertEqual(data_quality["direct_known_profiles"], 2)
+        self.assertEqual(data_quality["complete_price_routes"], 4)
+        self.assertEqual(data_quality["total_price_routes"], 5)
+        self.assertEqual(data_quality["complete_price_routes_pct"], 80.0)
+        self.assertEqual(report["coverage"]["reliable_locations"], 1)
+
     def test_quality_dimensions_do_not_use_legacy_confidence_as_main_kpi(self):
         report = build_quality_report(self.sample_dataset())
         self.assertNotIn("confidence", report)

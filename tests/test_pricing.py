@@ -164,6 +164,15 @@ class PricingRulesTest(unittest.TestCase):
         self.assertEqual(fallback["rate"], 0.41)
         self.assertEqual(fallback["range"], [0.34, 0.48])
 
+    def test_totalenergies_mrae_ac_fallback_does_not_claim_concession_resolution(self):
+        fallback = process.totalenergies_mrae_fallback("TotalEnergies", "AC")
+        self.assertEqual(fallback["range"], [0.34, 0.48])
+        self.assertIn("exacte concessie", fallback["note"].lower())
+        self.assertIn("dynamische", fallback["note"].lower())
+        self.assertEqual(process.TOTALENERGIES_MRAE_VERIFIED_AT, "2026-08-27")
+        self.assertIn("niet als concessieheuristiek", process.TOTALENERGIES_MRAE_RESOLUTION_NOTE)
+        self.assertIn("plaatsingsdatum", process.TOTALENERGIES_MRAE_RESOLUTION_NOTE)
+
     def test_totalenergies_mrae_dc_fallback_is_exact_regional_rate(self):
         fallback = process.totalenergies_mrae_fallback("TotalEnergies", "DC")
         self.assertEqual(fallback["source"], "totalenergies_mrae_dc")

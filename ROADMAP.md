@@ -49,6 +49,16 @@ Status: gerealiseerd na analyse van de eerste live Quality Model v2 baseline.
 - [x] Quality blockers primair per connectorprofiel tellen, met prijsroute-occurrences als afzonderlijke impactmaat.
 - [x] Laadkompas- en Vattenfall-broncontrole naar beter uitleesbare officiele pagina's verplaatst.
 
+### P0.2, quality-semantiek en bronmonitoring
+
+Status: gerealiseerd.
+
+- [x] Quality-dashboard splitst besliskwaliteit en datakwaliteit expliciet.
+- [x] Locatie-KPI's heten `Betrouwbaar vergelijkbaar`, `Indicatief vergelijkbaar` en `Geen veilige vergelijking`, zodat een laag reliability-percentage niet als percentage slechte data wordt gelezen.
+- [x] Afzonderlijke data-KPI's voor high-quality brondata, bekend basistarief, geprijsde Direct/QR-routes en complete prijsroutes.
+- [x] Bronmonitor ondersteunt meerdere actuele officiele URLs voor dezelfde regel, maar alleen als transportfallback. Een semantische mismatch op de primaire pagina stopt direct fail-closed; een alternatieve live pagina wordt alleen bij een ophaalfout geprobeerd en moet alle checks doorstaan. Geen stale/last-known-good fallback.
+- [x] Laadkompas gebruikt de specifieke pagina voor de pas zonder abonnement als primaire bron en de officiele campagnepagina als live fallback.
+
 ### Acceptatie P0
 
 Na de eerste succesvolle productie-run:
@@ -64,7 +74,34 @@ Na de eerste succesvolle productie-run:
 
 De aantallen hieronder moeten steeds uit de meest recente schema-5 quality run worden gehaald. Oude schema-4 aantallen zijn alleen een historische baseline.
 
-### 1. Mogelijke oude/vervangen CPO-records onderzoeken
+### P1a. TotalEnergies MRA-E concessie/tariefgroep oplossen
+
+**Status: onderzoek afgerond, automatische resolutie bewust nog niet geimplementeerd.**
+
+Actuele officiele tarieven bevestigen MRA-E 2 t/m 5 AC, MRA-E 6 AC, MRA-E 6 Dynamic en MRA-E DC. Laadwerk publiceert daarnaast dat nieuwe laadpalen vanaf 1 juli 2024 onder andere prijsafspraken vallen dan oudere locaties. Dat is relevante concessie-informatie, maar geen veilige NDW-koppelsleutel: `last_updated` is geen plaatsingsdatum en Laadwerk vermeldt dat een oude locatie na vervanging van de fysieke paal het oude tarief kan behouden. De onderzochte NDW/OCPI-data in Huizen bevat herkenbare TNLP/PP-/EVSE-ID's, vermogen, operator en actualiteit, maar geen bewezen veld dat de AC-laadpunten aan een concrete TotalEnergies/Laadwerk-tariefgroep koppelt. TotalEnergies documenteert TNLP als uniek paalnummer, niet als concessiecode.
+
+Ook de officiele tarieftabellen mogen niet automatisch aan elkaar gelijk worden gesteld: TotalEnergies publiceert MRA-E 6 als concessietarief, terwijl Laadwerk voor nieuwe TotalEnergies-palen een eigen maximaal afgesproken direct-payment tarief noemt. Zonder laadpunt-specifiek bewijs is "nieuw" dus niet hetzelfde als "MRA-E 6".
+
+Daarom zijn de volgende heuristieken expliciet afgewezen:
+
+- TNLP- of PP-nummerreeks;
+- EVSE-ID prefix/nummer zonder officiele mappingtabel;
+- laadvermogen als proxy voor plaatsingsgeneratie;
+- `last_updated` als proxy voor installatiedatum;
+- een plaatsingsdatum uit een niet-officiele aggregator;
+- "nieuwste paal" afleiden zonder het door TotalEnergies genoemde scherm/stickerkenmerk of andere officiele assetmetadata.
+
+MRA-E 6 Dynamic is daarnaast geen enkel vast tarief: de energie wordt per tijdsblok tegen het dan geldende tarief afgerekend. Zelfs een betrouwbare Dynamic-classificatie vereist dus het P2-tijdsmodel voordat een complete sessieprijs hard kan worden gerangschikt.
+
+**Heropen deze taak alleen wanneer minimaal een van deze bewijsbronnen beschikbaar is:**
+
+- expliciet OCPI-tarief of tarief-ID dat op connectorniveau naar de concrete concessieprijs resolveert;
+- officiele publieke TotalEnergies/Laadwerk laadpuntdetailbron die EVSE/TNLP naar tariefgroep of actueel tarief koppelt, bij voorkeur de laadpunt-specifieke prijs die de officiele kaarten zelf tonen;
+- officiele asset- of concessielijst met een reproduceerbare ID-naar-tariefgroep mapping.
+
+Tot die tijd blijft de TotalEnergies AC-fallback high-quality als bron, maar `regional` in specificity en dus indicatief. Dit is geen coverage-bug maar een bewuste onzekerheidsgrens.
+
+### P1b. Mogelijke oude/vervangen CPO-records onderzoeken
 
 **Waarom eerst:** een onjuist of vervangen laadpunt op de kaart is fundamenteler dan een ontbrekende prijs.
 
@@ -78,7 +115,7 @@ De aantallen hieronder moeten steeds uit de meest recente schema-5 quality run w
 
 **Klaar wanneer:** iedere suppressieregel getest en verklaarbaar is, zonder deduplicatie op alleen adres of coordinaten.
 
-### 2. Direct/QR gaten per CPO oplossen
+### P1c. Direct/QR gaten per CPO oplossen
 
 **Historische baseline voor schema 4:** Laadnet 9, Lidl 4, JOLT 1. Herbevestig aantallen na de P0-run.
 
@@ -92,21 +129,25 @@ De aantallen hieronder moeten steeds uit de meest recente schema-5 quality run w
 
 **Klaar wanneer:** dekking stijgt zonder `exclude` of `indicative` kunstmatig als betrouwbaar te classificeren.
 
-### 3. Ontbrekende CPO-basistarieven oplossen
+### P1c vervolg. Ontbrekende CPO-basistarieven oplossen
 
 Gebruik de actuele `base_pricing.gaps` uit het quality report. Onderzoek eerst operators met de grootste lokale impact.
 
 **Klaar wanneer:** iedere nieuwe basisprijs connector-, netwerk- of regionaal herleidbaar is, of bewust onbekend blijft.
 
-### 4. Vattenfall Direct/QR numeriek koppelen
+### P1c vervolg. Vattenfall Direct/QR numeriek koppelen
 
 QR/direct betalen is bevestigd. Voeg pas een numerieke prijs toe wanneer die publiek en reproduceerbaar aan het laadpunt of relevante tariefgroep kan worden gekoppeld.
 
-### 5. Netwerk-specifieke MSP-prijzen verfijnen
+### P1d. Netwerk-specifieke MSP-prijzen verfijnen
 
 Onderzoek vooral gevallen waar de MSP zelf aangeeft dat netwerkprijzen afwijken van de generieke formule, bijvoorbeeld ANWB-kortingsnetwerken.
 
 **Klaar wanneer:** een netwerkoverride alleen actief is zolang de specifieke bron kan worden geverifieerd.
+
+### Herprioritering na P0.2/P1a
+
+De TotalEnergies-specificity is nog steeds de grootste kwantitatieve bron van `indicative`, maar is zonder nieuwe officiele station-specifieke metadata niet veilig oplosbaar. De volgende actieve taak blijft daarom **P1b, mogelijke oude/vervangen CPO-records**, omdat een fout of vervangen laadpunt fundamenteler is dan extra prijsdekking. Daarna volgt **P1c**, gericht op de concrete ontbrekende CPO- en Direct/QR-prijzen. P2 wordt naar voren gehaald zodra dynamische TotalEnergies-tarieven of andere tijdsafhankelijke routes daadwerkelijk station-specifiek identificeerbaar zijn.
 
 ## P2, Compleet sessiemodel
 

@@ -432,6 +432,20 @@ def build_quality_report(dataset: dict[str, Any]) -> dict[str, Any]:
             "unknown_by_operator": operator_rows(unknown_base_counter, unknown_base_examples),
             "sources": source_rows,
         },
+        "data_quality": {
+            "high_quality_source_profiles": profile_source_quality.get("high", 0),
+            "high_quality_source_pct": percentage(profile_source_quality.get("high", 0), profile_count),
+            "base_tariff_known_profiles": max(0, profile_count - unknown_base),
+            "base_tariff_known_pct": percentage(max(0, profile_count - unknown_base), profile_count),
+            "direct_priced_profiles": direct_priced,
+            "direct_known_profiles": direct_known,
+            "direct_priced_pct_of_known": percentage(direct_priced, direct_known),
+            "complete_price_routes": quote_completeness.get("complete", 0),
+            "total_price_routes": sum(quote_completeness.values()),
+            "complete_price_routes_pct": percentage(
+                quote_completeness.get("complete", 0), sum(quote_completeness.values())
+            ),
+        },
         "quality_dimensions": {
             "profile_source_quality": dimension_rows(profile_source_quality, ["high", "medium", "low", "unknown"]),
             "profile_price_specificity": dimension_rows(profile_specificity, ["connector", "network", "regional", "national", "operator_estimate", "unknown"]),
@@ -493,6 +507,8 @@ def build_github_summary(report: dict[str, Any]) -> str:
         f"| Betrouwbare connectorprofielen | {profiles['reliable']}/{profiles['total_profiles']} ({profiles['reliable_pct']}%) |",
         f"| CPO-basisprijs beschikbaar | {base['known_profiles']}/{profiles['total_profiles']} ({base['known_pct']}%) |",
         f"| Connector-/netwerkspecifieke basisprijs | {base['specific_profiles']}/{profiles['total_profiles']} ({base['specific_pct']}%) |",
+        f"| High-quality brondata | {report['data_quality']['high_quality_source_profiles']}/{profiles['total_profiles']} ({report['data_quality']['high_quality_source_pct']}%) |",
+        f"| Complete prijsroutes | {report['data_quality']['complete_price_routes']}/{report['data_quality']['total_price_routes']} ({report['data_quality']['complete_price_routes_pct']}%) |",
         f"| Direct/QR rangschikbaar | {direct['rankable_profiles']}/{direct['known_profiles']} ({direct['rankable_pct_of_known']}%) |",
         f"| Direct/QR numeriek geprijsd | {direct['priced_profiles']}/{direct['known_profiles']} ({direct['priced_pct_of_known']}%) |",
         f"| Status ouder dan 7 dagen | {freshness['older_than_7d']} |",
