@@ -358,7 +358,12 @@ function quoteDetail(quote) {
   const specificity = specificityLabel(quote.quality?.price_specificity);
   if (specificity) parts.push(specificity);
   const sourceUrl = safeSourceUrl(quote.source_url);
-  if (sourceUrl) parts.push(`<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">officiële bron</a>`);
+  const feeSourceUrl = safeSourceUrl(quote.fee_source_url);
+  if (sourceUrl) {
+    const label = feeSourceUrl ? 'kWh-bron' : 'officiële bron';
+    parts.push(`<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">${label}</a>`);
+  }
+  if (feeSourceUrl) parts.push(`<a href="${escapeHtml(feeSourceUrl)}" target="_blank" rel="noopener noreferrer">starttarief-bron</a>`);
   return parts.join(' · ');
 }
 

@@ -41,7 +41,7 @@ class PricingMonitorTest(unittest.TestCase):
         snippets = {
             "anwb_free": "Gratis laadpas zonder abonnement. Wel betaal je per laadsessie een starttarief van € 0,89. Profiteer van korting bij Ionity, Total Energies, Ubitricity en Equans.",
             "tap_light": "Light De beste keuze. € 0.00 /maand Je betaalt het tarief van de laadpaal +5% transactiekosten per sessie.",
-            "vattenfall": "Voor onze gratis laadpas betaal je geen abonnementskosten. Je betaalt een starttarief als je laadt bij laadpalen die niet van ons zijn.",
+            "vattenfall": "Voor onze laadpas betaal je geen abonnementskosten. Je betaalt alleen voor het opladen zelf en een starttarief van €0,35 als je laadt bij laadpalen die niet van ons zijn.",
             "vattenfall_mrae": "Openbare laadpalen in Noordwest-Nederland. Vattenfall InCharge in Metropoolregio Amsterdam (MRA 2021) €0,5222 NVT. Vattenfall InCharge in Metropoolregio Amsterdam (MRA 2024) €0,3594 €0,3394. Andere openbare laadpalen.",
             "laadwerk_vattenfall_context": "Wat kost laden op een laadpaal van Laadwerk? Nieuwe laadpalen, geplaatst vanaf 1 juli 2024: Vattenfall InCharge: €0,36. Laadpalen geplaatst vóór 1 juli 2024: bij deze laadpalen geldt het oude tarief, óók als ze vervangen worden door een nieuwe laadpaal met een digitaal scherm: Vattenfall InCharge: €0,52. Op laadkaart.laadwerk.nl kunt u de prijs checken. Dit is de meest accurate informatie. Bewonersvragen & bezwaar.",
             "eflux_flex": "Flex Gratis. €0,31 per laadsessie. €0,024/kWh toeslag op sessies bij niet-E-Flux laadpunten. Er geldt een extra toeslag van €0,48 per sessie bij Hubject, Gireve of e-clearing.",
@@ -57,6 +57,18 @@ class PricingMonitorTest(unittest.TestCase):
             with self.subTest(source=source["id"]):
                 normalized = monitor.normalize_page(f"<p>{snippets[source['id']]}</p>")
                 self.assertEqual(monitor.evaluate_source(source, normalized), [])
+
+
+    def test_vattenfall_charge_card_monitor_fails_closed_when_start_fee_changes(self):
+        config = monitor.load_config(ROOT / "pricing-sources.json")
+        source = next(item for item in config["sources"] if item["id"] == "vattenfall")
+        page = monitor.normalize_page(
+            "Voor onze laadpas betaal je geen abonnementskosten. "
+            "Je betaalt alleen voor het opladen zelf en een starttarief van €0,49 "
+            "als je laadt bij laadpalen die niet van ons zijn."
+        )
+        missing = monitor.evaluate_source(source, page)
+        self.assertIn("roaming starttarief blijft EUR 0,35 per sessie", missing)
 
     def test_vattenfall_mrae_monitor_fails_closed_when_official_rate_changes(self):
         config = monitor.load_config(ROOT / "pricing-sources.json")
@@ -112,7 +124,7 @@ class PricingMonitorTest(unittest.TestCase):
         config = monitor.load_config(ROOT / "pricing-sources.json")
         by_id = {source["id"]: source for source in config["sources"]}
         live_snippets = {
-            "vattenfall": "Voor onze laadpas betaal je geen abonnementskosten. Je betaalt alleen voor het opladen zelf en een starttarief als je laadt bij laadpalen die niet van ons zijn.",
+            "vattenfall": "Voor onze laadpas betaal je geen abonnementskosten. Je betaalt alleen voor het opladen zelf en een starttarief van €0,35 als je laadt bij laadpalen die niet van ons zijn.",
             "shell_basic": "Shell Recharge Basic Geen maandelijkse kosten. Laden bij Shell Recharge Snelladen € 0,78 / kWh. Laden bij andere aanbieders DC: € 0,79 / kWh - € 0,82 / kWh - € 0,85 / kWh AC: € 0,50 / kWh - € 0,55 / kWh - € 0,60 / kWh. Goed om te weten € 0,35 transactiekosten per laadsessie. Eventuele extra kosten en blokkeerkosten verschillen per aanbieder of laadpunt en staan in de Shell Recharge App.",
             "laadkompas_free": "Geen abonnementskosten: je betaalt alleen wanneer je oplaadt. Scherp laadtarief van € 0,47, plus het tarief per kWh van de betreffende laadpaal. Het starttarief van € 0,47 komt bij een abonnement te vervallen.",
         }

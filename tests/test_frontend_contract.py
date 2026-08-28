@@ -14,7 +14,7 @@ class FrontendContractTest(unittest.TestCase):
 
     def test_app_script_is_versioned_to_avoid_old_frontend_with_new_json(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
-        self.assertIn('src="app.js?v=20260828-2"', html)
+        self.assertIn('src="app.js?v=20260828-3"', html)
 
     def test_vattenfall_range_and_exact_prices_have_explicit_frontend_labels(self):
         app = (ROOT / "app.js").read_text(encoding="utf-8")
@@ -34,3 +34,9 @@ class FrontendContractTest(unittest.TestCase):
         self.assertEqual(high, Decimal('13.06'))
         app = (ROOT / 'app.js').read_text(encoding='utf-8')
         self.assertIn("Number(value).toLocaleString('nl-NL'", app)
+
+    def test_msp_quote_can_show_separate_kwh_and_start_fee_sources(self):
+        app = (ROOT / "app.js").read_text(encoding="utf-8")
+        self.assertIn("fee_source_url", app)
+        self.assertIn("kWh-bron", app)
+        self.assertIn("starttarief-bron", app)

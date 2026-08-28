@@ -46,8 +46,54 @@ class PricingRulesTest(unittest.TestCase):
         self.assertEqual(quote["session"], 0.0)
         self.assertEqual(quote["confidence"], "high")
 
-    def test_vattenfall_generic_roaming_fails_closed_without_numeric_start_fee(self):
+    def test_vattenfall_generic_roaming_stays_unknown_without_network_specific_kwh_rate(self):
         pricing = process.build_pricing(0.42, "ndw", "Ubitricity", "AC")
+        self.assertNotIn("vattenfall", pricing)
+
+    def test_vattenfall_official_roaming_rate_adds_published_start_fee(self):
+        pricing = process.build_pricing(
+            0.335,
+            "ndw",
+            "Ubitricity",
+            "AC",
+            party_id="UB2",
+            msp_price_overrides={
+                "vattenfall": {
+                    "rate": 0.55,
+                    "basis": "official_cpo_msp_rate",
+                    "source_url": process.UBITRICITY_MRAE_DIRECT_SOURCE_URL,
+                    "confidence": "medium",
+                }
+            },
+            verified_rules={"vattenfall"},
+        )
+        quote = pricing["vattenfall"]
+        self.assertEqual(quote["kwh"], 0.55)
+        self.assertEqual(quote["session"], 0.35)
+        self.assertEqual(quote["msp_session"], 0.35)
+        self.assertEqual(quote["source_url"], process.UBITRICITY_MRAE_DIRECT_SOURCE_URL)
+        self.assertEqual(quote["fee_source_url"], process.VATTENFALL_CHARGE_CARD_SOURCE_URL)
+        self.assertEqual(quote["quality"]["cost_completeness"], "complete")
+        self.assertEqual(quote["quality"]["decision_grade"], "reliable")
+        self.assertEqual(round(35 * quote["kwh"] + quote["session"], 2), 19.60)
+
+    def test_vattenfall_roaming_fails_closed_when_charge_card_rule_is_disabled(self):
+        pricing = process.build_pricing(
+            0.335,
+            "ndw",
+            "Ubitricity",
+            "AC",
+            party_id="UB2",
+            msp_price_overrides={
+                "vattenfall": {
+                    "rate": 0.55,
+                    "basis": "official_cpo_msp_rate",
+                    "source_url": process.UBITRICITY_MRAE_DIRECT_SOURCE_URL,
+                    "confidence": "medium",
+                }
+            },
+            verified_rules=set(),
+        )
         self.assertNotIn("vattenfall", pricing)
 
     def test_eflux_flex_own_network_has_no_kwh_markup(self):
@@ -873,10 +919,12 @@ class PricingRulesTest(unittest.TestCase):
         self.assertEqual(pricing["shell_basic"]["quality"]["decision_grade"], "indicative")
         self.assertIn("potential_msp_blocking_fee", pricing["shell_basic"]["quality"]["reasons"])
         self.assertEqual(pricing["vattenfall"]["kwh"], 0.55)
-        self.assertEqual(pricing["vattenfall"]["session"], 0.0)
+        self.assertEqual(pricing["vattenfall"]["session"], 0.35)
+        self.assertEqual(pricing["vattenfall"]["msp_session"], 0.35)
         self.assertEqual(pricing["vattenfall"]["basis"], "official_cpo_msp_rate")
-        self.assertEqual(pricing["vattenfall"]["quality"]["decision_grade"], "exclude")
-        self.assertIn("starttarief", pricing["vattenfall"]["quality"]["unmodelled_costs"][0].lower())
+        self.assertEqual(pricing["vattenfall"]["quality"]["cost_completeness"], "complete")
+        self.assertEqual(pricing["vattenfall"]["quality"]["decision_grade"], "reliable")
+        self.assertEqual(pricing["vattenfall"]["quality"]["unmodelled_costs"], [])
 
     def test_totalenergies_official_direct_rule_mirrors_cpo_range(self):
         info = process.supplemental_direct_price_info(
@@ -1415,7 +1463,8 @@ class P01SourcePrecedenceTest(unittest.TestCase):
         self.assertEqual(pricing["anwb_free"]["quality"]["unmodelled_costs"], [])
         self.assertEqual(pricing["tap_light"]["quality"]["unmodelled_costs"], [])
         self.assertEqual(pricing["shell_basic"]["quality"]["decision_grade"], "indicative")
-        self.assertEqual(pricing["vattenfall"]["quality"]["decision_grade"], "exclude")
+        self.assertEqual(pricing["vattenfall"]["quality"]["decision_grade"], "reliable")
+        self.assertEqual(pricing["vattenfall"]["session"], 0.35)
         self.assertEqual(result["connector_options"][0]["decision_status"], "reliable")
 
     def test_explicit_ndw_ad_hoc_still_beats_official_cpo_fallback(self):

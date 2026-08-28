@@ -62,7 +62,7 @@
       "id": "vattenfall",
       "provider": "Vattenfall InCharge",
       "plan": "Gratis laadpas",
-      "url": "https://incharge.vattenfall.nl/laadpas/",
+      "url": "https://incharge.vattenfall.nl/de-laadpas",
       "checks": [
         {
           "label": "laadpas heeft geen abonnementskosten",
@@ -71,10 +71,10 @@
           ]
         },
         {
-          "label": "bij roaming geldt een starttarief, bedrag wordt niet als vaste aanname gemodelleerd",
+          "label": "roaming starttarief blijft EUR 0,35 per sessie",
           "patterns": [
-            "starttarief.{0,220}(?:laadpalen\\s+die\\s+niet\\s+van\\s+ons\\s+zijn|niet[- ]?vattenfall|andere\\s+aanbieder)",
-            "(?:laadpalen\\s+die\\s+niet\\s+van\\s+ons\\s+zijn|niet[- ]?vattenfall|andere\\s+aanbieder).{0,220}starttarief"
+            "starttarief\\s+van\\s+(?:€\\s*)?0[,.]35.{0,180}laadpalen\\s+die\\s+niet\\s+van\\s+ons\\s+zijn",
+            "(?:€\\s*)?0[,.]35.{0,160}starttarief.{0,180}laadpalen\\s+die\\s+niet\\s+van\\s+ons\\s+zijn"
           ]
         }
       ]
