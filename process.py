@@ -108,6 +108,8 @@ LAADWERK_SOURCE_URL = "https://www.laadwerk.nl/diensten/laadinfra"
 # available and no verified concession mapping exists, the complete official
 # MRA price envelope is exposed as a regional range.
 VATTENFALL_PUBLIC_TARIFF_SOURCE_URL = "https://incharge.vattenfall.nl/onze-tarieven?to-id=publiektarief"
+VATTENFALL_CHARGE_CARD_SOURCE_URL = "https://incharge.vattenfall.nl/de-laadpas"
+VATTENFALL_ROAMING_SESSION_FEE = 0.35
 VATTENFALL_MRAE_VERIFIED_AT = "2026-08-28"
 VATTENFALL_MRAE_RESOLUTION_NOTE = (
     "Een publiek vindbare gemeentelijke ArcGIS-mirror van Laadwerk charge stations bevat onder meer "
@@ -221,9 +223,9 @@ PASSES = [
         "plan": "Gratis laadpas",
         "color": "#16a34a",
         "monthly_fee": 0.0,
-        "summary": "Eigen netwerk zonder extra starttarief; roaming alleen gerangschikt als alle kosten publiek bekend zijn",
+        "summary": "Eigen netwerk zonder extra starttarief; bij roaming €0,35 starttarief bovenop het laadpunttarief",
         "verified_at": "2026-08-28",
-        "source_url": "https://incharge.vattenfall.nl/onze-tarieven",
+        "source_url": VATTENFALL_CHARGE_CARD_SOURCE_URL,
         "default_selected": True,
         "kind": "msp",
     },
@@ -1800,10 +1802,11 @@ def build_pricing(
             )
             pricing["tap_light"] = apply_source_metadata(quote, tap_override)
 
-    # Vattenfall roaming is deliberately fail-closed. The current public site
-    # confirms that a start fee applies outside InCharge, but not a numeric fee.
-    # A CPO-published kWh override remains visible, but cannot be ranked until
-    # that missing fee is known.
+    # Vattenfall publishes a fixed EUR 0.35 start fee when the InCharge charge
+    # card is used at a charging point that is not operated by Vattenfall. A
+    # roaming quote is still only created when the CPO publishes a Vattenfall-
+    # specific kWh rate for that network. We do not assume that the generic CPO
+    # tariff is also the Vattenfall MSP tariff.
     if enabled("vattenfall"):
         vf_override = msp_overrides.get("vattenfall")
         own_vattenfall = is_msp_home_network("vattenfall", operator_name, party_id)
@@ -1820,20 +1823,35 @@ def build_pricing(
                 energy_step_size_wh=cpo_energy_step_size_wh,
             )
         elif vf_override:
+            route_session = float(vf_override.get("session", 0.0))
+            route_session_range = vf_override.get("session_range")
+            route_unmodelled = list(vf_override.get("unmodelled_types") or [])
             note = merge_notes(
                 vf_override.get("note"),
-                "Vattenfall bevestigt een starttarief bij roaming, maar publiceert op de gecontroleerde pagina geen numeriek bedrag. Daarom geen sessietotaal of ranking.",
+                "Vattenfall rekent bij laadpalen die niet van Vattenfall zijn €0,35 starttarief per laadsessie.",
             )
             quote = make_quote(
-                float(vf_override["rate"]), 0.0, "low",
+                float(vf_override["rate"]),
+                route_session + VATTENFALL_ROAMING_SESSION_FEE,
+                vf_override.get("confidence", "medium"),
                 vf_override.get("basis", "official_cpo_msp_rate"),
                 note=note,
                 price_range=vf_override.get("range"),
+                session_range=combined_session_range(
+                    route_session, route_session_range, VATTENFALL_ROAMING_SESSION_FEE
+                ),
                 route="msp_roaming", relation="roaming",
-                unmodelled_costs=["Vattenfall roaming starttarief onbekend"],
-                inherited_base_source=cpo_source,
+                cpo_session=route_session, msp_session=VATTENFALL_ROAMING_SESSION_FEE,
+                unmodelled_costs=route_unmodelled,
+                source_quality="high",
+                price_specificity="network",
+                quality_reasons=list(vf_override.get("quality_reasons") or []),
+                energy_step_size_wh=vf_override.get("energy_step_size_wh"),
             )
-            pricing["vattenfall"] = apply_source_metadata(quote, vf_override)
+            quote = apply_source_metadata(quote, vf_override)
+            quote["fee_source_id"] = "vattenfall"
+            quote["fee_source_url"] = VATTENFALL_CHARGE_CARD_SOURCE_URL
+            pricing["vattenfall"] = quote
 
     if enabled("eflux_flex") and cpo_rate is not None:
         own_eflux = is_msp_home_network("eflux_flex", operator_name, party_id)

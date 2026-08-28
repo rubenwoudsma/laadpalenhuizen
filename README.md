@@ -113,7 +113,7 @@ Dit is fail-closed gedrag. Een gebruiker kiest in de huidige interface alleen de
 | --- | --- |
 | ANWB zonder abonnement | CPO-prijs + EUR 0,89 per sessie. Gepubliceerde netwerkkortingen worden niet numeriek ingevuld zonder een reproduceerbaar specifiek tarief. |
 | Tap Electric Light | Gemodelleerd CPO-subtotaal + 5 procent transactiekosten. |
-| Vattenfall InCharge | Eigen netwerk op `NUO` zonder extra MSP-starttarief. Roaming blijft ongeprijsd als het noodzakelijke starttarief niet reproduceerbaar numeriek bekend is. |
+| Vattenfall InCharge | Eigen netwerk op `NUO` zonder extra MSP-starttarief. Bij roaming rekent Vattenfall EUR 0,35 starttarief per sessie. Een roamingroute wordt alleen berekend als voor dat netwerk ook een Vattenfall-specifiek kWh-tarief uit een officiële bron beschikbaar is. |
 | E-Flux Flex | EUR 0,31 per sessie, buiten E-Flux + EUR 0,024/kWh. De mogelijke extra clearingtoeslag wordt als sessieband meegenomen. |
 | Shell Recharge Basic | Gepubliceerd Shell snellaadtarief op eigen netwerk, of de gepubliceerde AC/DC roamingband bij andere aanbieders, + EUR 0,35 per sessie. Locatieafhankelijke extra kosten houden de route indicatief. |
 | Laadkompas zonder abonnement | CPO-prijs + EUR 0,47 per sessie. |
