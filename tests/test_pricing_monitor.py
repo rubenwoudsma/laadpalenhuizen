@@ -12,10 +12,22 @@ class PricingMonitorTest(unittest.TestCase):
     def test_config_is_valid(self):
         config = monitor.load_config(ROOT / "pricing-sources.json")
         self.assertEqual(config["schema_version"], 1)
-        self.assertEqual(len(config["sources"]), 13)
+        self.assertEqual(len(config["sources"]), 15)
         self.assertIn("tap_light", {source["id"] for source in config["sources"]})
+        self.assertIn("vattenfall_roaming_fee", {source["id"] for source in config["sources"]})
         self.assertIn("vattenfall_mrae", {source["id"] for source in config["sources"]})
+        self.assertIn("laadkompas_legacy_039", {source["id"] for source in config["sources"]})
         self.assertIn("laadwerk_vattenfall_context", {source["id"] for source in config["sources"]})
+
+    def test_vattenfall_plan_and_roaming_fee_are_independent_monitored_components(self):
+        config = monitor.load_config(ROOT / "pricing-sources.json")
+        sources = {item["id"]: item for item in config["sources"]}
+        self.assertEqual(sources["vattenfall"]["url"], "https://incharge.vattenfall.nl/laadpas")
+        self.assertEqual(
+            sources["vattenfall_roaming_fee"]["url"],
+            "https://incharge.vattenfall.nl/en/our-network/our-rates",
+        )
+        self.assertNotEqual(sources["vattenfall"]["url"], sources["vattenfall_roaming_fee"]["url"])
 
     def test_laadkompas_uses_canonical_source_without_campaign_fallback(self):
         config = monitor.load_config(ROOT / "pricing-sources.json")
@@ -41,12 +53,14 @@ class PricingMonitorTest(unittest.TestCase):
         snippets = {
             "anwb_free": "Gratis laadpas zonder abonnement. Wel betaal je per laadsessie een starttarief van € 0,89. Profiteer van korting bij Ionity, Total Energies, Ubitricity en Equans.",
             "tap_light": "Light De beste keuze. € 0.00 /maand Je betaalt het tarief van de laadpaal +5% transactiekosten per sessie.",
-            "vattenfall": "Voor onze laadpas betaal je geen abonnementskosten. Je betaalt alleen voor het opladen zelf en een starttarief van €0,35 als je laadt bij laadpalen die niet van ons zijn.",
+            "vattenfall": "Voor onze gratis laadpas betaal je geen abonnementskosten. Je betaalt alleen voor het opladen zelf.",
+            "vattenfall_roaming_fee": "If you charge at another provider's charging station, you also pay a fee of €0,35 incl. btw per charging session.",
             "vattenfall_mrae": "Openbare laadpalen in Noordwest-Nederland. Vattenfall InCharge in Metropoolregio Amsterdam (MRA 2021) €0,5222 NVT. Vattenfall InCharge in Metropoolregio Amsterdam (MRA 2024) €0,3594 €0,3394. Andere openbare laadpalen.",
             "laadwerk_vattenfall_context": "Wat kost laden op een laadpaal van Laadwerk? Nieuwe laadpalen, geplaatst vanaf 1 juli 2024: Vattenfall InCharge: €0,36. Laadpalen geplaatst vóór 1 juli 2024: bij deze laadpalen geldt het oude tarief, óók als ze vervangen worden door een nieuwe laadpaal met een digitaal scherm: Vattenfall InCharge: €0,52. Op laadkaart.laadwerk.nl kunt u de prijs checken. Dit is de meest accurate informatie. Bewonersvragen & bezwaar.",
             "eflux_flex": "Flex Gratis. €0,31 per laadsessie. €0,024/kWh toeslag op sessies bij niet-E-Flux laadpunten. Er geldt een extra toeslag van €0,48 per sessie bij Hubject, Gireve of e-clearing.",
             "shell_basic": "Shell Recharge Basic Geen maandelijkse kosten. Laden bij Shell Recharge Snelladen € 0,78 / kWh. Laden bij andere aanbieders DC: € 0,79 / kWh - € 0,82 / kWh - € 0,85 / kWh. AC: € 0,50 / kWh - € 0,55 / kWh - € 0,60 / kWh. € 0,35 transactiekosten per laadsessie. Eventuele extra kosten, waaronder blokkeerkosten, verschillen per aanbieder of laadpunt en staan in de Shell Recharge App.",
-            "laadkompas_free": "Laadpas zonder abonnement. Het tarief is € 0,47 per laadsessie.",
+            "laadkompas_free": "Laadpas zonder abonnement. Het tarief is € 0,47 per laadsessie. Het scherpe tarief van € 0,39 dat je betaalt bij onze laadpas zonder abonnement.",
+            "laadkompas_legacy_039": "Laadpas zonder abonnement. Het tarief is € 0,47 per laadsessie. Het scherpe tarief van € 0,39 dat je betaalt bij onze laadpas zonder abonnement.",
             "totalenergies_mrae": "Provincies Flevoland, Noord-Holland en Utrecht MRA-E 2 t/m 5 €0,40 €0,48. MRA-E 6 €0,30 €0,36. MRA-E 6 - Dynamische tarieven €0,34 €0,36. Snelladers DC Provincies Flevoland, Noord-Holland en Utrecht (MRA-E) €0,45 €0,54.",
             "ubitricity_mrae_direct": "Ad Hoc Opladen via QR-code op scherm. Per kWh 0,35€. RFID / Apps Per kWh: ANWB, Greenchoice, Tap Electric, Essent, MoveMove, Green Caravan, Eneco, Shell Recharge (App), Vattenfall Incharge, MKB Brandstof.",
             "totalenergies_direct_payment": "Het laadtarief bestaat uit een basisprijs (CPO-prijs), dit is ook de ad-hoc of direct payment prijs. De extra toeslag geldt niet bij betaling met een gewone betaal/creditkaart (Direct Payment, ook wel Ad-Hoc).",
@@ -59,13 +73,19 @@ class PricingMonitorTest(unittest.TestCase):
                 self.assertEqual(monitor.evaluate_source(source, normalized), [])
 
 
-    def test_vattenfall_charge_card_monitor_fails_closed_when_start_fee_changes(self):
+    def test_laadkompas_legacy_conflict_marker_disables_when_old_039_copy_disappears(self):
         config = monitor.load_config(ROOT / "pricing-sources.json")
-        source = next(item for item in config["sources"] if item["id"] == "vattenfall")
+        source = next(item for item in config["sources"] if item["id"] == "laadkompas_legacy_039")
+        page = monitor.normalize_page("Laadpas zonder abonnement. Het tarief is € 0,47 per laadsessie.")
+        missing = monitor.evaluate_source(source, page)
+        self.assertIn("dezelfde officiële pagina bevat nog de conflicterende oude EUR 0,39-vermelding", missing)
+
+    def test_vattenfall_roaming_fee_monitor_fails_closed_when_start_fee_changes(self):
+        config = monitor.load_config(ROOT / "pricing-sources.json")
+        source = next(item for item in config["sources"] if item["id"] == "vattenfall_roaming_fee")
         page = monitor.normalize_page(
-            "Voor onze laadpas betaal je geen abonnementskosten. "
-            "Je betaalt alleen voor het opladen zelf en een starttarief van €0,49 "
-            "als je laadt bij laadpalen die niet van ons zijn."
+            "If you charge at another provider's charging station, "
+            "you also pay a fee of €0,49 incl. btw per charging session."
         )
         missing = monitor.evaluate_source(source, page)
         self.assertIn("roaming starttarief blijft EUR 0,35 per sessie", missing)
@@ -124,7 +144,8 @@ class PricingMonitorTest(unittest.TestCase):
         config = monitor.load_config(ROOT / "pricing-sources.json")
         by_id = {source["id"]: source for source in config["sources"]}
         live_snippets = {
-            "vattenfall": "Voor onze laadpas betaal je geen abonnementskosten. Je betaalt alleen voor het opladen zelf en een starttarief van €0,35 als je laadt bij laadpalen die niet van ons zijn.",
+            "vattenfall": "Voor onze gratis laadpas betaal je geen abonnementskosten. Je betaalt alleen voor het opladen zelf en een starttarief als je laadt bij laadpalen die niet van ons zijn.",
+            "vattenfall_roaming_fee": "If you charge at another provider's charging station, you also pay a fee of €0,35 incl. btw per charging session.",
             "shell_basic": "Shell Recharge Basic Geen maandelijkse kosten. Laden bij Shell Recharge Snelladen € 0,78 / kWh. Laden bij andere aanbieders DC: € 0,79 / kWh - € 0,82 / kWh - € 0,85 / kWh AC: € 0,50 / kWh - € 0,55 / kWh - € 0,60 / kWh. Goed om te weten € 0,35 transactiekosten per laadsessie. Eventuele extra kosten en blokkeerkosten verschillen per aanbieder of laadpunt en staan in de Shell Recharge App.",
             "laadkompas_free": "Geen abonnementskosten: je betaalt alleen wanneer je oplaadt. Scherp laadtarief van € 0,47, plus het tarief per kWh van de betreffende laadpaal. Het starttarief van € 0,47 komt bij een abonnement te vervallen.",
         }

@@ -108,7 +108,8 @@ LAADWERK_SOURCE_URL = "https://www.laadwerk.nl/diensten/laadinfra"
 # available and no verified concession mapping exists, the complete official
 # MRA price envelope is exposed as a regional range.
 VATTENFALL_PUBLIC_TARIFF_SOURCE_URL = "https://incharge.vattenfall.nl/onze-tarieven?to-id=publiektarief"
-VATTENFALL_CHARGE_CARD_SOURCE_URL = "https://incharge.vattenfall.nl/de-laadpas"
+VATTENFALL_CHARGE_CARD_SOURCE_URL = "https://incharge.vattenfall.nl/laadpas"
+VATTENFALL_ROAMING_FEE_SOURCE_URL = "https://incharge.vattenfall.nl/en/our-network/our-rates"
 VATTENFALL_ROAMING_SESSION_FEE = 0.35
 VATTENFALL_MRAE_VERIFIED_AT = "2026-08-28"
 VATTENFALL_MRAE_RESOLUTION_NOTE = (
@@ -1342,7 +1343,7 @@ def find_operator_median(operator_name: str, medians: dict) -> Optional[float]:
 def confidence_for_source(source: str) -> str:
     """Legacy confidence field retained for backwards compatibility.
 
-    Quality Model v2 no longer uses this as the primary quality KPI. A source
+    Quality Model v2.1 no longer uses this as the primary quality KPI. A source
     can be authoritative while still being geographically non-specific.
     """
     if source in {"ndw", "official_cpo_tariff"}:
@@ -1432,7 +1433,7 @@ def quote_quality(
     inherited_base_source: Optional[str] = None,
     extra_reasons: Optional[list[str]] = None,
 ) -> dict:
-    """Return Quality Model v2 dimensions for a quote.
+    """Return Quality Model v2.1 dimensions for a quote.
 
     - source_quality: trustworthiness of the source itself;
     - price_specificity: how closely that source identifies this connector;
@@ -1452,6 +1453,7 @@ def quote_quality(
         "potential_msp_blocking_fee",
         "energy_step_size_not_explicit",
         "currency_not_explicit",
+        "tariff_restrictions_bounded",
     }
 
     if missing:
@@ -1485,6 +1487,39 @@ def quote_quality(
         "reasons": sorted(reasons),
         "unmodelled_costs": missing,
     }
+
+
+def bounded_restriction_adjustment(
+    unmodelled_costs: Optional[list[str]],
+    price_range: Optional[list[float]] = None,
+    session_range: Optional[list[float]] = None,
+) -> tuple[list[str], list[str]]:
+    """Downgrade OCPI restrictions from blocker to bounded uncertainty when safe.
+
+    A restriction is not itself a monetary component. If the only blocker is
+    ``TARIFF_RESTRICTIONS`` and the tariff already exposes a genuine numeric
+    range, the unknown condition merely selects a value inside that known
+    envelope. Quality Model v2.1 therefore keeps the quote complete but
+    indicative. TIME, PARKING_TIME, minimum/maximum prices and malformed
+    components remain hard blockers because their session impact is not
+    bounded by the displayed range.
+    """
+    missing = sorted({str(value) for value in (unmodelled_costs or []) if value})
+    if "TARIFF_RESTRICTIONS" not in missing:
+        return missing, []
+
+    other = [value for value in missing if value != "TARIFF_RESTRICTIONS"]
+    has_price_range = bool(
+        price_range and len(price_range) == 2
+        and abs(float(price_range[1]) - float(price_range[0])) > 1e-9
+    )
+    has_session_range = bool(
+        session_range and len(session_range) == 2
+        and abs(float(session_range[1]) - float(session_range[0])) > 1e-9
+    )
+    if not other and (has_price_range or has_session_range):
+        return [], ["tariff_restrictions_bounded"]
+    return missing, []
 
 
 def totalenergies_mrae_fallback(operator_name: str, current_type: str) -> Optional[dict]:
@@ -1684,8 +1719,10 @@ def build_pricing(
     """Build direct-payment and MSP price components for one connector profile.
 
     Static MSP rules are fail-closed when ``verified_rules`` is supplied by the
-    daily source check. A route with a known but unbounded missing cost is kept
-    visible with decision_grade ``exclude`` and is never ranked.
+    daily source check. Quality Model v2.1 distinguishes bounded uncertainty
+    from an actually missing monetary component: bounded tariff alternatives
+    remain rankable as ``indicative`` while unbounded missing costs stay visible
+    as partial quotes and are never ranked.
     """
     pricing: dict[str, dict] = {}
     op = operator_key(operator_name)
@@ -1697,6 +1734,12 @@ def build_pricing(
     base_quality_reasons = list(cpo_quality_reasons or [])
     if cpo_restricted and "TARIFF_RESTRICTIONS" not in base_unmodelled:
         base_unmodelled.append("TARIFF_RESTRICTIONS")
+    base_unmodelled, bounded_reasons = bounded_restriction_adjustment(
+        base_unmodelled,
+        cpo_rate_range,
+        cpo_session_range,
+    )
+    base_quality_reasons.extend(bounded_reasons)
 
     def combined_reasons(*extra: str) -> Optional[list[str]]:
         values = list(base_quality_reasons)
@@ -1716,6 +1759,11 @@ def build_pricing(
         unmodelled = list(direct_price_info.get("unmodelled_types") or [])
         if direct_price_info.get("restricted") and "TARIFF_RESTRICTIONS" not in unmodelled:
             unmodelled.append("TARIFF_RESTRICTIONS")
+        unmodelled, bounded_direct_reasons = bounded_restriction_adjustment(
+            unmodelled,
+            direct_price_info.get("range"),
+            direct_price_info.get("session_range"),
+        )
         if unmodelled:
             direct_confidence = downgrade_confidence(direct_confidence)
             direct_note = merge_notes(
@@ -1735,7 +1783,7 @@ def build_pricing(
             cpo_session=direct_price_info.get("session", 0.0),
             unmodelled_costs=unmodelled,
             inherited_base_source=direct_price_info.get("inherited_base_source"),
-            quality_reasons=direct_price_info.get("quality_reasons"),
+            quality_reasons=sorted(set((direct_price_info.get("quality_reasons") or []) + bounded_direct_reasons)),
             energy_step_size_wh=direct_price_info.get("energy_step_size_wh"),
         )
         pricing["direct_pay"] = apply_source_metadata(direct_quote, direct_price_info)
@@ -1807,51 +1855,53 @@ def build_pricing(
     # roaming quote is still only created when the CPO publishes a Vattenfall-
     # specific kWh rate for that network. We do not assume that the generic CPO
     # tariff is also the Vattenfall MSP tariff.
-    if enabled("vattenfall"):
-        vf_override = msp_overrides.get("vattenfall")
-        own_vattenfall = is_msp_home_network("vattenfall", operator_name, party_id)
-        if own_vattenfall and cpo_rate is not None:
-            pricing["vattenfall"] = make_quote(
-                cpo_rate, float(cpo_session or 0.0), base_confidence, cpo_source,
-                note=cpo_note,
-                price_range=shifted_range(cpo_rate_range),
-                session_range=cpo_session_range,
-                route="msp_home", relation="own_network",
-                cpo_session=cpo_session,
-                unmodelled_costs=base_unmodelled,
-                quality_reasons=combined_reasons(),
-                energy_step_size_wh=cpo_energy_step_size_wh,
-            )
-        elif vf_override:
-            route_session = float(vf_override.get("session", 0.0))
-            route_session_range = vf_override.get("session_range")
-            route_unmodelled = list(vf_override.get("unmodelled_types") or [])
-            note = merge_notes(
-                vf_override.get("note"),
-                "Vattenfall rekent bij laadpalen die niet van Vattenfall zijn €0,35 starttarief per laadsessie.",
-            )
-            quote = make_quote(
-                float(vf_override["rate"]),
-                route_session + VATTENFALL_ROAMING_SESSION_FEE,
-                vf_override.get("confidence", "medium"),
-                vf_override.get("basis", "official_cpo_msp_rate"),
-                note=note,
-                price_range=vf_override.get("range"),
-                session_range=combined_session_range(
-                    route_session, route_session_range, VATTENFALL_ROAMING_SESSION_FEE
-                ),
-                route="msp_roaming", relation="roaming",
-                cpo_session=route_session, msp_session=VATTENFALL_ROAMING_SESSION_FEE,
-                unmodelled_costs=route_unmodelled,
-                source_quality="high",
-                price_specificity="network",
-                quality_reasons=list(vf_override.get("quality_reasons") or []),
-                energy_step_size_wh=vf_override.get("energy_step_size_wh"),
-            )
-            quote = apply_source_metadata(quote, vf_override)
-            quote["fee_source_id"] = "vattenfall"
-            quote["fee_source_url"] = VATTENFALL_CHARGE_CARD_SOURCE_URL
-            pricing["vattenfall"] = quote
+    vf_override = msp_overrides.get("vattenfall")
+    own_vattenfall = is_msp_home_network("vattenfall", operator_name, party_id)
+    vattenfall_rule_ready = enabled("vattenfall") and enabled("vattenfall_roaming_fee")
+    if own_vattenfall and cpo_rate is not None:
+        # The own-network CPO tariff is itself the relevant InCharge tariff;
+        # it does not depend on the separate roaming start-fee rule.
+        pricing["vattenfall"] = make_quote(
+            cpo_rate, float(cpo_session or 0.0), base_confidence, cpo_source,
+            note=cpo_note,
+            price_range=shifted_range(cpo_rate_range),
+            session_range=cpo_session_range,
+            route="msp_home", relation="own_network",
+            cpo_session=cpo_session,
+            unmodelled_costs=base_unmodelled,
+            quality_reasons=combined_reasons(),
+            energy_step_size_wh=cpo_energy_step_size_wh,
+        )
+    elif vattenfall_rule_ready and vf_override:
+        route_session = float(vf_override.get("session", 0.0))
+        route_session_range = vf_override.get("session_range")
+        route_unmodelled = list(vf_override.get("unmodelled_types") or [])
+        note = merge_notes(
+            vf_override.get("note"),
+            "Vattenfall rekent bij laadpalen die niet van Vattenfall zijn €0,35 starttarief per laadsessie.",
+        )
+        quote = make_quote(
+            float(vf_override["rate"]),
+            route_session + VATTENFALL_ROAMING_SESSION_FEE,
+            vf_override.get("confidence", "medium"),
+            vf_override.get("basis", "official_cpo_msp_rate"),
+            note=note,
+            price_range=vf_override.get("range"),
+            session_range=combined_session_range(
+                route_session, route_session_range, VATTENFALL_ROAMING_SESSION_FEE
+            ),
+            route="msp_roaming", relation="roaming",
+            cpo_session=route_session, msp_session=VATTENFALL_ROAMING_SESSION_FEE,
+            unmodelled_costs=route_unmodelled,
+            source_quality="high",
+            price_specificity="network",
+            quality_reasons=list(vf_override.get("quality_reasons") or []),
+            energy_step_size_wh=vf_override.get("energy_step_size_wh"),
+        )
+        quote = apply_source_metadata(quote, vf_override)
+        quote["fee_source_id"] = "vattenfall_roaming_fee"
+        quote["fee_source_url"] = VATTENFALL_ROAMING_FEE_SOURCE_URL
+        pricing["vattenfall"] = quote
 
     if enabled("eflux_flex") and cpo_rate is not None:
         own_eflux = is_msp_home_network("eflux_flex", operator_name, party_id)
@@ -1929,17 +1979,96 @@ def build_pricing(
             )
 
     if enabled("laadkompas_free") and cpo_rate is not None:
+        # The canonical Laadkompas page currently states EUR 0.47 in its title,
+        # product copy and FAQ, but still contains one contradictory EUR 0.39
+        # paragraph. Quality Model v2.1 treats that live official-source conflict
+        # as bounded uncertainty rather than choosing one value silently. When
+        # the legacy wording disappears, the monitor disables only the conflict
+        # marker and EUR 0.47 becomes exact again.
+        laadkompas_conflict = enabled("laadkompas_legacy_039")
+        laadkompas_fee = 0.43 if laadkompas_conflict else 0.47
+        laadkompas_fee_range = [0.39, 0.47] if laadkompas_conflict else None
+        laadkompas_note = cpo_note
+        laadkompas_reasons = combined_reasons("official_source_internal_conflict" if laadkompas_conflict else "")
+        if laadkompas_conflict:
+            laadkompas_note = merge_notes(
+                laadkompas_note,
+                "De officiële Laadkompas-pagina noemt overwegend EUR 0,47 per sessie, maar bevat ook nog een conflicterende EUR 0,39-vermelding. De kaart rekent daarom met de volledige EUR 0,39-EUR 0,47 sessieband.",
+            )
         pricing["laadkompas_free"] = make_quote(
-            cpo_rate, float(cpo_session or 0.0) + 0.47, base_confidence, cpo_source,
-            note=cpo_note,
+            cpo_rate, float(cpo_session or 0.0) + laadkompas_fee, base_confidence, cpo_source,
+            note=laadkompas_note,
             price_range=shifted_range(cpo_rate_range),
-            session_range=combined_session_range(cpo_session, cpo_session_range, 0.47),
+            session_range=combined_session_range(
+                cpo_session, cpo_session_range, laadkompas_fee, laadkompas_fee_range
+            ),
             route="msp_roaming", relation="roaming",
-            cpo_session=cpo_session, msp_session=0.47,
+            cpo_session=cpo_session, msp_session=laadkompas_fee,
             unmodelled_costs=base_unmodelled,
-            quality_reasons=combined_reasons(),
+            quality_reasons=laadkompas_reasons,
             energy_step_size_wh=cpo_energy_step_size_wh,
         )
+
+    # A failed MSP source monitor must not erase independently verified CPO or
+    # network-specific information. For a route whose provider-side monetary
+    # model is not currently validated, retain the known price component as a
+    # partial floor. The frontend shows it as "vanaf" and never ranks it.
+    # This is deliberately different from last-known-good pricing: no stale MSP
+    # fee or markup is reused.
+    for pass_id in ("anwb_free", "tap_light", "vattenfall", "eflux_flex", "shell_basic", "laadkompas_free"):
+        if pass_id in pricing:
+            continue
+        override = msp_overrides.get(pass_id)
+        if override:
+            partial_rate = float(override["rate"])
+            partial_range = override.get("range")
+            partial_session = float(override.get("session", 0.0))
+            partial_session_range = override.get("session_range")
+            partial_basis = override.get("basis", "official_cpo_msp_rate")
+            partial_source_quality = "high"
+            partial_specificity = "network"
+            partial_unmodelled = list(override.get("unmodelled_types") or [])
+            partial_reasons = list(override.get("quality_reasons") or [])
+            partial_step = override.get("energy_step_size_wh")
+            partial_note = override.get("note")
+        elif cpo_rate is not None:
+            partial_rate = float(cpo_rate)
+            partial_range = shifted_range(cpo_rate_range)
+            partial_session = float(cpo_session or 0.0)
+            partial_session_range = cpo_session_range
+            partial_basis = cpo_source
+            partial_source_quality = None
+            partial_specificity = None
+            partial_unmodelled = list(base_unmodelled)
+            partial_reasons = list(base_quality_reasons)
+            partial_step = cpo_energy_step_size_wh
+            partial_note = cpo_note
+        else:
+            continue
+
+        partial_unmodelled.append("MSP_TARIFF_COMPONENTS_UNKNOWN")
+        partial_note = merge_notes(
+            partial_note,
+            "De actuele providerkosten voor deze betaalroute konden in deze run niet volledig worden gevalideerd. Alleen de bekende prijscomponent wordt als ondergrens getoond; deze route wordt niet gerangschikt.",
+        )
+        partial_quote = make_quote(
+            partial_rate,
+            partial_session,
+            "low",
+            partial_basis,
+            note=partial_note,
+            price_range=partial_range,
+            session_range=partial_session_range,
+            route="msp_home" if is_msp_home_network(pass_id, operator_name, party_id) else "msp_roaming",
+            relation="own_network" if is_msp_home_network(pass_id, operator_name, party_id) else "roaming",
+            cpo_session=partial_session,
+            unmodelled_costs=sorted(set(partial_unmodelled)),
+            source_quality=partial_source_quality,
+            price_specificity=partial_specificity,
+            quality_reasons=sorted(set(partial_reasons)),
+            energy_step_size_wh=partial_step,
+        )
+        pricing[pass_id] = apply_source_metadata(partial_quote, override)
 
     return pricing
 
