@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-28T11:56:48.516090+00:00",
+  "generated_at": "2026-08-28T12:24:04.284832+00:00",
   "input_schema_version": 5,
   "legacy_profile_fallback": false,
   "coverage": {
@@ -15,7 +15,7 @@
     "comparison_ready": 132,
     "comparison_ready_pct": 69.5,
     "fully_reliable_locations": 23,
-    "available_snapshot": 161
+    "available_snapshot": 160
   },
   "connector_coverage": {
     "total_profiles": 209,
@@ -398,9 +398,9 @@
     "direct_priced_profiles": 131,
     "direct_known_profiles": 151,
     "direct_priced_pct_of_known": 86.8,
-    "complete_price_routes": 527,
-    "total_price_routes": 726,
-    "complete_price_routes_pct": 72.6
+    "complete_price_routes": 526,
+    "total_price_routes": 689,
+    "complete_price_routes_pct": 76.3
   },
   "quality_dimensions": {
     "profile_source_quality": [
@@ -450,30 +450,30 @@
     "quote_cost_completeness": [
       {
         "id": "complete",
-        "count": 527,
-        "pct": 72.6
+        "count": 526,
+        "pct": 76.3
       },
       {
         "id": "partial",
-        "count": 199,
-        "pct": 27.4
+        "count": 163,
+        "pct": 23.7
       }
     ],
     "quote_decision_grade": [
       {
         "id": "reliable",
         "count": 69,
-        "pct": 9.5
+        "pct": 10.0
       },
       {
         "id": "indicative",
-        "count": 458,
-        "pct": 63.1
+        "count": 457,
+        "pct": 66.3
       },
       {
         "id": "exclude",
-        "count": 199,
-        "pct": 27.4
+        "count": 163,
+        "pct": 23.7
       }
     ]
   },
@@ -482,19 +482,19 @@
       "reason": "bounded_price_uncertainty",
       "count": 119,
       "connector_profiles": 119,
-      "quote_occurrences": 455
+      "quote_occurrences": 454
     },
     {
       "reason": "specificity_regional",
       "count": 113,
       "connector_profiles": 113,
-      "quote_occurrences": 452
+      "quote_occurrences": 451
     },
     {
       "reason": "known_cost_component_not_modelled",
       "count": 67,
       "connector_profiles": 67,
-      "quote_occurrences": 199
+      "quote_occurrences": 163
     },
     {
       "reason": "potential_network_discount",
@@ -514,7 +514,7 @@
       "reason": "TARIFF_RESTRICTIONS",
       "count": 39,
       "connector_profiles": 39,
-      "quote_occurrences": 96
+      "quote_occurrences": 79
     },
     {
       "reason": "LOCATION_TARIFF_COMPONENTS_UNKNOWN",
@@ -527,12 +527,6 @@
       "count": 13,
       "connector_profiles": 13,
       "quote_occurrences": 39
-    },
-    {
-      "reason": "Vattenfall roaming starttarief onbekend",
-      "count": 19,
-      "connector_profiles": 19,
-      "quote_occurrences": 19
     },
     {
       "reason": "PARKING_TIME",
@@ -557,12 +551,13 @@
   },
   "pricing_rule_verification": {
     "mode": "daily_verified_fail_closed",
-    "checked_at": "2026-08-28T11:56:36.828837+00:00",
+    "checked_at": "2026-08-28T12:23:52.232787+00:00",
     "all_ok": false,
     "disabled_rules": [
       "laadkompas_free",
       "lidl_direct_payment",
-      "shell_basic"
+      "shell_basic",
+      "vattenfall"
     ],
     "results": [
       {
@@ -607,18 +602,23 @@
         "id": "vattenfall",
         "provider": "Vattenfall InCharge",
         "plan": "Gratis laadpas",
-        "url": "https://incharge.vattenfall.nl/laadpas/",
-        "status": "ok",
-        "missing": [],
-        "verified_url": "https://incharge.vattenfall.nl/laadpas/",
+        "url": "https://incharge.vattenfall.nl/de-laadpas",
+        "status": "mismatch",
+        "missing": [
+          "laadpas heeft geen abonnementskosten",
+          "roaming starttarief blijft EUR 0,35 per sessie"
+        ],
         "attempted_urls": [
-          "https://incharge.vattenfall.nl/laadpas/"
+          "https://incharge.vattenfall.nl/de-laadpas"
         ],
         "attempts": [
           {
-            "url": "https://incharge.vattenfall.nl/laadpas/",
-            "status": "ok",
-            "missing": []
+            "url": "https://incharge.vattenfall.nl/de-laadpas",
+            "status": "mismatch",
+            "missing": [
+              "laadpas heeft geen abonnementskosten",
+              "roaming starttarief blijft EUR 0,35 per sessie"
+            ]
           }
         ]
       },
@@ -836,7 +836,7 @@
     ]
   },
   "freshness": {
-    "older_than_24h": 16,
+    "older_than_24h": 17,
     "older_than_7d": 9,
     "older_than_30d": 0,
     "missing_or_invalid_timestamp": 0,
@@ -897,6 +897,17 @@
         "age_days": 25.1
       },
       {
+        "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
+        "address": "Waterland 2, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-08-03T10:50:26Z",
+        "age_days": 25.1
+      },
+      {
         "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
         "address": "Westkade 359, Huizen",
         "operator": "Vattenfall InCharge",
@@ -916,17 +927,6 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T12:12:52Z",
-        "age_days": 25.0
-      },
-      {
-        "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
-        "address": "Waterland 2, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-08-03T10:50:26Z",
         "age_days": 25.0
       },
       {
@@ -1170,7 +1170,7 @@
               "OUTOFORDER"
             ],
             "available": true,
-            "last_updated": "2026-08-28T10:36:06Z",
+            "last_updated": "2026-08-28T12:17:23Z",
             "evse_ids": [
               "NLLMSE1234937612*1",
               "NLLMSE1234937612*2"
@@ -1504,7 +1504,7 @@
     "recomputed_stats": {
       "total": 190,
       "connector_profiles": 209,
-      "available_snapshot": 161,
+      "available_snapshot": 160,
       "comparison_ready": 132,
       "decision_ready": 23,
       "indicative_only": 109,
@@ -1515,7 +1515,7 @@
       "adhoc_priced_ndw": 0,
       "adhoc_priced_official": 131,
       "direct_payment_known": 151,
-      "msp_quotes_official": 57
+      "msp_quotes_official": 38
     }
   },
   "attention": [
@@ -1523,7 +1523,7 @@
       "severity": "high",
       "category": "pricing_rule_verification",
       "title": "Prijsregels fail-closed uitgeschakeld na broncontrole",
-      "count": 3
+      "count": 4
     },
     {
       "severity": "high",
@@ -1553,7 +1553,7 @@
       "severity": "medium",
       "category": "cost_completeness",
       "title": "Prijsroutes met bekende maar nog niet volledig gemodelleerde kosten",
-      "count": 199
+      "count": 163
     },
     {
       "severity": "medium",
