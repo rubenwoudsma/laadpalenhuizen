@@ -1,30 +1,30 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-28T08:26:46.106572+00:00",
+  "generated_at": "2026-08-28T09:44:52.452552+00:00",
   "input_schema_version": 5,
   "legacy_profile_fallback": false,
   "coverage": {
     "total_locations": 190,
     "connector_profiles": 209,
-    "reliable_locations": 19,
-    "reliable_locations_pct": 10.0,
+    "reliable_locations": 23,
+    "reliable_locations_pct": 12.1,
     "indicative_locations": 108,
     "indicative_locations_pct": 56.8,
-    "insufficient_locations": 63,
-    "insufficient_locations_pct": 33.2,
-    "comparison_ready": 127,
-    "comparison_ready_pct": 66.8,
-    "fully_reliable_locations": 19,
-    "available_snapshot": 146
+    "insufficient_locations": 59,
+    "insufficient_locations_pct": 31.1,
+    "comparison_ready": 131,
+    "comparison_ready_pct": 68.9,
+    "fully_reliable_locations": 23,
+    "available_snapshot": 152
   },
   "connector_coverage": {
     "total_profiles": 209,
-    "reliable": 19,
+    "reliable": 25,
     "indicative": 112,
-    "insufficient": 78,
-    "reliable_pct": 9.1,
+    "insufficient": 72,
+    "reliable_pct": 12.0,
     "indicative_pct": 53.6,
-    "insufficient_pct": 37.3
+    "insufficient_pct": 34.4
   },
   "direct_payment": {
     "known_profiles": 151,
@@ -190,11 +190,11 @@
     ]
   },
   "base_pricing": {
-    "known_profiles": 179,
-    "known_pct": 85.6,
-    "specific_profiles": 52,
-    "specific_pct": 24.9,
-    "unknown_profiles": 30,
+    "known_profiles": 185,
+    "known_pct": 88.5,
+    "specific_profiles": 58,
+    "specific_pct": 27.8,
+    "unknown_profiles": 24,
     "unknown_by_operator": [
       {
         "party_id": "LNT",
@@ -327,72 +327,6 @@
         ]
       },
       {
-        "party_id": "LDL",
-        "operator": "Lidl",
-        "count": 6,
-        "examples": [
-          {
-            "id": "6c9f31ee-b0ff-4e8f-8434-9f2d1294162c",
-            "name": "Lidl Huizen",
-            "address": "Warandebergstraat, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 22.0,
-            "evse_ids": [
-              "NL*LDL*E00000148",
-              "NL*LDL*EE00000283",
-              "NL*LDL*EE00000285"
-            ]
-          },
-          {
-            "id": "6c9f31ee-b0ff-4e8f-8434-9f2d1294162c",
-            "name": "Lidl Huizen",
-            "address": "Warandebergstraat, Huizen",
-            "connector": "CCS",
-            "current_type": "DC",
-            "power_kw": 50.0,
-            "evse_ids": [
-              "NL*LDL*E00000150"
-            ]
-          },
-          {
-            "id": "6c9f31ee-b0ff-4e8f-8434-9f2d1294162c",
-            "name": "Lidl Huizen",
-            "address": "Warandebergstraat, Huizen",
-            "connector": "CHAdeMO",
-            "current_type": "DC",
-            "power_kw": 50.0,
-            "evse_ids": [
-              "NL*LDL*E00000149"
-            ]
-          },
-          {
-            "id": "803b1f5c-cd85-464d-bf95-e7fd2f1bc69d",
-            "name": "LNL01EVCP36",
-            "address": "Havenstraat 71, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 22.0,
-            "evse_ids": [
-              "NL*LDL*E00000413",
-              "NL*LDL*E00000414"
-            ]
-          },
-          {
-            "id": "eb8361f7-ea8f-42c0-a2ac-89a1177d5426",
-            "name": "Lidl HUIZEN",
-            "address": "Warandebergstraat, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 11.0,
-            "evse_ids": [
-              "NL*LDL*E00000280",
-              "NL*LDL*E00000282"
-            ]
-          }
-        ]
-      },
-      {
         "party_id": "JEG",
         "operator": "JOLT Energy",
         "count": 1,
@@ -444,13 +378,18 @@
       },
       {
         "id": "unknown",
-        "profiles": 30,
-        "pct": 14.4
+        "profiles": 24,
+        "pct": 11.5
       },
       {
         "id": "operator_median",
         "profiles": 15,
         "pct": 7.2
+      },
+      {
+        "id": "official_cpo_tariff",
+        "profiles": 6,
+        "pct": 2.9
       },
       {
         "id": "totalenergies_mrae_dc",
@@ -460,28 +399,28 @@
     ]
   },
   "data_quality": {
-    "high_quality_source_profiles": 164,
-    "high_quality_source_pct": 78.5,
-    "base_tariff_known_profiles": 179,
-    "base_tariff_known_pct": 85.6,
+    "high_quality_source_profiles": 170,
+    "high_quality_source_pct": 81.3,
+    "base_tariff_known_profiles": 185,
+    "base_tariff_known_pct": 88.5,
     "direct_priced_profiles": 131,
     "direct_known_profiles": 151,
     "direct_priced_pct_of_known": 86.8,
-    "complete_price_routes": 505,
-    "total_price_routes": 704,
-    "complete_price_routes_pct": 71.7
+    "complete_price_routes": 523,
+    "total_price_routes": 722,
+    "complete_price_routes_pct": 72.4
   },
   "quality_dimensions": {
     "profile_source_quality": [
       {
         "id": "high",
-        "count": 164,
-        "pct": 78.5
+        "count": 170,
+        "pct": 81.3
       },
       {
         "id": "medium",
-        "count": 30,
-        "pct": 14.4
+        "count": 24,
+        "pct": 11.5
       },
       {
         "id": "low",
@@ -496,6 +435,11 @@
         "pct": 24.9
       },
       {
+        "id": "network",
+        "count": 6,
+        "pct": 2.9
+      },
+      {
         "id": "regional",
         "count": 112,
         "pct": 53.6
@@ -507,52 +451,52 @@
       },
       {
         "id": "unknown",
-        "count": 30,
-        "pct": 14.4
+        "count": 24,
+        "pct": 11.5
       }
     ],
     "quote_cost_completeness": [
       {
         "id": "complete",
-        "count": 505,
-        "pct": 71.7
+        "count": 523,
+        "pct": 72.4
       },
       {
         "id": "partial",
         "count": 199,
-        "pct": 28.3
+        "pct": 27.6
       }
     ],
     "quote_decision_grade": [
       {
         "id": "reliable",
-        "count": 57,
-        "pct": 8.1
+        "count": 69,
+        "pct": 9.6
       },
       {
         "id": "indicative",
-        "count": 448,
-        "pct": 63.6
+        "count": 454,
+        "pct": 62.9
       },
       {
         "id": "exclude",
         "count": 199,
-        "pct": 28.3
+        "pct": 27.6
       }
     ]
   },
   "decision_reasons": [
     {
+      "reason": "bounded_price_uncertainty",
+      "count": 118,
+      "connector_profiles": 118,
+      "quote_occurrences": 451
+    },
+    {
       "reason": "specificity_regional",
       "count": 112,
       "connector_profiles": 112,
       "quote_occurrences": 448
-    },
-    {
-      "reason": "bounded_price_uncertainty",
-      "count": 112,
-      "connector_profiles": 112,
-      "quote_occurrences": 445
     },
     {
       "reason": "known_cost_component_not_modelled",
@@ -606,17 +550,26 @@
     }
   ],
   "official_sources": {
-    "total": 2,
-    "ok": 2,
-    "failed": 0,
-    "failed_sources": []
+    "total": 4,
+    "ok": 3,
+    "failed": 1,
+    "failed_sources": [
+      {
+        "id": "lidl_direct_payment",
+        "party_id": "LDL",
+        "status": "unavailable",
+        "error": "Lidl.nl AC/DC Direct/QR-tarieven niet gevonden in de Direct-sectie",
+        "source_url": "https://www.lidl.nl/c/laadpalen/s10015078"
+      }
+    ]
   },
   "pricing_rule_verification": {
     "mode": "daily_verified_fail_closed",
-    "checked_at": "2026-08-28T08:26:35.316964+00:00",
+    "checked_at": "2026-08-28T09:44:41.836978+00:00",
     "all_ok": false,
     "disabled_rules": [
       "laadkompas_free",
+      "lidl_direct_payment",
       "shell_basic"
     ],
     "results": [
@@ -808,19 +761,43 @@
         ]
       },
       {
-        "id": "vattenfall_direct_support",
-        "provider": "Vattenfall InCharge",
-        "plan": "Direct / QR support",
-        "url": "https://incharge.vattenfall.nl/blog/snel-en-eenvoudig-laden-zonder-laadpas",
-        "status": "ok",
-        "missing": [],
-        "verified_url": "https://incharge.vattenfall.nl/blog/snel-en-eenvoudig-laden-zonder-laadpas",
+        "id": "lidl_direct_payment",
+        "provider": "Lidl",
+        "plan": "Direct / QR via Lidl.nl",
+        "url": "https://www.lidl.nl/c/laadpalen/s10015078",
+        "status": "mismatch",
+        "missing": [
+          "Lidl.nl publiceert een numeriek Direct/QR AC-tarief",
+          "Lidl.nl publiceert een numeriek Direct/QR DC-tarief"
+        ],
         "attempted_urls": [
-          "https://incharge.vattenfall.nl/blog/snel-en-eenvoudig-laden-zonder-laadpas"
+          "https://www.lidl.nl/c/laadpalen/s10015078"
         ],
         "attempts": [
           {
-            "url": "https://incharge.vattenfall.nl/blog/snel-en-eenvoudig-laden-zonder-laadpas",
+            "url": "https://www.lidl.nl/c/laadpalen/s10015078",
+            "status": "mismatch",
+            "missing": [
+              "Lidl.nl publiceert een numeriek Direct/QR AC-tarief",
+              "Lidl.nl publiceert een numeriek Direct/QR DC-tarief"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "lidl_cpo_tariff",
+        "provider": "Lidl",
+        "plan": "CPO-basistarief via eigen laadpas",
+        "url": "https://www.lidl.nl/c/laadpalen/s10015078",
+        "status": "ok",
+        "missing": [],
+        "verified_url": "https://www.lidl.nl/c/laadpalen/s10015078",
+        "attempted_urls": [
+          "https://www.lidl.nl/c/laadpalen/s10015078"
+        ],
+        "attempts": [
+          {
+            "url": "https://www.lidl.nl/c/laadpalen/s10015078",
             "status": "ok",
             "missing": []
           }
@@ -829,11 +806,33 @@
     ]
   },
   "freshness": {
-    "older_than_24h": 17,
+    "older_than_24h": 16,
     "older_than_7d": 9,
     "older_than_30d": 0,
     "missing_or_invalid_timestamp": 0,
     "stale_locations_over_7d": [
+      {
+        "id": "74ac2267-f060-4c21-a3fd-483702b00a19",
+        "address": "Mastspoor 3, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-07-31T12:44:41Z",
+        "age_days": 27.9
+      },
+      {
+        "id": "50cf8798-1841-4b66-8f8c-86c43af6dfea",
+        "address": "De Ruyterstraat 7, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-07-31T14:36:10Z",
+        "age_days": 27.8
+      },
       {
         "id": "7e0dfd1b-e2e7-46ff-bcff-53fb5c9af4bb",
         "address": "Driftweg 24, Huizen",
@@ -846,26 +845,37 @@
         "age_days": 27.8
       },
       {
-        "id": "74ac2267-f060-4c21-a3fd-483702b00a19",
-        "address": "Mastspoor 3, Huizen",
+        "id": "691343b7-cb61-4117-9d42-db44ceb4ba32",
+        "address": "Zomerkade 290, Huizen",
         "operator": "Vattenfall InCharge",
         "party_id": "NUO",
         "statuses": [
           "UNKNOWN"
         ],
-        "last_updated": "2026-07-31T12:44:41Z",
-        "age_days": 27.8
+        "last_updated": "2026-08-03T07:46:28Z",
+        "age_days": 25.1
       },
       {
-        "id": "50cf8798-1841-4b66-8f8c-86c43af6dfea",
-        "address": "De Ruyterstraat 7, Huizen",
+        "id": "715d923d-4113-4e5a-8c20-7c41a9b78227",
+        "address": "Eierlanden 93, Huizen",
         "operator": "Vattenfall InCharge",
         "party_id": "NUO",
         "statuses": [
           "UNKNOWN"
         ],
-        "last_updated": "2026-07-31T14:36:10Z",
-        "age_days": 27.7
+        "last_updated": "2026-08-03T09:49:33Z",
+        "age_days": 25.0
+      },
+      {
+        "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
+        "address": "Waterland 2, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-08-03T10:50:26Z",
+        "age_days": 25.0
       },
       {
         "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
@@ -879,39 +889,6 @@
         "age_days": 25.0
       },
       {
-        "id": "691343b7-cb61-4117-9d42-db44ceb4ba32",
-        "address": "Zomerkade 290, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-08-03T07:46:28Z",
-        "age_days": 25.0
-      },
-      {
-        "id": "715d923d-4113-4e5a-8c20-7c41a9b78227",
-        "address": "Eierlanden 93, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-08-03T09:49:33Z",
-        "age_days": 24.9
-      },
-      {
-        "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
-        "address": "Waterland 2, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-08-03T10:50:26Z",
-        "age_days": 24.9
-      },
-      {
         "id": "6c715014-aa5e-46e6-9aab-4da426e6b9f2",
         "address": "Salamander 2, Huizen",
         "operator": "Vattenfall InCharge",
@@ -920,7 +897,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T12:12:52Z",
-        "age_days": 24.8
+        "age_days": 24.9
       },
       {
         "id": "acbe9fd2-a94e-4760-88c5-72fbb962e753",
@@ -1034,7 +1011,7 @@
               "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-08-28T06:52:01Z",
+            "last_updated": "2026-08-28T09:32:43Z",
             "evse_ids": [
               "NLLMSE1234937461*1",
               "NLLMSE1234937461*2"
@@ -1073,11 +1050,10 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE",
-              "CHARGING"
+              "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-28T06:52:41Z",
+            "last_updated": "2026-08-28T09:12:06Z",
             "evse_ids": [
               "NLLMSE1234937418*1",
               "NLLMSE1234937418*2"
@@ -1247,10 +1223,11 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE"
+              "AVAILABLE",
+              "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-08-27T23:40:57Z",
+            "last_updated": "2026-08-28T09:19:31Z",
             "evse_ids": [
               "NLLMSE1234937467*1",
               "NLLMSE1234937467*2"
@@ -1496,13 +1473,13 @@
     "recomputed_stats": {
       "total": 190,
       "connector_profiles": 209,
-      "available_snapshot": 146,
-      "comparison_ready": 127,
-      "decision_ready": 19,
+      "available_snapshot": 152,
+      "comparison_ready": 131,
+      "decision_ready": 23,
       "indicative_only": 108,
-      "insufficient": 63,
-      "fully_reliable": 19,
-      "unknown_base_rate": 30,
+      "insufficient": 59,
+      "fully_reliable": 23,
+      "unknown_base_rate": 24,
       "adhoc_priced": 131,
       "adhoc_priced_ndw": 0,
       "adhoc_priced_official": 131,
@@ -1515,13 +1492,19 @@
       "severity": "high",
       "category": "pricing_rule_verification",
       "title": "Prijsregels fail-closed uitgeschakeld na broncontrole",
-      "count": 2
+      "count": 3
+    },
+    {
+      "severity": "high",
+      "category": "official_source_harvest",
+      "title": "Officiële CPO-bron kon niet volledig worden geverifieerd",
+      "count": 1
     },
     {
       "severity": "high",
       "category": "decision_quality",
       "title": "Connectorprofielen met onvoldoende informatie voor vergelijking",
-      "count": 78
+      "count": 72
     },
     {
       "severity": "medium",
@@ -1533,7 +1516,7 @@
       "severity": "medium",
       "category": "base_tariff",
       "title": "Connectorprofielen zonder CPO-basistarief",
-      "count": 30
+      "count": 24
     },
     {
       "severity": "medium",
@@ -1550,7 +1533,7 @@
     {
       "severity": "medium",
       "category": "multi_record",
-      "title": "Mogelijke CPO-wissels of vervangen locatierecords",
+      "title": "Adresgroepen met een operatorovergangssignaal [geen automatische deduplicatie]",
       "count": 9
     }
   ]
