@@ -274,6 +274,7 @@ function sourceInfo(pt) {
   const tariff = profile.tariff || {};
   const source = tariff.source || pt.pricing_source;
   if (source === 'ndw') return { cls: 'source-direct', label: 'NDW connector-tarief', tariff };
+  if (source === 'official_cpo_tariff') return { cls: 'source-direct', label: 'Officieel CPO-netwerktarief', tariff };
   if (source === 'totalenergies_mrae') return { cls: 'source-regional', label: 'Officiële TotalEnergies MRA-E prijsband', tariff };
   if (source === 'totalenergies_mrae_dc') return { cls: 'source-regional', label: 'Officieel TotalEnergies MRA-E DC-tarief', tariff };
   if (source === 'operator_median') return { cls: 'source-estimate', label: 'Schatting via operator-mediaan', tariff };

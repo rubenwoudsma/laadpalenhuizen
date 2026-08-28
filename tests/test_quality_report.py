@@ -174,6 +174,8 @@ class QualityReportTests(unittest.TestCase):
         self.assertEqual(report["potential_duplicates"]["group_count"], 1)
         self.assertEqual(report["potential_duplicates"]["possible_operator_transition_groups"], 1)
         self.assertEqual(report["potential_duplicates"]["groups"][0]["reason"], "possible_operator_transition")
+        attention = next(item for item in report["attention"] if item["category"] == "multi_record")
+        self.assertIn("geen automatische deduplicatie", attention["title"].lower())
 
     def test_reports_source_and_rule_failures(self):
         report = build_quality_report(self.sample_dataset())

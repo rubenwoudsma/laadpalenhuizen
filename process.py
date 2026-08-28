@@ -84,7 +84,7 @@ SKIP_OPERATOR_MEDIAN = {
 # DC: MRA-E = EUR 0.54/kWh incl. VAT.
 TOTALENERGIES_MRAE_AC_RANGE = (0.34, 0.48)
 TOTALENERGIES_MRAE_DC_RATE = 0.54
-TOTALENERGIES_MRAE_VERIFIED_AT = "2026-08-27"
+TOTALENERGIES_MRAE_VERIFIED_AT = "2026-08-28"
 TOTALENERGIES_MRAE_SOURCE_URL = "https://totalenergies.nl/elektrisch-rijden/vind-laadpunt"
 TOTALENERGIES_MRAE_HISTORY_SOURCE_URL = "https://totalenergies.nl/historische-laadtarieven-concessie"
 TOTALENERGIES_MRAE_DYNAMIC_SOURCE_URL = "https://totalenergies.nl/elektrisch-rijden/dynamische-tarieven"
@@ -108,6 +108,7 @@ TOTALENERGIES_DIRECT_RULE_SOURCE_URL = (
     "https://totalenergies.nl/nieuwsoverzicht/blogs-klantverhalen/"
     "totalenergies-betreurt-onverwachte-toeslag-van-laaddienstverlener-voor-e"
 )
+LIDL_DIRECT_SOURCE_URL = "https://www.lidl.nl/c/laadpalen/s10015078"
 
 # OCPI party IDs make CPO matching more reliable than operator-name matching.
 # The list is deliberately limited to operators relevant to Huizen or current
@@ -180,7 +181,7 @@ PASSES = [
         "color": "#d89b00",
         "monthly_fee": 0.0,
         "summary": "CPO-tarief + €0,89 per sessie",
-        "verified_at": "2026-08-12",
+        "verified_at": "2026-08-28",
         "source_url": "https://www.anwb.nl/auto/elektrisch-rijden/laadpas-abonnement",
         "default_selected": True,
         "kind": "msp",
@@ -192,7 +193,7 @@ PASSES = [
         "color": "#0891b2",
         "monthly_fee": 0.0,
         "summary": "CPO-tarief + 5% transactiekosten per sessie",
-        "verified_at": "2026-08-12",
+        "verified_at": "2026-08-28",
         "source_url": "https://tapelectric.app/nl/laadpas/",
         "default_selected": True,
         "kind": "msp",
@@ -204,7 +205,7 @@ PASSES = [
         "color": "#16a34a",
         "monthly_fee": 0.0,
         "summary": "Eigen netwerk zonder extra starttarief; roaming alleen gerangschikt als alle kosten publiek bekend zijn",
-        "verified_at": "2026-08-12",
+        "verified_at": "2026-08-28",
         "source_url": "https://incharge.vattenfall.nl/onze-tarieven",
         "default_selected": True,
         "kind": "msp",
@@ -216,7 +217,7 @@ PASSES = [
         "color": "#2563eb",
         "monthly_fee": 0.0,
         "summary": "€0,31 per sessie + €0,024/kWh buiten E-Flux",
-        "verified_at": "2026-08-12",
+        "verified_at": "2026-08-28",
         "source_url": "https://www.e-flux.io/nl/tarieven-laadpassen",
         "default_selected": True,
         "kind": "msp",
@@ -228,7 +229,7 @@ PASSES = [
         "color": "#dc2626",
         "monthly_fee": 0.0,
         "summary": "Gepubliceerde prijsband + €0,35 per sessie",
-        "verified_at": "2026-08-12",
+        "verified_at": "2026-08-28",
         "source_url": "https://www.shell.nl/elektrisch-opladen/Tarieven.html",
         "default_selected": True,
         "kind": "msp",
@@ -240,7 +241,7 @@ PASSES = [
         "color": "#7c3aed",
         "monthly_fee": 0.0,
         "summary": "CPO-tarief + €0,47 per sessie",
-        "verified_at": "2026-08-12",
+        "verified_at": "2026-08-28",
         "source_url": "https://laadkompas.nl/laadpas/zonder-abonnement/",
         "default_selected": True,
         "kind": "msp",
@@ -422,6 +423,53 @@ def parse_totalenergies_direct_rule(page_text: str) -> bool:
     ))
 
 
+def _parse_lidl_rates_in_section(page_text: str, heading: str, stop_heading: Optional[str] = None) -> dict[str, float]:
+    """Extract AC/DC Lidl.nl rates only from the named visible page section."""
+    text = re.sub(r"\s+", " ", (page_text or "").lower())
+    start = text.find(heading.lower())
+    if start < 0:
+        return {}
+    end = len(text)
+    if stop_heading:
+        candidate = text.find(stop_heading.lower(), start + len(heading))
+        if candidate >= 0:
+            end = candidate
+    section = text[start:end]
+    patterns = {
+        "AC": r"lidl\.nl[- ]tarief\s+regulier[- ]laadstation.{0,100}?€?\s*([0-9]+[,.][0-9]{2,4}).{0,30}?/\s*kwh.{0,30}?\(ac\)",
+        "DC": r"lidl\.nl[- ]tarief\s+snel[- ]laadstation.{0,100}?€?\s*([0-9]+[,.][0-9]{2,4}).{0,30}?/\s*kwh.{0,30}?\(dc\)",
+    }
+    result: dict[str, float] = {}
+    for current_type, pattern in patterns.items():
+        match = re.search(pattern, section, flags=re.IGNORECASE)
+        if not match:
+            return {}
+        result[current_type] = round(float(match.group(1).replace(",", ".")), 4)
+    return result
+
+
+def parse_lidl_direct_rates(page_text: str) -> dict[str, float]:
+    """Extract Lidl.nl Direct/QR AC and DC rates from the Direct section only."""
+    return _parse_lidl_rates_in_section(page_text, "opladen via lidl.nl", "opladen met eigen laadpas")
+
+
+def parse_lidl_cpo_rates(page_text: str) -> dict[str, float]:
+    """Extract Lidl.nl AC/DC rates explicitly published for use with a charge card.
+
+    The own-charge-card section must also state that the charge-card provider's
+    own costs can apply. Without that qualifier the numerical CPO base would be
+    easy to misread as a complete MSP session price, so the fallback fails closed.
+    """
+    text = re.sub(r"\s+", " ", (page_text or "").lower())
+    start = text.find("opladen met eigen laadpas")
+    if start < 0:
+        return {}
+    section = text[start:]
+    if not re.search(r"abonnementskosten.{0,120}laadpas\s+aanbieder", section, flags=re.IGNORECASE):
+        return {}
+    return _parse_lidl_rates_in_section(page_text, "opladen met eigen laadpas")
+
+
 def harvest_official_pricing(fetcher=fetch_public_page) -> dict:
     """Harvest public operator rules that can safely supplement NDW pricing.
 
@@ -431,6 +479,7 @@ def harvest_official_pricing(fetcher=fetch_public_page) -> dict:
     """
     checked_at = datetime.now(timezone.utc).isoformat()
     direct_by_party: dict[str, dict] = {}
+    cpo_by_party: dict[str, dict] = {}
     msp_by_party: dict[str, dict] = {}
     results: list[dict] = []
 
@@ -510,9 +559,80 @@ def harvest_official_pricing(fetcher=fetch_public_page) -> dict:
             "source_url": TOTALENERGIES_DIRECT_RULE_SOURCE_URL,
         })
 
+    try:
+        page = fetcher(LIDL_DIRECT_SOURCE_URL)
+    except Exception as exc:
+        for source_id in ("lidl_direct_payment", "lidl_cpo_tariff"):
+            results.append({
+                "id": source_id,
+                "party_id": "LDL",
+                "status": "unavailable",
+                "error": str(exc),
+                "source_url": LIDL_DIRECT_SOURCE_URL,
+            })
+    else:
+        direct_rates = parse_lidl_direct_rates(page)
+        if set(direct_rates) == {"AC", "DC"}:
+            direct_by_party["LDL"] = {
+                "mode": "by_current_type",
+                "rates": direct_rates,
+                "session": 0.0,
+                "basis": "official_cpo_adhoc",
+                "source_id": "lidl_direct_payment",
+                "source_url": LIDL_DIRECT_SOURCE_URL,
+                "source_checked_at": checked_at,
+                "confidence": "high",
+                "note": "Officieel Lidl.nl Direct/QR-tarief, met een afzonderlijk kWh-tarief voor AC en DC.",
+            }
+            results.append({
+                "id": "lidl_direct_payment",
+                "party_id": "LDL",
+                "status": "ok",
+                "rates": direct_rates,
+                "source_url": LIDL_DIRECT_SOURCE_URL,
+            })
+        else:
+            results.append({
+                "id": "lidl_direct_payment",
+                "party_id": "LDL",
+                "status": "unavailable",
+                "error": "Lidl.nl AC/DC Direct/QR-tarieven niet gevonden in de Direct-sectie",
+                "source_url": LIDL_DIRECT_SOURCE_URL,
+            })
+
+        cpo_rates = parse_lidl_cpo_rates(page)
+        if set(cpo_rates) == {"AC", "DC"}:
+            cpo_by_party["LDL"] = {
+                "mode": "by_current_type",
+                "rates": cpo_rates,
+                "session": 0.0,
+                "basis": "official_cpo_tariff",
+                "source_id": "lidl_cpo_tariff",
+                "source_url": LIDL_DIRECT_SOURCE_URL,
+                "source_checked_at": checked_at,
+                "confidence": "high",
+                "note": "Officieel Lidl.nl CPO-tarief bij gebruik van een eigen laadpas, afzonderlijk voor AC en DC; laadpasaanbieders kunnen eigen kosten toevoegen.",
+            }
+            results.append({
+                "id": "lidl_cpo_tariff",
+                "party_id": "LDL",
+                "status": "ok",
+                "rates": cpo_rates,
+                "source_url": LIDL_DIRECT_SOURCE_URL,
+            })
+        else:
+            results.append({
+                "id": "lidl_cpo_tariff",
+                "party_id": "LDL",
+                "status": "unavailable",
+                "error": "Lidl.nl AC/DC CPO-tarieven niet gevonden in de eigen-laadpas-sectie",
+                "source_url": LIDL_DIRECT_SOURCE_URL,
+            })
+
     return {
         "checked_at": checked_at,
         "direct_by_party": direct_by_party,
+        "cpo_by_party": cpo_by_party,
         "msp_by_party": msp_by_party,
         "sources": results,
     }
@@ -522,6 +642,37 @@ def harvest_official_pricing(fetcher=fetch_public_page) -> dict:
 # were added. New code should use harvest_official_pricing().
 def harvest_official_direct_pricing(fetcher=fetch_public_page) -> dict:
     return harvest_official_pricing(fetcher=fetcher)
+
+
+def supplemental_cpo_price_info(
+    party_id: str,
+    current_type: Optional[str],
+    official_cpo: Optional[dict],
+) -> Optional[dict]:
+    """Return a verified network CPO base tariff when NDW has none."""
+    source = (official_cpo or {}).get((party_id or "").upper())
+    if not source or source.get("mode") != "by_current_type":
+        return None
+    rate = (source.get("rates") or {}).get(str(current_type or "").upper())
+    if rate is None:
+        return None
+    return {
+        "rate": float(rate),
+        "range": None,
+        "session": float(source.get("session", 0.0)),
+        "session_range": None,
+        "unmodelled_types": [],
+        "quality_reasons": [],
+        "energy_step_size_wh": None,
+        "tariff_id": None,
+        "restricted": False,
+        "basis": source.get("basis", "official_cpo_tariff"),
+        "source_id": source.get("source_id"),
+        "source_url": source.get("source_url"),
+        "source_checked_at": source.get("source_checked_at"),
+        "confidence": source.get("confidence", "high"),
+        "note": source.get("note"),
+    }
 
 
 def supplemental_direct_price_info(
@@ -536,6 +687,7 @@ def supplemental_direct_price_info(
     cpo_restricted: bool = False,
     cpo_energy_step_size_wh: Optional[int] = None,
     cpo_quality_reasons: Optional[list[str]] = None,
+    current_type: Optional[str] = None,
 ) -> Optional[dict]:
     """Build an ad-hoc price from a verified public CPO source.
 
@@ -560,6 +712,27 @@ def supplemental_direct_price_info(
             "restricted": bool(source.get("restricted")),
             "energy_step_size_wh": source.get("energy_step_size_wh"),
             "quality_reasons": list(source.get("quality_reasons") or []),
+            "basis": source.get("basis", "official_cpo_adhoc"),
+            "source_id": source.get("source_id"),
+            "source_url": source.get("source_url"),
+            "source_checked_at": source.get("source_checked_at"),
+            "confidence": source.get("confidence", "high"),
+            "note": source.get("note"),
+        }
+
+    if source.get("mode") == "by_current_type":
+        rate = (source.get("rates") or {}).get(str(current_type or "").upper())
+        if rate is None:
+            return None
+        return {
+            "rate": float(rate),
+            "range": None,
+            "session": float(source.get("session", 0.0)),
+            "session_range": None,
+            "unmodelled_types": [],
+            "restricted": False,
+            "energy_step_size_wh": None,
+            "quality_reasons": [],
             "basis": source.get("basis", "official_cpo_adhoc"),
             "source_id": source.get("source_id"),
             "source_url": source.get("source_url"),
@@ -1005,7 +1178,7 @@ def confidence_for_source(source: str) -> str:
     Quality Model v2 no longer uses this as the primary quality KPI. A source
     can be authoritative while still being geographically non-specific.
     """
-    if source == "ndw":
+    if source in {"ndw", "official_cpo_tariff"}:
         return "high"
     if source in {"operator_median", "totalenergies_mrae", "totalenergies_mrae_dc"}:
         return "medium"
@@ -1048,6 +1221,7 @@ def source_quality_for_basis(basis: str, inherited_base_source: Optional[str] = 
     source = inherited_base_source or basis
     if source in {
         "ndw", "ndw_ad_hoc", "ndw_ad_hoc_compatible", "official_cpo_adhoc", "official_cpo_msp_rate",
+        "official_cpo_tariff",
         "official_cpo_direct_rule", "totalenergies_mrae", "totalenergies_mrae_dc",
         "published_shell", "published_band",
     }:
@@ -1061,7 +1235,7 @@ def price_specificity_for_basis(basis: str, inherited_base_source: Optional[str]
     source = inherited_base_source or basis
     if source in {"ndw", "ndw_ad_hoc", "ndw_ad_hoc_compatible"}:
         return "connector"
-    if source in {"official_cpo_adhoc", "official_cpo_msp_rate"}:
+    if source in {"official_cpo_adhoc", "official_cpo_msp_rate", "official_cpo_tariff"}:
         return "network"
     if source in {"totalenergies_mrae", "totalenergies_mrae_dc"}:
         return "regional"
@@ -1723,6 +1897,7 @@ def process_location(
     operator_median: Optional[dict] = None,
     boundary: Optional[list] = None,
     official_direct: Optional[dict] = None,
+    official_cpo: Optional[dict] = None,
     official_msp: Optional[dict] = None,
     verified_rules: Optional[set[str]] = None,
 ) -> Optional[dict]:
@@ -1789,6 +1964,13 @@ def process_location(
                 has_ad_hoc_tariff=direct_price_info is not None,
             )
 
+            if cpo_info is None:
+                supplemental_cpo = supplemental_cpo_price_info(party_id, current_type, official_cpo)
+                if supplemental_cpo:
+                    cpo_info = supplemental_cpo
+                    source = supplemental_cpo.get("basis", "official_cpo_tariff")
+                    cpo_note = supplemental_cpo.get("note")
+
             if cpo_info is None and (verified_rules is None or "totalenergies_mrae" in verified_rules):
                 regional = totalenergies_mrae_fallback(operator, current_type)
                 if regional:
@@ -1844,6 +2026,7 @@ def process_location(
                     cpo_restricted=bool(cpo_info and cpo_info.get("restricted")),
                     cpo_energy_step_size_wh=cpo_energy_step_size_wh,
                     cpo_quality_reasons=cpo_quality_reasons,
+                    current_type=current_type,
                 )
 
             # Source precedence for direct payment is deliberately strict:
@@ -1938,6 +2121,9 @@ def process_location(
                     "energy_step_size_wh": cpo_energy_step_size_wh,
                     "restricted": bool(cpo_info and cpo_info.get("restricted")),
                     "note": cpo_note,
+                    "source_id": cpo_info.get("source_id") if cpo_info else None,
+                    "source_url": cpo_info.get("source_url") if cpo_info else None,
+                    "source_checked_at": cpo_info.get("source_checked_at") if cpo_info else None,
                     "quality": {
                         "source_quality": source_quality_for_basis(source),
                         "price_specificity": price_specificity_for_basis(source),
@@ -2166,6 +2352,7 @@ def main() -> None:
             operator_median,
             boundary,
             official_direct=official_harvest["direct_by_party"],
+            official_cpo=official_harvest["cpo_by_party"],
             official_msp=official_harvest["msp_by_party"],
             verified_rules=verified_rules,
         )

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "verified_at": "2026-08-27",
+  "verified_at": "2026-08-28",
   "selection_policy": {
     "scope": "Kernvergelijking voor particuliere EV-rijders in Huizen",
     "criteria": [
@@ -168,9 +168,6 @@
             "starttarief.{0,80}(?:€\\s*)?0[,.]47"
           ]
         }
-      ],
-      "urls": [
-        "https://laadkompas.nl/campagne/laadpas/"
       ]
     },
     {
@@ -248,26 +245,57 @@
       ]
     },
     {
-      "id": "vattenfall_direct_support",
-      "provider": "Vattenfall InCharge",
-      "plan": "Direct / QR support",
-      "url": "https://incharge.vattenfall.nl/blog/snel-en-eenvoudig-laden-zonder-laadpas",
+      "id": "lidl_direct_payment",
+      "provider": "Lidl",
+      "plan": "Direct / QR via Lidl.nl",
+      "url": "https://www.lidl.nl/c/laadpalen/s10015078",
       "checks": [
         {
-          "label": "direct betalen via QR en betaalpas wordt ondersteund",
+          "label": "Lidl.nl publiceert een numeriek Direct/QR AC-tarief",
           "patterns": [
-            "scan\\s+de\\s+qr-code.{0,220}betaalgegevens",
-            "zonder\\s+laadpas.{0,260}(?:pinpas|creditcard|betaalpas)"
+            "^.*lidl\\.nl[- ]tarief\\s+regulier[- ]laadstation.{0,140}(?:€\\s*)?[0-9]+[,.][0-9]{2,4}.{0,60}(?:/\\s*)?kwh.{0,50}\\(ac\\)"
           ]
         },
         {
-          "label": "beschikbaarheid is gekoppeld aan openbare palen met QR-code",
+          "label": "Lidl.nl publiceert een numeriek Direct/QR DC-tarief",
           "patterns": [
-            "openbare\\s+laadpalen.{0,180}(?:sticker\\s+met\\s+)?(?:een\\s+)?qr-code",
-            "qr-code.{0,220}openbare\\s+laadpalen"
+            "^.*lidl\\.nl[- ]tarief\\s+snel[- ]laadstation.{0,140}(?:€\\s*)?[0-9]+[,.][0-9]{2,4}.{0,60}(?:/\\s*)?kwh.{0,50}\\(dc\\)"
           ]
         }
-      ]
+      ],
+      "scope": {
+        "start": "opladen via lidl.nl",
+        "end": "opladen met eigen laadpas"
+      }
+    },
+    {
+      "id": "lidl_cpo_tariff",
+      "provider": "Lidl",
+      "plan": "CPO-basistarief via eigen laadpas",
+      "url": "https://www.lidl.nl/c/laadpalen/s10015078",
+      "checks": [
+        {
+          "label": "eigen-laadpas-sectie publiceert een numeriek AC-tarief",
+          "patterns": [
+            "lidl\\.nl[- ]tarief\\s+regulier[- ]laadstation.{0,140}(?:€\\s*)?[0-9]+[,.][0-9]{2,4}.{0,60}(?:/\\s*)?kwh.{0,50}\\(ac\\)"
+          ]
+        },
+        {
+          "label": "eigen-laadpas-sectie publiceert een numeriek DC-tarief",
+          "patterns": [
+            "lidl\\.nl[- ]tarief\\s+snel[- ]laadstation.{0,140}(?:€\\s*)?[0-9]+[,.][0-9]{2,4}.{0,60}(?:/\\s*)?kwh.{0,50}\\(dc\\)"
+          ]
+        },
+        {
+          "label": "Lidl vermeldt dat kosten van de laadpasaanbieder aanvullend van toepassing kunnen zijn",
+          "patterns": [
+            "abonnementskosten.{0,100}laadpas\\s+aanbieder"
+          ]
+        }
+      ],
+      "scope": {
+        "start": "opladen met eigen laadpas"
+      }
     }
   ]
 }

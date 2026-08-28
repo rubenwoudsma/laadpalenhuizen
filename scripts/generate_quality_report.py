@@ -377,7 +377,7 @@ def build_quality_report(dataset: dict[str, Any]) -> dict[str, Any]:
     if freshness_7d:
         attention.append({"severity": "medium", "category": "freshness", "title": "Locatiestatus ouder dan zeven dagen", "count": freshness_7d})
     if possible_transition_count:
-        attention.append({"severity": "medium", "category": "multi_record", "title": "Mogelijke CPO-wissels of vervangen locatierecords", "count": possible_transition_count})
+        attention.append({"severity": "medium", "category": "multi_record", "title": "Adresgroepen met een operatorovergangssignaal [geen automatische deduplicatie]", "count": possible_transition_count})
 
     source_rows = [{"id": k, "profiles": v, "pct": percentage(v, profile_count)} for k, v in sorted(profile_source.items(), key=lambda x: (-x[1], x[0]))]
 
