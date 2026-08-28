@@ -14,4 +14,4 @@ class FrontendContractTest(unittest.TestCase):
 
     def test_app_script_is_versioned_to_avoid_old_frontend_with_new_json(self):
         html = (ROOT / "index.html").read_text(encoding="utf-8")
-        self.assertIn('src="app.js?v=p0.1-20260827"', html)
+        self.assertIn('src="app.js?v=20260828"', html)

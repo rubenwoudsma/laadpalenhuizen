@@ -30,15 +30,15 @@
   <div class="grid" id="data-kpis"></div>
 
   <h2>Wat vraagt aandacht?</h2>
-  <p class="lead">Een aandachtspunt is niet automatisch een fout. Het maakt zichtbaar waar een gebruiker mogelijk minder zekerheid heeft of waar de volgende ontwikkelstap het meeste oplevert.</p>
+  <p class="lead">Een aandachtspunt is niet automatisch een fout. Het maakt zichtbaar waar een gebruiker mogelijk minder zekerheid heeft en waarom een prijsroute niet volledig vergelijkbaar is.</p>
   <div class="card section-card" id="attention"></div>
 
   <h2>Besliskwaliteit per connectorprofiel</h2>
-  <p class="lead">Locaties zijn de gebruikersmaat hierboven. Hieronder staat de fijnmazigere verdeling per connectorprofiel. <strong>Onvoldoende</strong> betekent dat we bewust geen vergelijking maken totdat de ontbrekende prijsinformatie of voorwaarden veilig zijn gemodelleerd.</p>
+  <p class="lead">Locaties zijn de gebruikersmaat hierboven. Hieronder staat de fijnmazigere verdeling per connectorprofiel. <strong>Onvoldoende</strong> betekent dat een veilige vergelijking met de beschikbare data en sessie-input niet mogelijk is.</p>
   <div class="card section-card"><div class="bars" id="decision-bars"></div></div>
 
   <h2>Kwaliteitsdimensies</h2>
-  <p class="lead">De oude algemene confidence-score is vervangen. Een officiële regionale bron kan bijvoorbeeld zeer betrouwbaar zijn als bron, maar toch niet connector-specifiek genoeg zijn voor een harde winnaar.</p>
+  <p class="lead">Bronkwaliteit, prijs-specificiteit, kostendekking en decision-grade worden afzonderlijk gemeten. Een officiële regionale bron kan bijvoorbeeld zeer betrouwbaar zijn als bron, maar toch niet connector-specifiek genoeg zijn voor een harde winnaar.</p>
   <div class="dim-grid" id="dimensions"></div>
 
   <h2>Prijsdekking per connectorprofiel</h2>
@@ -55,23 +55,23 @@
   <div class="card section-card" id="rule-verification"></div>
 
   <h2>Waarom routes indicatief of uitgesloten zijn</h2>
-  <p class="lead">Hier zie je de inhoudelijke oorzaken achter de decision-grade. Zo telt dezelfde onderliggende onzekerheid niet alleen als een abstract confidence-cijfer, maar is zichtbaar wat er concreet beter moet.</p>
+  <p class="lead">Hier zie je de inhoudelijke oorzaken achter de decision-grade. De onderliggende onzekerheid wordt daarmee niet alleen als een abstract label getoond, maar gekoppeld aan de concrete bron-, specificiteits- of kostenbeperking.</p>
   <div class="card section-card" id="decision-reasons"></div>
 
   <h2>Bekende kosten die ranking blokkeren</h2>
-  <p class="lead">Als een tarief bijvoorbeeld tijd-, parkeer-, minimum/maximum- of een onbekende roamingcomponent bevat die nog niet volledig kan worden berekend, blijft de route zichtbaar maar wordt hij niet gerangschikt.</p>
+  <p class="lead">Als een tarief bijvoorbeeld tijd-, parkeer-, minimum/maximum- of een onbekende roamingcomponent bevat die niet volledig kan worden berekend, blijft de route zichtbaar maar wordt hij niet gerangschikt.</p>
   <div class="card section-card" id="blockers"></div>
 
   <h2>Versheid van locatiestatus</h2>
   <p class="lead">Beschikbaarheid is een momentopname uit de laatste NDW-run. Het rapport houdt daarom statusversheid apart van prijskwaliteit.</p>
   <div class="card section-card"><div id="freshness-summary"></div><details><summary id="stale-summary">Toon oude statussen</summary><div class="table-wrap"><table><thead><tr><th>Adres</th><th>CPO</th><th>Status</th><th>Laatste update</th><th>Leeftijd</th></tr></thead><tbody id="stale-locations"></tbody></table></div></details></div>
 
-  <h2>Mogelijke dubbele of vervangen locaties</h2>
-  <p class="lead">Meerdere records op hetzelfde adres worden niet automatisch verwijderd. Een oud record naast een recent record van een andere CPO kan bijvoorbeeld een operatorwissel zijn.</p>
+  <h2>Multi-record adressen en overgangssignalen</h2>
+  <p class="lead">Meerdere records op hetzelfde adres worden niet automatisch verwijderd. Een oud record naast een recent record van een andere CPO is alleen een operatorovergangssignaal, niet het bewijs dat het oude record is vervangen. Zonder reproduceerbare koppeling op station- of EVSE-niveau blijven beide records zichtbaar.</p>
   <div class="card section-card" id="duplicates"></div>
 
   <h2>Interpretatie</h2>
-  <div class="notice">Een lager coverage-percentage na Quality Model v2 kan juist een verbetering zijn: de site claimt dan minder zekerheid waar brondata die zekerheid niet ondersteunt. De prijs op de betaalpagina of in de laadapp en de actuele fysieke status van de paal blijven leidend.</div>
+  <div class="notice">Een lager coverage-percentage is niet automatisch slechter: de site claimt alleen zekerheid wanneer brondata, prijs-specificiteit en kostendekking dat ondersteunen. De prijs op de betaalpagina of in de laadapp en de actuele fysieke status van de paal blijven leidend.</div>
 </main>
 <footer>Automatisch gegenereerd uit <code>huizen-data.json</code> via <code>pricing-quality.json</code>.</footer>
 <script>
@@ -84,9 +84,10 @@ function bars(rows){return(rows||[]).map(row=>`<div class="bar-row"><strong>${es
 function operatorRows(id,rows){document.getElementById(id).innerHTML=(rows||[]).length?(rows||[]).map(r=>`<tr><td>${esc(r.operator)}</td><td><code>${esc(r.party_id)}</code></td><td>${fmt.format(r.count)}</td><td>${examples(r.examples)}</td></tr>`).join(''):'<tr><td colspan="4" class="muted">Geen openstaande profielen.</td></tr>'}
 function blockerLabel(v){const m={TARIFF_RESTRICTIONS:'OCPI-tariefvoorwaarden (tijd/dag/duur/verbruik)',TIME:'Tijdkosten tijdens laden',PARKING_TIME:'Parkeer- of idle-kosten',MIN_PRICE:'Minimum sessieprijs',MAX_PRICE:'Maximum sessieprijs',INVALID_VAT:'Ongeldige expliciete btw-waarde in OCPI',ENERGY_STEP_SIZE_VARIANTS:'Meerdere verschillende energie-afrekenstappen',LOCATION_TARIFF_COMPONENTS_UNKNOWN:'Lokale tariefcomponenten onbekend',INVALID_PRICE_COMPONENT:'Ongeldige OCPI-prijscomponent',UNSUPPORTED_PRICE_COMPONENT:'Niet-ondersteunde OCPI-prijscomponent',DUPLICATE_PRICE_DIMENSION:'Meerdere prijscomponenten voor dezelfde OCPI-dimensie'};return m[v]||v}
 function reasonLabel(v){const m={potential_network_discount:'Netwerkspecifieke MSP-korting kan eindtarief wijzigen',potential_msp_blocking_fee:'Mogelijke MSP-/blokkeerkosten verschillen per laadpunt',energy_step_size_not_explicit:'OCPI-afrekenstap voor energie ontbreekt',currency_not_explicit:'Tariefvaluta ontbreekt in OCPI',operator_estimate_only:'Alleen operator-mediaan beschikbaar',bounded_price_uncertainty:'Gepubliceerde prijsband in plaats van exact tarief',specificity_regional:'Prijs is regionaal, niet connector-specifiek',specificity_national:'Prijs is landelijk, niet connector-specifiek',specificity_operator_estimate:'Prijs is operator-schatting',specificity_unknown:'Prijs-specificiteit onbekend',source_quality_low:'Lage bronkwaliteit',source_quality_medium:'Middelmatige bronkwaliteit',known_cost_component_not_modelled:'Bekende kostencomponent nog niet gemodelleerd'};return m[v]||v}
+function multiRecordReasonLabel(v){const m={possible_operator_transition:'operatorovergangssignaal',multiple_operators_same_address:'meerdere CPO-records op hetzelfde adres',same_operator_multiple_records:'meerdere records van dezelfde CPO'};return m[v]||v}
 function render(report){
  document.getElementById('generated-at').textContent=`Dataset: ${dt(report.generated_at)} · input schema ${report.input_schema_version}`;
- if(report.legacy_profile_fallback) document.getElementById('schema-notice').innerHTML='<div class="notice warning" style="margin-top:14px">Deze publicatie gebruikt nog de vorige datasetstructuur. De eerstvolgende succesvolle “Update charging point data”-run bouwt echte connectorprofielen op en vervangt deze overgangsmeting.</div>';
+ if(report.legacy_profile_fallback) document.getElementById('schema-notice').innerHTML='<div class="notice warning" style="margin-top:14px">Deze dataset bevat geen connectorprofielen. Connector-level kwaliteitsmetingen zijn voor deze publicatie daarom niet beschikbaar; de getoonde kwaliteitsinformatie is beperkt tot de aanwezige location-level gegevens.</div>';
  const c=report.coverage,p=report.connector_coverage,d=report.direct_payment,b=report.base_pricing,f=report.freshness,qdata=report.data_quality||{};
  const decisionCards=[['Betrouwbaar vergelijkbaar',`${fmt.format(c.reliable_locations)} / ${fmt.format(c.total_locations)}`,`${pct(c.reliable_locations_pct)} van locaties`],['Indicatief vergelijkbaar',`${fmt.format(c.indicative_locations)} / ${fmt.format(c.total_locations)}`,`${pct(c.indicative_locations_pct)} van locaties`],['Geen veilige vergelijking',`${fmt.format(c.insufficient_locations)} / ${fmt.format(c.total_locations)}`,`${pct(c.insufficient_locations_pct)} van locaties`]];
  document.getElementById('decision-kpis').innerHTML=decisionCards.map(x=>`<div class="card kpi"><div class="kpi-label">${x[0]}</div><div class="kpi-value">${x[1]}</div><div class="kpi-sub">${x[2]}</div></div>`).join('');
@@ -103,7 +104,7 @@ function render(report){
  document.getElementById('blockers').innerHTML=(report.decision_blockers||[]).length?`<div class="table-wrap"><table><thead><tr><th>Ontbrekende/gedeeltelijke component</th><th>Connectorprofielen</th><th>Prijsroutes</th></tr></thead><tbody>${report.decision_blockers.map(x=>`<tr><td>${esc(blockerLabel(x.reason))}</td><td>${fmt.format(x.connector_profiles??x.count)}</td><td>${fmt.format(x.quote_occurrences??x.count)}</td></tr>`).join('')}</tbody></table></div><p class="muted">Connectorprofielen is de primaire kwaliteitsmaat. Prijsroutes voorkomt dat één probleem dat zes laadpassen raakt zes verschillende dataproblemen lijkt te zijn.</p>`:'<span class="muted">Geen bekende onbegrensde kostencomponenten in deze dataset.</span>';
  document.getElementById('freshness-summary').innerHTML=`<strong>${fmt.format(f.older_than_24h)}</strong> locaties ouder dan 24 uur · <strong>${fmt.format(f.older_than_7d)}</strong> ouder dan 7 dagen · <strong>${fmt.format(f.older_than_30d)}</strong> ouder dan 30 dagen`;
  document.getElementById('stale-summary').textContent=`Toon ${f.older_than_7d} locaties ouder dan zeven dagen`;document.getElementById('stale-locations').innerHTML=(f.stale_locations_over_7d||[]).map(r=>`<tr><td>${esc(r.address)}</td><td>${esc(r.operator)} <code>${esc(r.party_id)}</code></td><td>${(r.statuses||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join(' ')}</td><td>${dt(r.last_updated)}</td><td>${Number(r.age_days).toLocaleString('nl-NL',{maximumFractionDigits:1})} dagen</td></tr>`).join('');
- const dup=report.potential_duplicates;document.getElementById('duplicates').innerHTML=!dup.groups.length?'<span class="muted">Geen multi-record adressen gevonden.</span>':`<p><strong>${dup.group_count}</strong> adresgroepen, waarvan <strong>${dup.possible_operator_transition_groups}</strong> mogelijke CPO-wissels.</p>`+dup.groups.map(g=>`<details><summary>${esc(g.address)} · ${g.count} records · <span class="tag ${g.reason==='possible_operator_transition'?'transition':''}">${esc(g.reason)}</span></summary><div class="table-wrap"><table><thead><tr><th>CPO</th><th>ID</th><th>Status</th><th>Laatste update</th></tr></thead><tbody>${g.locations.map(r=>`<tr><td>${esc(r.operator)}</td><td><code>${esc(r.id)}</code></td><td>${(r.statuses||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join(' ')}</td><td>${dt(r.last_updated)}</td></tr>`).join('')}</tbody></table></div></details>`).join('');
+ const dup=report.potential_duplicates;document.getElementById('duplicates').innerHTML=!dup.groups.length?'<span class="muted">Geen multi-record adressen gevonden.</span>':`<p><strong>${dup.group_count}</strong> adresgroepen, waarvan <strong>${dup.possible_operator_transition_groups}</strong> met een operatorovergangssignaal. Deze signalen leiden niet automatisch tot verwijdering.</p>`+dup.groups.map(g=>`<details><summary>${esc(g.address)} · ${g.count} records · <span class="tag ${g.reason==='possible_operator_transition'?'transition':''}">${esc(multiRecordReasonLabel(g.reason))}</span></summary><div class="table-wrap"><table><thead><tr><th>CPO</th><th>ID</th><th>Status</th><th>Laatste update</th></tr></thead><tbody>${g.locations.map(r=>`<tr><td>${esc(r.operator)}</td><td><code>${esc(r.id)}</code></td><td>${(r.statuses||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join(' ')}</td><td>${dt(r.last_updated)}</td></tr>`).join('')}</tbody></table></div></details>`).join('');
 }
 fetch(`pricing-quality.json?v=${Date.now()}`,{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error(`HTTP ${r.status}`);return r.json()}).then(render).catch(err=>{document.getElementById('schema-notice').innerHTML=`<div class="notice warning" style="margin-top:14px">Kon kwaliteitsrapport niet laden: ${esc(err.message)}</div>`});
 </script>

@@ -48,147 +48,129 @@ code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
 </header>
 <main>
   <h1>Methodologie</h1>
-  <p class="lead">Laadpalen Huizen vergelijkt totale sessiekosten. Het uitgangspunt is niet maximale prijsdekking, maar een eerlijke keuze: betrouwbaar wanneer het kan, indicatief wanneer onzekerheid begrensd is, en niet rangschikken wanneer bekende kosten of voorwaarden ontbreken.</p>
+  <p class="lead">Laadpalen Huizen vergelijkt betaalroutes voor publiek toegankelijke laadpunten in Huizen. Het uitgangspunt is betrouwbaarheid boven dekking: een prijs is betrouwbaar vergelijkbaar wanneer de bron, specificiteit en kostenmodellering dat toelaten, indicatief wanneer de onzekerheid begrensd is, en niet gerangschikt wanneer noodzakelijke informatie ontbreekt.</p>
+  <p>Thuisladen valt buiten deze vergelijking. Afhankelijk van bijvoorbeeld een thuisenergiecontract, zonnepanelen of een vergoeding door werkgever of leasemaatschappij kan thuisladen goedkoper zijn dan publiek laden.</p>
 
-  <h2>1. De vergelijking is connector-specifiek</h2>
-  <p>Een locatie kan meerdere EVSE's en connectoren hebben. Vanaf dataschema 5 wordt pricing daarom per connectorprofiel opgebouwd. De processor gebruikt OCPI <code>power_type</code> voor AC/DC en de <code>tariff_ids</code> die aan die connector zijn gekoppeld.</p>
+  <h2>1. Connectorprofielen zijn de rekeneenheid</h2>
+  <p>Een laadlocatie kan meerdere EVSE's en verschillende connectoren hebben. Prijzen worden daarom per connectorprofiel opgebouwd. De processor gebruikt de OCPI <code>tariff_ids</code> van de connector en gebruikt <code>power_type</code> voor de stroomsoort.</p>
   <div class="card good">
-    <strong>Geen kW-heuristiek voor AC/DC</strong>
-    <p>Een 25 kW aansluiting kan DC zijn en een hoogvermogen-aansluiting kan AC zijn. Vermogen bepaalt daarom nooit de stroomsoort. Als <code>power_type</code> ontbreekt wordt alleen een conservatieve connector-standaardinferentie gebruikt. Anders blijft de stroomsoort onbekend.</p>
+    <strong>Geen vermogensheuristiek voor AC/DC</strong>
+    <p>Laadvermogen bepaalt niet of een connector AC of DC is. Als <code>power_type</code> ontbreekt, mag alleen een conservatieve inferentie uit een eenduidige connectorstandaard worden gebruikt. Anders blijft de stroomsoort onbekend.</p>
   </div>
-  <p>Wanneer <code>max_electric_power</code> ontbreekt, kan het nominale vermogen worden afgeleid uit <code>max_voltage</code>, <code>max_amperage</code> en het aantal fasen uit <code>power_type</code>. Heeft een locatie prijsverschillende connectorprofielen, dan kiest de gebruiker eerst zijn aansluiting voordat prijzen worden vergeleken.</p>
+  <p>Wanneer <code>max_electric_power</code> ontbreekt, kan het nominale vermogen worden afgeleid uit spanning, stroomsterkte en het aantal fasen. Als connectorprofielen op dezelfde locatie verschillende prijsuitkomsten hebben, moet de gebruiker eerst de relevante aansluiting kiezen.</p>
 
-  <h2>2. Drie betaalroutes</h2>
+  <h2>2. Drie afzonderlijke betaalroutes</h2>
   <div class="route-grid">
-    <div class="route good"><strong>Direct / ad-hoc</strong><span>Rechtstreeks betalen bij de CPO, bijvoorbeeld via QR of betaalterminal, zonder MSP-contract.</span></div>
-    <div class="route"><strong>MSP eigen netwerk</strong><span>De laadpas wordt gebruikt op een netwerk dat aantoonbaar als eigen netwerk van die MSP-route geldt.</span></div>
-    <div class="route"><strong>MSP roaming</strong><span>De MSP geeft toegang tot een andere CPO. Afwijkende kWh-, start- of clearingkosten kunnen gelden.</span></div>
+    <div class="route good"><strong>Direct / ad-hoc</strong><span>Rechtstreeks betalen bij de CPO, bijvoorbeeld via QR, webbetaling of betaalterminal, zonder MSP-contract.</span></div>
+    <div class="route"><strong>MSP eigen netwerk</strong><span>Een laadpas of app op een netwerk dat aantoonbaar als eigen netwerk voor die MSP-route geldt.</span></div>
+    <div class="route"><strong>MSP roaming</strong><span>Een laadpas of app via een andere CPO, waarbij aanvullende roaming-, transactie- of sessiekosten kunnen gelden.</span></div>
   </div>
-  <p>Een gedeeld merk of dezelfde bedrijvengroep bewijst geen gelijk consumententarief. Eigen netwerk wordt daarom primair via OCPI <code>party_id</code> bepaald. Shell <code>TNM</code> en Ubitricity <code>UB2</code> blijven bijvoorbeeld afzonderlijke prijsrelaties.</p>
+  <p>Een gedeeld merk of dezelfde bedrijvengroep bewijst geen gelijk consumententarief. Eigen netwerk wordt daarom primair via OCPI <code>party_id</code> bepaald. Shell Recharge <code>TNM</code> en Ubitricity <code>UB2</code> blijven bijvoorbeeld afzonderlijke prijsrelaties.</p>
 
-  <h2>3. Sessiekosten</h2>
-  <div class="formula">CPO-afrekenenergie = gekozen kWh afgerond op de OCPI ENERGY-step_size<br>CPO-energie = CPO-afrekenenergie x CPO-kWh-tarief<br>MSP-kWh-opslag = gekozen kWh x MSP-kWh-opslag<br>sessietotaal = CPO-energie + vaste CPO-kosten + MSP-kosten/opslag</div>
-  <p>Een prijsband wordt als band doorgerekend. Een harde winnaar verschijnt alleen wanneer minimaal twee geselecteerde routes volledig berekenbaar en <code>reliable</code> zijn en de hoogste prijs van de winnaar nog lager is dan de laagste prijs van iedere andere route.</p>
+  <h2>3. Totale sessiekosten</h2>
+  <div class="formula">CPO-afrekenenergie = gekozen kWh afgerond volgens ENERGY step_size<br>CPO-energie = CPO-afrekenenergie x CPO-kWh-tarief<br>MSP-kWh-opslag = gekozen kWh x MSP-opslag per kWh<br>sessietotaal = CPO-energie + vaste CPO-kosten + MSP-kosten en opslagen</div>
+  <p>Prijsbanden worden als bandbreedte doorgerekend. Een route met gedeeltelijk gemodelleerde kosten of <code>decision_grade = exclude</code> krijgt geen sessietotaal in de rangschikking.</p>
+  <p>Een harde winnaar verschijnt alleen wanneer minimaal twee geselecteerde routes berekenbaar zijn, alle geselecteerde routes een berekenbare prijs hebben, alle berekende routes <code>reliable</code> zijn en de maximale prijs van de winnaar lager ligt dan de minimale prijs van iedere andere route. Anders kan de kaart wel een indicatieve volgorde tonen, maar geen eenduidige winnaar claimen.</p>
 
-  <h2>4. OCPI-tarieven en kostencomponenten</h2>
-  <p>Een expliciet OCPI <code>AD_HOC_PAYMENT</code> tarief wordt alleen voor Direct / QR gebruikt. Een <code>REGULAR</code> tarief blijft de basis voor reguliere CPO/MSP-berekeningen. OCPI staat ook een tarief zonder <code>Tariff.type</code> toe. Zo'n generiek tarief mag voor Direct / QR alleen worden hergebruikt wanneer de mogelijkheid tot direct betalen onafhankelijk is bevestigd. Alleen het bestaan van zo'n tarief bewijst geen Direct/QR-ondersteuning.</p>
-  <p>De huidige processor kan <code>ENERGY</code> en <code>FLAT</code> numeriek verwerken. Ook een FLAT-only tarief, waaronder OCPI's <code>FLAT = 0</code> voor gratis laden, is geldig. Voor ENERGY wordt de OCPI <code>step_size</code> in Wh toegepast op het energie-aandeel van de CPO. Bij unrestricted tarieven wordt per prijsdimensie het eerste TariffElement gebruikt, latere elementen zijn fallbacks en worden niet als gelijktijdige prijsband opgeteld. OCPI publiceert <code>price</code> exclusief btw. Een expliciete <code>vat</code> wordt toegevoegd; wanneer <code>vat</code> ontbreekt wordt volgens OCPI geen btw toegevoegd. Ontbrekende ENERGY-step_size houdt een route indicatief. Alleen EUR wordt als eurotarief verwerkt; een expliciet andere valuta wordt niet herlabeld en een ontbrekende valuta verlaagt de decision grade. Een ongeldige prijscomponent, onbekende of dubbele prijsdimensie, ongeldige expliciete btw-waarde of tegenstrijdige step sizes blokkeert de ranking.</p>
-  <p>Bekende componenten of voorwaarden die nog niet veilig berekend kunnen worden, blokkeren eveneens de ranking:</p>
+  <h2>4. OCPI-tarieven en prijscomponenten</h2>
+  <p>Een expliciet OCPI <code>AD_HOC_PAYMENT</code> tarief wordt alleen gebruikt voor Direct / QR. Een <code>REGULAR</code> tarief blijft de basis voor reguliere CPO- en MSP-routes. Een tarief zonder <code>Tariff.type</code> mag alleen als Direct/QR-prijs dienen wanneer direct betalen onafhankelijk is bevestigd.</p>
+  <p>De processor kan <code>ENERGY</code> en <code>FLAT</code> numeriek verwerken. Een FLAT-only tarief, inclusief <code>FLAT = 0</code>, is geldig. Voor ENERGY wordt <code>step_size</code> in Wh toegepast op het energie-aandeel van de CPO. Bij onbeperkte TariffElements wordt per prijsdimensie het eerste toepasselijke element gebruikt, latere elementen zijn fallbacks en worden niet als gelijktijdige prijsband opgeteld.</p>
+  <p>OCPI <code>price</code> is exclusief btw. Alleen een expliciet opgegeven geldige <code>vat</code> wordt toegevoegd. Een ontbrekend btw-percentage wordt niet aangevuld met een aangenomen Nederlands percentage. Alleen EUR wordt als eurotarief verwerkt. Een expliciet andere valuta, ongeldige prijscomponent, onbekende of dubbele prijsdimensie, ongeldige btw-waarde of tegenstrijdige afrekenstap blokkeert de prijsroute.</p>
+  <p>De volgende OCPI-constructies worden herkend, maar niet naar een sessietotaal vertaald wanneer de benodigde context ontbreekt:</p>
   <ul>
-    <li><code>TIME</code> en <code>PARKING_TIME</code>;</li>
-    <li><code>MIN_PRICE</code> en <code>MAX_PRICE</code>;</li>
-    <li><code>TariffRestrictions</code>, bijvoorbeeld tijdvak, dag van de week, duur of kWh-grenzen.</li>
+    <li><code>TIME</code>, de tijd waarin daadwerkelijk wordt geladen;</li>
+    <li><code>PARKING_TIME</code>, de tijd waarin de auto aangesloten staat zonder te laden;</li>
+    <li><code>TariffRestrictions</code>, bijvoorbeeld tijdvak, dag, duur, energie, stroom of vermogen;</li>
+    <li><code>min_price</code> en <code>max_price</code>, waarvoor de OCPI-grenzen zowel exclusief als inclusief btw correct moeten worden toegepast.</li>
   </ul>
-  <p>Dit is bewust streng. OCPI-restricties bepalen welke prijscomponent op een bepaald moment actief is. Zolang de browser die context niet volledig evalueert, mag een restricted tarief geen harde winnaar ondersteunen.</p>
+  <p>De gebruiker voert alleen een hoeveelheid kWh in. Daardoor zijn tijdsafhankelijke en tijdens een sessie wisselende voorwaarden niet deterministisch te berekenen. De betreffende route blijft daarom fail-closed buiten de rangschikking.</p>
 
-  <h2>5. Bronprioriteit</h2>
+  <h2>5. Bronprioriteit voor het CPO-tarief</h2>
   <ol>
-    <li>Connector-gebonden NDW/OCPI tarief.</li>
-    <li>Geverifieerde officiele CPO-bron die reproduceerbaar aan netwerk, regio of connector kan worden gekoppeld.</li>
-    <li>Geverifieerde regionale fallback wanneer die expliciet passend is.</li>
-    <li>Operator-mediaan alleen als diagnostische schatting, niet voor sessieranking.</li>
-    <li>Anders blijft de prijs onbekend.</li>
+    <li>Een geldig connectorgebonden NDW/OCPI-tarief.</li>
+    <li>Een tijdens dezelfde run geverifieerde officiële CPO-bron die reproduceerbaar aan het relevante netwerk of connectortype kan worden gekoppeld.</li>
+    <li>Een geverifieerde regionale fallback wanneer de bron aantoonbaar voor die regio en CPO geldt.</li>
+    <li>Een operator-mediaan uitsluitend als diagnostische schatting, nooit als complete sessieprijs of basis voor een winnaar.</li>
+    <li>Geen prijs wanneer geen veilige bron beschikbaar is.</li>
   </ol>
-  <p>Voor Direct / QR geldt de vaste bronvolgorde: eerst een expliciet OCPI <code>AD_HOC_PAYMENT</code> tarief, daarna een in dezelfde run geverifieerde officiele CPO Direct/QR-prijs, en pas daarna een generiek OCPI-tarief zonder <code>Tariff.type</code>. Een tarief zonder type mag alleen als prijsbasis dienen nadat direct betalen los daarvan is bevestigd. Een expliciete routeprijs erft geen beperkingen van een onafhankelijk generiek NDW-tarief.</p>
+  <p>Voor Direct / QR geldt een afzonderlijke prioriteit: expliciet OCPI <code>AD_HOC_PAYMENT</code>, daarna een tijdens dezelfde run geverifieerde officiële CPO Direct/QR-prijs, daarna alleen een generiek OCPI-tarief zonder type wanneer direct betalen los daarvan is bevestigd. Een expliciete Direct/QR-prijs erft geen restricties van een onafhankelijk generiek NDW-tarief.</p>
 
-  <h2>6. Aanvullende officiele CPO-bronnen</h2>
+  <h2>6. Officiële aanvullende CPO-bronnen</h2>
   <div class="card">
     <table>
-      <thead><tr><th>CPO</th><th>party_id</th><th>Huidige aanvulling</th></tr></thead>
+      <thead><tr><th>CPO</th><th>party_id</th><th>Huidige behandeling</th></tr></thead>
       <tbody>
-        <tr><td>Ubitricity</td><td><code>UB2</code></td><td>Officieel MRA-E Direct/QR tarief en, wanneer de tabel veilig kan worden gekoppeld, netwerk-specifieke kWh-prijzen voor geselecteerde MSP's.</td></tr>
-        <tr><td>TotalEnergies</td><td><code>GFX</code></td><td>Geverifieerde regel dat de CPO-basisprijs ook de direct-payment prijs is. De specificity blijft gelijk aan die van de onderliggende CPO-prijs.</td></tr>
-        <tr><td>Vattenfall</td><td><code>NUO</code></td><td>Direct betalen via QR is bevestigd. Zonder reproduceerbaar numeriek laadpunttarief wordt geen Direct/QR bedrag verzonnen.</td></tr>
+        <tr><td>Ubitricity</td><td><code>UB2</code></td><td>Het officiële MRA-E Direct/QR-tarief en, wanneer de tabel veilig kan worden gekoppeld, netwerk-specifieke kWh-prijzen voor geselecteerde MSP's worden tijdens de run uit de officiële bron gelezen.</td></tr>
+        <tr><td>TotalEnergies</td><td><code>GFX</code></td><td>De officiële regel dat de CPO-basisprijs ook de ad-hocprijs is kan worden toegepast. De prijs-specificiteit blijft gelijk aan die van de onderliggende CPO-prijs.</td></tr>
+        <tr><td>Lidl</td><td><code>LDL</code></td><td>De officiële Lidl.nl-pagina publiceert afzonderlijke AC- en DC-tarieven voor zowel Direct/QR als laden met een eigen laadpas. Beide secties worden apart gecontroleerd. Ontbreekt het NDW-basistarief, dan mag het tarief uit de eigen-laadpas-sectie als high-quality, network-specific CPO-basis worden gebruikt. De connector krijgt alleen het tarief dat bij zijn vastgestelde stroomsoort hoort.</td></tr>
+        <tr><td>Vattenfall</td><td><code>NUO</code></td><td>Direct betalen via QR is bevestigd. Zonder reproduceerbaar numeriek tarief voor het betreffende laadpunt of de toepasselijke concessie wordt geen Direct/QR-bedrag ingevuld.</td></tr>
       </tbody>
     </table>
   </div>
-  <p>Een bronfout blokkeert de dagelijkse NDW-update niet. De betreffende aanvullende of statische prijsregel wordt voor die run fail-closed uitgeschakeld.</p>
 
   <h2>7. MSP-regels</h2>
   <div class="card">
     <table>
       <thead><tr><th>Optie</th><th>Huidig model</th><th>Decision-behandeling</th></tr></thead>
       <tbody>
-        <tr><td>ANWB zonder abonnement</td><td>CPO-prijs + &euro;0,89 per sessie.</td><td>Bij netwerken waarvoor ANWB expliciet korting noemt, maar geen exact netwerktarief is gekoppeld, blijft de berekening indicatief.</td></tr>
+        <tr><td>ANWB zonder abonnement</td><td>CPO-prijs + &euro;0,89 per sessie.</td><td>Een gepubliceerde netwerkkorting wordt niet numeriek aangenomen zonder reproduceerbaar specifiek tarief.</td></tr>
         <tr><td>Tap Electric Light</td><td>CPO-subtotaal + 5% transactiekosten.</td><td>Volgt de kwaliteit en volledigheid van de onderliggende CPO-prijs.</td></tr>
-        <tr><td>Vattenfall InCharge</td><td>Eigen netwerk <code>NUO</code> zonder extra MSP-starttarief. Bij roaming is publiek een starttarief bevestigd, maar geen vast numeriek bedrag op de gecontroleerde pagina.</td><td>Generieke roaming wordt niet gerangschikt zolang het starttarief niet reproduceerbaar bekend is.</td></tr>
-        <tr><td>E-Flux Flex</td><td>&euro;0,31 per sessie. Buiten E-Flux + &euro;0,024/kWh en mogelijke extra &euro;0,48 clearingtoeslag.</td><td>De clearingtoeslag wordt als sessieband meegenomen.</td></tr>
-        <tr><td>Shell Recharge Basic</td><td>Gepubliceerd Shell snellaadtarief op eigen netwerk, of de AC/DC roamingband bij andere aanbieders, + &euro;0,35 per sessie. Een roamingband wordt niet als eigen-netwerk AC-tarief hergebruikt.</td><td>Shell meldt locatie-/aanbiederafhankelijke extra of blokkeerkosten. De statische route blijft daarom indicatief.</td></tr>
+        <tr><td>Vattenfall InCharge</td><td>Eigen netwerk op <code>NUO</code> zonder extra MSP-starttarief. Bij roaming is een starttarief bekend als voorwaarde, maar niet als algemeen reproduceerbaar numeriek bedrag.</td><td>Generieke roaming wordt niet gerangschikt wanneer het benodigde starttarief ontbreekt.</td></tr>
+        <tr><td>E-Flux Flex</td><td>&euro;0,31 per sessie. Buiten E-Flux + &euro;0,024/kWh en een mogelijke extra &euro;0,48 clearingtoeslag.</td><td>De clearingtoeslag wordt als sessieband meegenomen.</td></tr>
+        <tr><td>Shell Recharge Basic</td><td>Gepubliceerd Shell snellaadtarief op eigen netwerk, of de gepubliceerde AC/DC roamingband bij andere aanbieders, + &euro;0,35 per sessie.</td><td>Locatie- of aanbiederafhankelijke extra kosten houden de statische route indicatief.</td></tr>
         <tr><td>Laadkompas zonder abonnement</td><td>CPO-prijs + &euro;0,47 per sessie.</td><td>Volgt de kwaliteit en volledigheid van de onderliggende CPO-prijs.</td></tr>
       </tbody>
     </table>
   </div>
 
   <h2>8. Quality Model v2</h2>
-  <p>Een enkele confidence-score bleek te grof. De kwaliteit wordt nu in vier dimensies uitgesplitst:</p>
+  <p>Iedere numerieke prijsroute wordt langs vier afzonderlijke kwaliteitsdimensies beoordeeld:</p>
   <div class="card">
     <table>
       <thead><tr><th>Dimensie</th><th>Betekenis</th></tr></thead>
       <tbody>
         <tr><td><code>source_quality</code></td><td>Betrouwbaarheid van de bron: high, medium of low.</td></tr>
-        <tr><td><code>price_specificity</code></td><td>Hoe specifiek de prijs is: connector, network, regional, national, operator_estimate of unknown.</td></tr>
+        <tr><td><code>price_specificity</code></td><td>Specificiteit van de prijs: connector, network, regional, national, operator_estimate of unknown.</td></tr>
         <tr><td><code>cost_completeness</code></td><td>Of alle bekende kostencomponenten zijn gemodelleerd: complete of partial.</td></tr>
-        <tr><td><code>decision_grade</code></td><td>Of de route een harde keuze mag ondersteunen: reliable, indicative of exclude.</td></tr>
+        <tr><td><code>decision_grade</code></td><td>Of de route een prijsbeslissing mag ondersteunen: reliable, indicative of exclude.</td></tr>
       </tbody>
     </table>
   </div>
-  <p>Een officiele regionale prijs kan dus een hoge bronkwaliteit hebben, maar toch alleen indicatief zijn omdat de exacte connectorprijs niet vaststaat. Dat is informatiever dan dezelfde quote simpelweg als low confidence tellen.</p>
-  <p>De quality-pagina scheidt daarom ook <strong>data quality</strong> van <strong>decision quality</strong>. Het percentage betrouwbaar vergelijkbare locaties meet of de strengste gebruikersvergelijking mogelijk is. Het is geen percentage betrouwbare bronrecords. High-quality brondata, bekende basistarieven, Direct/QR-prijsdekking en complete prijsroutes worden afzonderlijk gemeten.</p>
+  <p>Een officiële regionale prijs kan dus <code>source_quality = high</code> hebben en toch <code>decision_grade = indicative</code> zijn, omdat de prijs niet specifiek genoeg is voor het individuele connectorprofiel.</p>
 
-  <h3>TotalEnergies / MRA-E</h3>
-  <p>TotalEnergies publiceert voor het MRA-E-gebied verschillende AC-tariefgroepen, waaronder MRA-E 2 t/m 5, MRA-E 6 en MRA-E 6 Dynamic. Laadwerk publiceert daarnaast een contractgrens voor laadpalen geplaatst vanaf 1 juli 2024 versus oudere locaties. Die grens kan niet veilig uit <code>last_updated</code> worden afgeleid: dat is geen plaatsingsdatum, en Laadwerk vermeldt expliciet dat een oudere locatie ook na vervanging van de fysieke paal het oude tarief kan behouden. In de onderzochte publieke NDW/OCPI-metadata en officiele bronnen is daarom nog geen reproduceerbare sleutel gevonden die een individueel TNLP/PP-/EVSE-ID aan een concrete tariefgroep koppelt. Nummerreeksen, laadvermogen en <code>last_updated</code> worden niet als concessieheuristiek gebruikt.</p>
-  <p>De openbare tabellen mogen ook niet zonder bewijs aan elkaar gelijk worden gesteld: TotalEnergies noemt MRA-E 6 als concessietarief, terwijl Laadwerk voor nieuwe TotalEnergies-palen een eigen maximaal afgesproken direct-payment tarief publiceert. MRA-E 6 Dynamic is bovendien tijdsblokafhankelijk. De uiteindelijk afgerekende prijs volgt de hoeveelheid energie die in ieder tijdsblok is geladen. Een laadpunt alleen als "Dynamic" of "nieuw" herkennen is dus nog onvoldoende om voor een sessie een exacte vaste kWh-prijs te claimen. De huidige AC-fallback blijft om die redenen bewust regionaal en indicatief totdat een officiele laadpunt-specifieke bron of expliciet OCPI-tarief beschikbaar is.</p>
-
-  <h2>9. Datakwaliteit</h2>
-  <p>Na iedere datarun genereert <code>scripts/generate_quality_report.py</code> onafhankelijk <code>pricing-quality.json</code>. De pagina <a href="kwaliteit.html">Datakwaliteit</a> toont:</p>
+  <h2>9. Structurele beperkingen</h2>
   <ul>
-    <li>reliable, indicative en insufficient locaties en connectorprofielen;</li>
-    <li>Direct/QR dekking en prijs-gaten per operator;</li>
-    <li>source quality, price specificity, cost completeness en decision grade;</li>
-    <li>bekende blockers, inclusief nog niet gemodelleerde OCPI-kosten of restricties;</li>
-    <li>mislukte bronverificaties en uitgeschakelde prijsregels;</li>
-    <li>status-freshness, meerdere records per adres en mogelijke CPO-wissels;</li>
-    <li>interne consistentie tussen de dataset en onafhankelijk herberekende statistieken.</li>
+    <li><strong>TotalEnergies:</strong> het MRA-E-gebied kent meerdere officiële AC-tariefgroepen. De publieke NDW/OCPI-data bevat geen reproduceerbare station-specifieke sleutel waarmee een individuele locatie veilig aan MRA-E 2-5, MRA-E 6 of MRA-E 6 Dynamic kan worden gekoppeld. <code>last_updated</code>, laadvermogen en ID-patronen worden niet als concessieheuristiek gebruikt. De AC-fallback blijft daarom een officiële regionale prijsband en indicatief.</li>
+    <li><strong>Laadnet:</strong> het gasttarief kan door de eigenaar van het laadpunt worden ingesteld. Zonder openbare, reproduceerbare station-specifieke prijs wordt geen netwerkbreed bedrag aangenomen.</li>
+    <li><strong>EQUANS / Velian:</strong> publieke tarieven zijn afhankelijk van contract of concessie. Voor de Huizen-records is geen officiële station-specifieke tariefkoppeling beschikbaar.</li>
+    <li><strong>Vattenfall:</strong> verschillende concessies en laadpunten kunnen verschillende tarieven hebben. Direct/QR-ondersteuning alleen is onvoldoende om een numeriek tarief toe te kennen.</li>
+    <li><strong>JOLT:</strong> officiële Nederlandse JOLT-pagina's publiceren niet overal hetzelfde ad-hocbedrag. Zonder eenduidige bron voor de Huizen-locatie wordt geen generieke prijs toegepast.</li>
+    <li><strong>OCPI tijd en restricties:</strong> duurafhankelijke componenten, dynamische restrictions en correcte min/max-grenzen vereisen meer sessiecontext dan de huidige kWh-invoer biedt. Deze routes blijven buiten ranking.</li>
+    <li><strong>Operatortransities:</strong> meerdere records op hetzelfde adres kunnen een overgangssignaal vormen, maar adres, nabijheid, ouderdom of een andere CPO is geen bewijs dat een record is vervangen. Zonder reproduceerbare station- of EVSE-koppeling worden records niet automatisch onderdrukt.</li>
+    <li><strong>Beschikbaarheid:</strong> statusinformatie is de laatst verwerkte NDW-snapshot, geen realtime garantie.</li>
   </ul>
-  <p>Er is bewust geen kunstmatige totaalscore. Verschillende risico's blijven afzonderlijk zichtbaar.</p>
 
-  <h2>10. Beschikbaarheid is een snapshot</h2>
-  <p>De site draait statisch op GitHub Pages. De status <code>AVAILABLE</code> of een andere EVSE-status is daarom de laatst opgehaalde NDW-snapshot, geen realtime garantie. De frontend noemt dit expliciet. De roadmap bevat een aparte freshness-stap om te onderzoeken of status vaker moet worden bijgewerkt.</p>
+  <h2>10. Bronmonitoring en fail-closed gedrag</h2>
+  <p><code>scripts/check_pricing_sources.py</code> controleert de officiële prijsregels die door statische of aanvullende prijslogica worden gebruikt. Een tijdelijke netwerkfout op een CPO-bron blokkeert de NDW-update niet. De betrokken prijsregel wordt voor die run wel uitgeschakeld wanneer de bron niet betrouwbaar kan worden bevestigd.</p>
+  <p>Een alternatieve officiële URL mag alleen als transportfallback worden gebruikt na een ophaalfout. Wanneer de primaire pagina bereikbaar is maar de verwachte inhoud niet meer bevat, faalt de regel inhoudelijk en wordt geen fallback gebruikt om die wijziging te maskeren. Er is geen last-known-good prijsfallback.</p>
+  <p>De afzonderlijke pricing-monitor maakt bronwijzigingen zichtbaar in de workflow en, wanneer Issues beschikbaar is, via issue-synchronisatie.</p>
 
-  <h2>11. Automatische broncontrole</h2>
-  <p>Voor iedere dagelijkse data-update controleert <code>scripts/check_pricing_sources.py</code> de publieke regels waarop statische MSP-berekeningen rusten. Een gewijzigde ANWB-, Tap-, Vattenfall-, E-Flux-, Shell- of Laadkompas-pagina kan daardoor niet ongemerkt wekenlang een verouderde formule blijven voeden.</p>
-  <p>Bij een mismatch wordt alleen de getroffen statische regel uitgeschakeld. NDW, andere geverifieerde regels en aanvullende CPO-harvesting blijven beschikbaar.</p>
-  <p>Wanneer een aanbieder meerdere officiele publieke pagina's met dezelfde tariefregel onderhoudt, mag de monitor alleen na een ophaalfout een alternatieve live URL proberen. Een inhoudelijke mismatch op een wel opgehaalde primaire pagina stopt direct fail-closed. Daarmee kan oudere wording op een alternatieve officiele pagina een echte tariefwijziging niet maskeren. De fallback wordt tijdens dezelfde run live opgehaald en moet alle geconfigureerde controles doorstaan. Er wordt nooit teruggevallen op een eerder opgeslagen prijs of een last-known-good HTML-versie.</p>
+  <h2>11. Datastroom en actualiteit</h2>
+  <div class="formula">GitHub Actions -> NDW/OCPI + officiële prijsbronnen -> process.py -> huizen-data.json -> quality generator -> pricing-quality.json -> kaart en kwaliteitspagina</div>
+  <p>De primaire laadpuntbron is NDW DOT-NL. De applicatie draait statisch op GitHub Pages en heeft geen runtime backend of database. De productiedataset vermeldt zijn generatietijd en de kwaliteitspagina maakt statusversheid en bronverificaties zichtbaar.</p>
 
-  <h2>12. Bekende beperkingen</h2>
-  <div class="card warning">
-    <ul>
-      <li>OCPI-tariefrestricties worden nog niet inhoudelijk geevalueerd en blokkeren daarom ranking.</li>
-      <li>Tijd-, parkeer-, idle- en andere duurafhankelijke kosten zijn nog niet volledig gemodelleerd.</li>
-      <li>Een MSP-app kan netwerk- of locatie-specifieke prijzen tonen die niet publiek reproduceerbaar beschikbaar zijn.</li>
-      <li>Regionale fallbacks zijn minder specifiek dan een connectorgebonden NDW-tarief.</li>
-      <li>Beschikbaarheidsstatus is een periodieke snapshot.</li>
-      <li>De prijs op het laadpunt, de betaalpagina, de MSP-app en de uiteindelijke factuur blijven leidend.</li>
-    </ul>
-  </div>
-
-  <h2>13. Vervolg</h2>
-  <p>De actuele prioriteiten staan in <a href="https://github.com/rubenwoudsma/laadpalenhuizen/blob/main/ROADMAP.md" rel="noopener">ROADMAP.md</a>. Na deze P0-hardening ligt de nadruk eerst op oude/vervangen CPO-records en lokale prijs-gaten, daarna op volledige OCPI-restricties, tijd-/parkeerkosten en status-freshness.</p>
-
-  <h2>14. Bronnen</h2>
+  <h2>12. Bronnen</h2>
   <ul class="source-list">
-    <li><a href="https://docs.ndw.nu/en/elektrisch-rijden/" rel="noopener">NDW DOT-NL documentatie voor elektrisch rijden</a></li>
-    <li><a href="https://ocpi.github.io/openapi-specification/ocpi/2.2.1/" rel="noopener">OCPI 2.2.1 OpenAPI documentatie</a></li>
-    <li><a href="https://github.com/ocpi/ocpi" rel="noopener">Officiele OCPI repository</a></li>
-    <li><a href="https://www.anwb.nl/auto/elektrisch-rijden/laadpas-abonnement" rel="noopener">ANWB laadpas</a></li>
-    <li><a href="https://tapelectric.app/nl/laadpas/" rel="noopener">Tap Electric laadpas</a></li>
-    <li><a href="https://incharge.vattenfall.nl/laadpas/" rel="noopener">Vattenfall InCharge laadpas</a></li>
-    <li><a href="https://www.e-flux.io/nl/tarieven-laadpassen" rel="noopener">E-Flux laadpastarieven</a></li>
-    <li><a href="https://www.shell.nl/elektrisch-opladen/Tarieven.html" rel="noopener">Shell Recharge tarieven</a></li>
-    <li><a href="https://ubitricity.com/nl/bestuurder/mrae-laadprijzen/" rel="noopener">Ubitricity MRA-E laadprijzen</a></li>
-    <li><a href="https://www.huizen.nl/elektrisch-laden" rel="noopener">Gemeente Huizen, elektrisch laden</a></li>
+    <li><a href="https://docs.ndw.nu/en/elektrisch-rijden/">NDW DOT-NL</a>, OCPI laadpunten en tarieven.</li>
+    <li><a href="https://github.com/ocpi/ocpi/tree/release-2.2.1-bugfixes">OCPI 2.2.1 bugfixes</a>, tarieftypen, componenten, restrictions, step_size en min/max-prijzen.</li>
+    <li><a href="https://ubitricity.com/nl/bestuurder/mrae-laadprijzen/">Ubitricity MRA-E laadprijzen</a>.</li>
+    <li><a href="https://totalenergies.nl/elektrisch-rijden/vind-laadpunt">TotalEnergies laadpunt- en MRA-E-tarieven</a>.</li>
+    <li><a href="https://www.lidl.nl/c/laadpalen/s10015078">Lidl laadpalen</a>, AC- en DC-tarieven voor Direct/QR en laden met eigen laadpas.</li>
+    <li><a href="https://incharge.vattenfall.nl/blog/snel-en-eenvoudig-laden-zonder-laadpas">Vattenfall Direct/QR</a> en de openbare Vattenfall-tariefinformatie.</li>
+    <li><a href="https://www.laadwerk.nl/">Laadwerk</a>, regionale concessie- en tariefcontext.</li>
+    <li>De afzonderlijke MSP-bronnen die in <code>pricing-sources.json</code> zijn vastgelegd en tijdens de broncontrole semantisch worden geverifieerd.</li>
   </ul>
-  <p class="muted">Controleer voor het starten van een laadsessie altijd de actuele prijs op het laadpunt, de betaalpagina of in de app van de gekozen aanbieder.</p>
+  <p class="muted">De berekeningen zijn een vergelijkingshulpmiddel. Controleer vóór het starten van een sessie het actuele tarief en de voorwaarden van de gekozen aanbieder.</p>
 </main>
 </body>
 </html>

@@ -74,7 +74,30 @@ def fetch_page(url: str, attempts: int = 3, timeout: int = 30) -> str:
     raise RuntimeError(f"bron kon na {attempts} pogingen niet worden opgehaald: {last_error}")
 
 
+def scoped_source_text(source: dict, page_text: str) -> str:
+    """Limit checks to an explicitly named visible page section when configured.
+
+    This prevents identical prices elsewhere on a provider page from masking a
+    removed or changed pricing route. Missing section boundaries fail closed.
+    """
+    scope = source.get("scope") or {}
+    start_marker = str(scope.get("start") or "").strip().lower()
+    end_marker = str(scope.get("end") or "").strip().lower()
+    if not start_marker:
+        return page_text
+    start = page_text.find(start_marker)
+    if start < 0:
+        return ""
+    end = len(page_text)
+    if end_marker:
+        candidate = page_text.find(end_marker, start + len(start_marker))
+        if candidate >= 0:
+            end = candidate
+    return page_text[start:end]
+
+
 def evaluate_source(source: dict, page_text: str) -> list[str]:
+    page_text = scoped_source_text(source, page_text)
     missing = []
     for check in source.get("checks", []):
         patterns = check.get("patterns") or []

@@ -12,8 +12,13 @@ class PricingMonitorTest(unittest.TestCase):
     def test_config_is_valid(self):
         config = monitor.load_config(ROOT / "pricing-sources.json")
         self.assertEqual(config["schema_version"], 1)
-        self.assertEqual(len(config["sources"]), 10)
+        self.assertEqual(len(config["sources"]), 11)
         self.assertIn("tap_light", {source["id"] for source in config["sources"]})
+
+    def test_laadkompas_uses_canonical_source_without_campaign_fallback(self):
+        config = monitor.load_config(ROOT / "pricing-sources.json")
+        source = next(item for item in config["sources"] if item["id"] == "laadkompas_free")
+        self.assertEqual(monitor.source_urls(source), ["https://laadkompas.nl/laadpas/zonder-abonnement/"])
 
     def test_normalize_page_removes_markup_and_whitespace(self):
         text = monitor.normalize_page("<h1>Tap&nbsp;Electric</h1>\n<p>Light   +5% transactiekosten</p>")
@@ -41,12 +46,39 @@ class PricingMonitorTest(unittest.TestCase):
             "totalenergies_mrae": "Provincies Flevoland, Noord-Holland en Utrecht MRA-E 2 t/m 5 €0,40 €0,48. MRA-E 6 €0,30 €0,36. MRA-E 6 - Dynamische tarieven €0,34 €0,36. Snelladers DC Provincies Flevoland, Noord-Holland en Utrecht (MRA-E) €0,45 €0,54.",
             "ubitricity_mrae_direct": "Ad Hoc Opladen via QR-code op scherm. Per kWh 0,35€. RFID / Apps Per kWh: ANWB, Greenchoice, Tap Electric, Essent, MoveMove, Green Caravan, Eneco, Shell Recharge (App), Vattenfall Incharge, MKB Brandstof.",
             "totalenergies_direct_payment": "Het laadtarief bestaat uit een basisprijs (CPO-prijs), dit is ook de ad-hoc of direct payment prijs. De extra toeslag geldt niet bij betaling met een gewone betaal/creditkaart (Direct Payment, ook wel Ad-Hoc).",
-            "vattenfall_direct_support": "Met je betaalpas opladen: scan de QR-code en vul je betaalgegevens in. Je kan dit gebruiken op onze openbare laadpalen zolang ze een sticker met QR-code hebben.",
+            "lidl_direct_payment": "Opladen via Lidl.nl. Lidl.nl-tarief regulier-laadstation: € 0.55 €/kWh (AC). Lidl.nl-tarief snel-laadstation: € 0.60 €/kWh (DC).",
+            "lidl_cpo_tariff": "Opladen met eigen laadpas. Lidl.nl-tarief regulier-laadstation: € 0.55 €/kWh (AC). Lidl.nl-tarief snel-laadstation: € 0.60 €/kWh (DC). Let op: De abonnementskosten van uw laadpas aanbieder zijn van toepassing.",
         }
         for source in config["sources"]:
             with self.subTest(source=source["id"]):
                 normalized = monitor.normalize_page(f"<p>{snippets[source['id']]}</p>")
                 self.assertEqual(monitor.evaluate_source(source, normalized), [])
+
+    def test_lidl_checks_are_scoped_to_the_intended_page_sections(self):
+        config = monitor.load_config(ROOT / "pricing-sources.json")
+        by_id = {source["id"]: source for source in config["sources"]}
+        page = monitor.normalize_page(
+            "<h2>Opladen via Lidl.nl</h2><p>Betaal direct.</p>"
+            "<h2>Opladen met eigen laadpas</h2>"
+            "<p>Lidl.nl-tarief regulier-laadstation: € 0.55 €/kWh (AC)</p>"
+            "<p>Lidl.nl-tarief snel-laadstation: € 0.60 €/kWh (DC)</p>"
+            "<p>De abonnementskosten van uw laadpas aanbieder zijn van toepassing.</p>"
+        )
+        self.assertEqual(len(monitor.evaluate_source(by_id["lidl_direct_payment"], page)), 2)
+        self.assertEqual(monitor.evaluate_source(by_id["lidl_cpo_tariff"], page), [])
+
+    def test_lidl_cpo_monitor_requires_provider_cost_qualifier(self):
+        config = monitor.load_config(ROOT / "pricing-sources.json")
+        source = next(item for item in config["sources"] if item["id"] == "lidl_cpo_tariff")
+        page = monitor.normalize_page(
+            "<h2>Opladen met eigen laadpas</h2>"
+            "<p>Lidl.nl-tarief regulier-laadstation: € 0.55 €/kWh (AC)</p>"
+            "<p>Lidl.nl-tarief snel-laadstation: € 0.60 €/kWh (DC)</p>"
+        )
+        self.assertEqual(
+            monitor.evaluate_source(source, page),
+            ["Lidl vermeldt dat kosten van de laadpasaanbieder aanvullend van toepassing kunnen zijn"],
+        )
 
     def test_current_live_wording_for_previous_false_positives(self):
         config = monitor.load_config(ROOT / "pricing-sources.json")

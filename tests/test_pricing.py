@@ -169,7 +169,7 @@ class PricingRulesTest(unittest.TestCase):
         self.assertEqual(fallback["range"], [0.34, 0.48])
         self.assertIn("exacte concessie", fallback["note"].lower())
         self.assertIn("dynamische", fallback["note"].lower())
-        self.assertEqual(process.TOTALENERGIES_MRAE_VERIFIED_AT, "2026-08-27")
+        self.assertEqual(process.TOTALENERGIES_MRAE_VERIFIED_AT, "2026-08-28")
         self.assertIn("niet als concessieheuristiek", process.TOTALENERGIES_MRAE_RESOLUTION_NOTE)
         self.assertIn("plaatsingsdatum", process.TOTALENERGIES_MRAE_RESOLUTION_NOTE)
 
@@ -384,6 +384,65 @@ class PricingRulesTest(unittest.TestCase):
         )
         self.assertTrue(process.parse_totalenergies_direct_rule(page))
 
+    def test_lidl_public_page_parser_extracts_direct_ac_dc_rates(self):
+        page = process.normalize_public_page(
+            "<h2>Opladen via Lidl.nl</h2>"
+            "<p>Lidl.nl-tarief regulier-laadstation: € 0.55 €/kWh (AC)</p>"
+            "<p>Lidl.nl-tarief snel-laadstation: € 0.60 €/kWh (DC)</p>"
+        )
+        self.assertEqual(process.parse_lidl_direct_rates(page), {"AC": 0.55, "DC": 0.60})
+
+    def test_lidl_public_page_parser_fails_closed_when_one_rate_is_missing(self):
+        page = process.normalize_public_page(
+            "<p>Lidl.nl-tarief regulier-laadstation: € 0.55 €/kWh (AC)</p>"
+        )
+        self.assertEqual(process.parse_lidl_direct_rates(page), {})
+
+    def test_lidl_direct_parser_does_not_reuse_own_charge_card_section(self):
+        page = process.normalize_public_page(
+            "<h2>Opladen met eigen laadpas</h2>"
+            "<p>Lidl.nl-tarief regulier-laadstation: € 0.55 €/kWh (AC)</p>"
+            "<p>Lidl.nl-tarief snel-laadstation: € 0.60 €/kWh (DC)</p>"
+            "<p>Let op: de abonnementskosten van uw laadpas aanbieder zijn van toepassing.</p>"
+        )
+        self.assertEqual(process.parse_lidl_direct_rates(page), {})
+        self.assertEqual(process.parse_lidl_cpo_rates(page), {"AC": 0.55, "DC": 0.60})
+
+    def test_lidl_cpo_parser_requires_own_charge_card_section(self):
+        page = process.normalize_public_page(
+            "<h2>Opladen via Lidl.nl</h2>"
+            "<p>Lidl.nl-tarief regulier-laadstation: € 0.55 €/kWh (AC)</p>"
+            "<p>Lidl.nl-tarief snel-laadstation: € 0.60 €/kWh (DC)</p>"
+        )
+        self.assertEqual(process.parse_lidl_cpo_rates(page), {})
+
+    def test_lidl_cpo_parser_requires_provider_cost_qualifier(self):
+        page = process.normalize_public_page(
+            "<h2>Opladen met eigen laadpas</h2>"
+            "<p>Lidl.nl-tarief regulier-laadstation: € 0.55 €/kWh (AC)</p>"
+            "<p>Lidl.nl-tarief snel-laadstation: € 0.60 €/kWh (DC)</p>"
+        )
+        self.assertEqual(process.parse_lidl_cpo_rates(page), {})
+
+    def test_lidl_current_type_direct_rule_uses_ac_or_dc_only(self):
+        rule = {
+            "LDL": {
+                "mode": "by_current_type",
+                "rates": {"AC": 0.55, "DC": 0.60},
+                "basis": "official_cpo_adhoc",
+                "source_id": "lidl_direct_payment",
+                "source_url": process.LIDL_DIRECT_SOURCE_URL,
+                "confidence": "high",
+            }
+        }
+        ac = process.supplemental_direct_price_info("LDL", None, None, "unknown", rule, current_type="AC")
+        dc = process.supplemental_direct_price_info("LDL", None, None, "unknown", rule, current_type="DC")
+        unknown = process.supplemental_direct_price_info("LDL", None, None, "unknown", rule, current_type="UNKNOWN")
+        self.assertEqual(ac["rate"], 0.55)
+        self.assertEqual(dc["rate"], 0.60)
+        self.assertIsNone(unknown)
+        self.assertEqual(ac["basis"], "official_cpo_adhoc")
+
     def test_official_source_harvest_builds_party_rules(self):
         pages = {
             process.UBITRICITY_MRAE_DIRECT_SOURCE_URL: (
@@ -398,13 +457,149 @@ class PricingRulesTest(unittest.TestCase):
                 "het laadtarief bestaat uit een basisprijs (cpo-prijs), "
                 "dit is ook de ad-hoc of direct payment prijs"
             ),
+            process.LIDL_DIRECT_SOURCE_URL: (
+                "opladen via lidl.nl lidl.nl-tarief regulier-laadstation: € 0.55 €/kwh (ac) "
+                "lidl.nl-tarief snel-laadstation: € 0.60 €/kwh (dc) "
+                "opladen met eigen laadpas lidl.nl-tarief regulier-laadstation: € 0.55 €/kwh (ac) "
+                "lidl.nl-tarief snel-laadstation: € 0.60 €/kwh (dc) "
+                "let op: de abonnementskosten van uw laadpas aanbieder zijn van toepassing"
+            ),
         }
         harvest = process.harvest_official_pricing(fetcher=lambda url: pages[url])
         self.assertEqual(harvest["direct_by_party"]["UB2"]["rate"], 0.35)
         self.assertEqual(harvest["direct_by_party"]["GFX"]["mode"], "mirror_cpo")
+        self.assertEqual(harvest["direct_by_party"]["LDL"]["rates"], {"AC": 0.55, "DC": 0.60})
+        self.assertEqual(harvest["cpo_by_party"]["LDL"]["rates"], {"AC": 0.55, "DC": 0.60})
         self.assertEqual(harvest["msp_by_party"]["UB2"]["anwb_free"]["rate"], 0.35)
         self.assertEqual(harvest["msp_by_party"]["UB2"]["shell_basic"]["rate"], 0.55)
         self.assertTrue(all(source["status"] == "ok" for source in harvest["sources"]))
+
+    def test_lidl_official_direct_rates_follow_connector_current_type(self):
+        location = {
+            "id": "lidl-huizen-test",
+            "country_code": "NL",
+            "party_id": "LDL",
+            "operator": {"name": "Lidl"},
+            "name": "Lidl test",
+            "address": "Voorbaan 1",
+            "city": "Huizen",
+            "coordinates": {"latitude": "52.2955", "longitude": "5.2451"},
+            "evses": [
+                {
+                    "evse_id": "NL*LDL*EAC",
+                    "status": "AVAILABLE",
+                    "connectors": [{
+                        "id": "1",
+                        "standard": "IEC_62196_T2",
+                        "power_type": "AC_3_PHASE",
+                        "max_electric_power": 22000,
+                        "tariff_ids": [],
+                    }],
+                },
+                {
+                    "evse_id": "NL*LDL*EDC",
+                    "status": "AVAILABLE",
+                    "connectors": [{
+                        "id": "1",
+                        "standard": "IEC_62196_T2_COMBO",
+                        "power_type": "DC",
+                        "max_electric_power": 50000,
+                        "tariff_ids": [],
+                    }],
+                },
+            ],
+        }
+        official_direct = {
+            "LDL": {
+                "mode": "by_current_type",
+                "rates": {"AC": 0.55, "DC": 0.60},
+                "basis": "official_cpo_adhoc",
+                "source_id": "lidl_direct_payment",
+                "source_url": process.LIDL_DIRECT_SOURCE_URL,
+                "source_checked_at": "2026-08-28T08:00:00+00:00",
+            }
+        }
+
+        official_cpo = {
+            "LDL": {
+                "mode": "by_current_type",
+                "rates": {"AC": 0.55, "DC": 0.60},
+                "basis": "official_cpo_tariff",
+                "source_id": "lidl_cpo_tariff",
+                "source_url": process.LIDL_DIRECT_SOURCE_URL,
+                "source_checked_at": "2026-08-28T08:00:00+00:00",
+                "confidence": "high",
+            }
+        }
+        point = process.process_location(
+            location, process.build_tariff_index([]), official_direct=official_direct, official_cpo=official_cpo
+        )
+        self.assertIsNotNone(point)
+        direct_rates = {
+            option["current_type"]: option["pricing"]["direct_pay"]["kwh"]
+            for option in point["connector_options"]
+        }
+        self.assertEqual(direct_rates, {"AC": 0.55, "DC": 0.60})
+        base_rates = {
+            option["current_type"]: option["tariff"]["rate"]
+            for option in point["connector_options"]
+        }
+        self.assertEqual(base_rates, {"AC": 0.55, "DC": 0.60})
+        self.assertTrue(all(option["tariff"]["source"] == "official_cpo_tariff" for option in point["connector_options"]))
+        self.assertTrue(all(option["tariff"]["quality"]["source_quality"] == "high" for option in point["connector_options"]))
+        self.assertTrue(all(option["tariff"]["quality"]["price_specificity"] == "network" for option in point["connector_options"]))
+        self.assertTrue(all(
+            option["direct_payment"]["reason"] == "official_operator_source"
+            for option in point["connector_options"]
+        ))
+
+    def test_lidl_ndw_tariff_takes_precedence_over_official_cpo_fallback(self):
+        location = {
+            "id": "lidl-ndw-priority",
+            "country_code": "NL",
+            "party_id": "LDL",
+            "operator": {"name": "Lidl"},
+            "name": "Lidl NDW priority",
+            "address": "Voorbaan 2",
+            "city": "Huizen",
+            "coordinates": {"latitude": "52.2955", "longitude": "5.2451"},
+            "evses": [{
+                "evse_id": "NL*LDL*ENDW",
+                "status": "AVAILABLE",
+                "connectors": [{
+                    "id": "1",
+                    "standard": "IEC_62196_T2",
+                    "power_type": "AC_3_PHASE",
+                    "max_electric_power": 22000,
+                    "tariff_ids": ["lidl-ndw"],
+                }],
+            }],
+        }
+        tariffs = [{
+            "country_code": "NL",
+            "party_id": "LDL",
+            "id": "lidl-ndw",
+            "currency": "EUR",
+            "type": "REGULAR",
+            "elements": [{"price_components": [{"type": "ENERGY", "price": 0.49, "step_size": 1}]}],
+        }]
+        official_cpo = {
+            "LDL": {
+                "mode": "by_current_type",
+                "rates": {"AC": 0.55, "DC": 0.60},
+                "basis": "official_cpo_tariff",
+                "source_id": "lidl_cpo_tariff",
+                "source_url": process.LIDL_DIRECT_SOURCE_URL,
+                "source_checked_at": "2026-08-28T08:00:00+00:00",
+                "confidence": "high",
+            }
+        }
+        point = process.process_location(
+            location, process.build_tariff_index(tariffs), official_cpo=official_cpo
+        )
+        option = point["connector_options"][0]
+        self.assertEqual(option["tariff"]["rate"], 0.49)
+        self.assertEqual(option["tariff"]["source"], "ndw")
 
     def test_ubitricity_direct_survives_msp_table_layout_change(self):
         pages = {
