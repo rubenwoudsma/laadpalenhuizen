@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-28T13:01:41.456393+00:00",
+  "generated_at": "2026-08-28T18:59:23.157905+00:00",
   "input_schema_version": 5,
   "legacy_profile_fallback": false,
   "coverage": {
@@ -15,7 +15,7 @@
     "comparison_ready": 140,
     "comparison_ready_pct": 73.7,
     "fully_reliable_locations": 23,
-    "available_snapshot": 153
+    "available_snapshot": 146
   },
   "connector_coverage": {
     "total_profiles": 209,
@@ -44,20 +44,6 @@
         "operator": "Laadnet",
         "count": 13,
         "examples": [
-          {
-            "id": "1701826",
-            "name": "Laadnet Landal Gooise Heide",
-            "address": "Woensbergweg 5, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 11.0,
-            "evse_ids": [
-              "NL*LNT*E1722089*001",
-              "NL*LNT*E1722089*002",
-              "NL*LNT*E1722090*001",
-              "NL*LNT*E1722090*002"
-            ]
-          },
           {
             "id": "4208919",
             "name": "Laadnet Veiligheidsregio Nevenpost Huizen",
@@ -101,6 +87,17 @@
             "evse_ids": [
               "NL*LNT*E2086401*001",
               "NL*LNT*E2086401*002"
+            ]
+          },
+          {
+            "id": "4237279",
+            "name": "Laadnet Driftweg 19",
+            "address": "Veldweg 19, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 11.0,
+            "evse_ids": [
+              "NL*LNT*E4287031*001"
             ]
           }
         ]
@@ -205,20 +202,6 @@
         "count": 13,
         "examples": [
           {
-            "id": "1701826",
-            "name": "Laadnet Landal Gooise Heide",
-            "address": "Woensbergweg 5, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 11.0,
-            "evse_ids": [
-              "NL*LNT*E1722089*001",
-              "NL*LNT*E1722089*002",
-              "NL*LNT*E1722090*001",
-              "NL*LNT*E1722090*002"
-            ]
-          },
-          {
             "id": "4208919",
             "name": "Laadnet Veiligheidsregio Nevenpost Huizen",
             "address": "Bovenmaatweg 2, Huizen",
@@ -261,6 +244,17 @@
             "evse_ids": [
               "NL*LNT*E2086401*001",
               "NL*LNT*E2086401*002"
+            ]
+          },
+          {
+            "id": "4237279",
+            "name": "Laadnet Driftweg 19",
+            "address": "Veldweg 19, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 11.0,
+            "evse_ids": [
+              "NL*LNT*E4287031*001"
             ]
           }
         ]
@@ -563,7 +557,7 @@
   },
   "pricing_rule_verification": {
     "mode": "daily_verified_fail_closed",
-    "checked_at": "2026-08-28T13:01:24.182901+00:00",
+    "checked_at": "2026-08-28T18:59:07.691763+00:00",
     "all_ok": false,
     "disabled_rules": [
       "laadkompas_free",
@@ -890,17 +884,6 @@
     "missing_or_invalid_timestamp": 0,
     "stale_locations_over_7d": [
       {
-        "id": "7e0dfd1b-e2e7-46ff-bcff-53fb5c9af4bb",
-        "address": "Driftweg 24, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-07-31T13:43:40Z",
-        "age_days": 28.0
-      },
-      {
         "id": "74ac2267-f060-4c21-a3fd-483702b00a19",
         "address": "Mastspoor 3, Huizen",
         "operator": "Vattenfall InCharge",
@@ -909,7 +892,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T12:44:41Z",
-        "age_days": 28.0
+        "age_days": 28.3
       },
       {
         "id": "50cf8798-1841-4b66-8f8c-86c43af6dfea",
@@ -920,18 +903,18 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T14:36:10Z",
-        "age_days": 27.9
+        "age_days": 28.2
       },
       {
-        "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
-        "address": "Westkade 359, Huizen",
+        "id": "7e0dfd1b-e2e7-46ff-bcff-53fb5c9af4bb",
+        "address": "Driftweg 24, Huizen",
         "operator": "Vattenfall InCharge",
         "party_id": "NUO",
         "statuses": [
           "UNKNOWN"
         ],
-        "last_updated": "2026-08-03T08:53:12Z",
-        "age_days": 25.2
+        "last_updated": "2026-07-31T13:43:40Z",
+        "age_days": 28.2
       },
       {
         "id": "691343b7-cb61-4117-9d42-db44ceb4ba32",
@@ -942,7 +925,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T07:46:28Z",
-        "age_days": 25.2
+        "age_days": 25.5
       },
       {
         "id": "715d923d-4113-4e5a-8c20-7c41a9b78227",
@@ -953,18 +936,18 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T09:49:33Z",
-        "age_days": 25.1
+        "age_days": 25.4
       },
       {
-        "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
-        "address": "Waterland 2, Huizen",
+        "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
+        "address": "Westkade 359, Huizen",
         "operator": "Vattenfall InCharge",
         "party_id": "NUO",
         "statuses": [
           "UNKNOWN"
         ],
-        "last_updated": "2026-08-03T10:50:26Z",
-        "age_days": 25.1
+        "last_updated": "2026-08-03T08:53:12Z",
+        "age_days": 25.4
       },
       {
         "id": "6c715014-aa5e-46e6-9aab-4da426e6b9f2",
@@ -975,7 +958,18 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T12:12:52Z",
-        "age_days": 25.0
+        "age_days": 25.3
+      },
+      {
+        "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
+        "address": "Waterland 2, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-08-03T10:50:26Z",
+        "age_days": 25.3
       },
       {
         "id": "acbe9fd2-a94e-4760-88c5-72fbb962e753",
@@ -987,7 +981,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-04T07:12:23Z",
-        "age_days": 24.2
+        "age_days": 24.5
       }
     ]
   },
@@ -1031,7 +1025,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-28T09:34:18.806Z",
+            "last_updated": "2026-08-28T14:33:24.414Z",
             "evse_ids": [
               "NL*EFL*EV3893250*C1",
               "NL*EFL*EV6652420*C1"
@@ -1043,10 +1037,11 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE"
+              "AVAILABLE",
+              "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-08-27T23:41:02Z",
+            "last_updated": "2026-08-28T15:20:25Z",
             "evse_ids": [
               "NLLMSE1234937483*1",
               "NLLMSE1234937483*2"
@@ -1088,7 +1083,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-28T12:30:55Z",
+            "last_updated": "2026-08-28T18:48:15Z",
             "evse_ids": [
               "NLLMSE1234937461*1",
               "NLLMSE1234937461*2"
@@ -1127,11 +1122,10 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE",
-              "CHARGING"
+              "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-28T10:13:45Z",
+            "last_updated": "2026-08-28T13:30:32Z",
             "evse_ids": [
               "NLLMSE1234937418*1",
               "NLLMSE1234937418*2"
@@ -1159,7 +1153,7 @@
               "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-08-28T09:56:54Z",
+            "last_updated": "2026-08-28T16:38:37Z",
             "evse_ids": [
               "NLLMSE1234937533*1",
               "NLLMSE1234937533*2"
@@ -1213,11 +1207,11 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE",
+              "CHARGING",
               "OUTOFORDER"
             ],
-            "available": true,
-            "last_updated": "2026-08-28T12:17:23Z",
+            "available": false,
+            "last_updated": "2026-08-28T16:33:15Z",
             "evse_ids": [
               "NLLMSE1234937612*1",
               "NLLMSE1234937612*2"
@@ -1301,11 +1295,10 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE",
-              "CHARGING"
+              "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-28T09:19:31Z",
+            "last_updated": "2026-08-28T18:19:00Z",
             "evse_ids": [
               "NLLMSE1234937467*1",
               "NLLMSE1234937467*2"
@@ -1416,7 +1409,7 @@
               "INOPERATIVE"
             ],
             "available": true,
-            "last_updated": "2026-08-28T06:56:55Z",
+            "last_updated": "2026-08-28T18:04:42Z",
             "evse_ids": [
               "NL*LDL*E00000148",
               "NL*LDL*E00000149",
@@ -1550,7 +1543,7 @@
     "recomputed_stats": {
       "total": 190,
       "connector_profiles": 209,
-      "available_snapshot": 153,
+      "available_snapshot": 146,
       "comparison_ready": 140,
       "decision_ready": 23,
       "indicative_only": 117,
