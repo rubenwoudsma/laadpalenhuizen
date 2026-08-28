@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-28T12:25:50.054606+00:00",
+  "generated_at": "2026-08-28T13:00:11.812853+00:00",
   "input_schema_version": 5,
   "legacy_profile_fallback": false,
   "coverage": {
@@ -8,23 +8,23 @@
     "connector_profiles": 209,
     "reliable_locations": 23,
     "reliable_locations_pct": 12.1,
-    "indicative_locations": 109,
-    "indicative_locations_pct": 57.4,
-    "insufficient_locations": 58,
-    "insufficient_locations_pct": 30.5,
-    "comparison_ready": 132,
-    "comparison_ready_pct": 69.5,
+    "indicative_locations": 117,
+    "indicative_locations_pct": 61.6,
+    "insufficient_locations": 50,
+    "insufficient_locations_pct": 26.3,
+    "comparison_ready": 140,
+    "comparison_ready_pct": 73.7,
     "fully_reliable_locations": 23,
-    "available_snapshot": 159
+    "available_snapshot": 153
   },
   "connector_coverage": {
     "total_profiles": 209,
     "reliable": 25,
-    "indicative": 113,
-    "insufficient": 71,
+    "indicative": 121,
+    "insufficient": 63,
     "reliable_pct": 12.0,
-    "indicative_pct": 54.1,
-    "insufficient_pct": 34.0
+    "indicative_pct": 57.9,
+    "insufficient_pct": 30.1
   },
   "direct_payment": {
     "known_profiles": 151,
@@ -398,9 +398,9 @@
     "direct_priced_profiles": 131,
     "direct_known_profiles": 151,
     "direct_priced_pct_of_known": 86.8,
-    "complete_price_routes": 526,
-    "total_price_routes": 689,
-    "complete_price_routes_pct": 76.3
+    "complete_price_routes": 587,
+    "total_price_routes": 1247,
+    "complete_price_routes_pct": 47.1
   },
   "quality_dimensions": {
     "profile_source_quality": [
@@ -450,51 +450,51 @@
     "quote_cost_completeness": [
       {
         "id": "complete",
-        "count": 526,
-        "pct": 76.3
+        "count": 587,
+        "pct": 47.1
       },
       {
         "id": "partial",
-        "count": 163,
-        "pct": 23.7
+        "count": 660,
+        "pct": 52.9
       }
     ],
     "quote_decision_grade": [
       {
         "id": "reliable",
-        "count": 69,
-        "pct": 10.0
+        "count": 88,
+        "pct": 7.1
       },
       {
         "id": "indicative",
-        "count": 457,
-        "pct": 66.3
+        "count": 499,
+        "pct": 40.0
       },
       {
         "id": "exclude",
-        "count": 163,
-        "pct": 23.7
+        "count": 660,
+        "pct": 52.9
       }
     ]
   },
   "decision_reasons": [
     {
+      "reason": "known_cost_component_not_modelled",
+      "count": 186,
+      "connector_profiles": 186,
+      "quote_occurrences": 660
+    },
+    {
       "reason": "bounded_price_uncertainty",
-      "count": 119,
-      "connector_profiles": 119,
-      "quote_occurrences": 454
+      "count": 136,
+      "connector_profiles": 136,
+      "quote_occurrences": 496
     },
     {
       "reason": "specificity_regional",
       "count": 113,
       "connector_profiles": 113,
-      "quote_occurrences": 451
-    },
-    {
-      "reason": "known_cost_component_not_modelled",
-      "count": 67,
-      "connector_profiles": 67,
-      "quote_occurrences": 163
+      "quote_occurrences": 452
     },
     {
       "reason": "potential_network_discount",
@@ -506,33 +506,45 @@
       "reason": "operator_estimate_only",
       "count": 15,
       "connector_profiles": 15,
-      "quote_occurrences": 45
+      "quote_occurrences": 90
+    },
+    {
+      "reason": "tariff_restrictions_bounded",
+      "count": 17,
+      "connector_profiles": 17,
+      "quote_occurrences": 66
     }
   ],
   "decision_blockers": [
     {
+      "reason": "MSP_TARIFF_COMPONENTS_UNKNOWN",
+      "count": 186,
+      "connector_profiles": 186,
+      "quote_occurrences": 521
+    },
+    {
       "reason": "TARIFF_RESTRICTIONS",
-      "count": 39,
-      "connector_profiles": 39,
-      "quote_occurrences": 79
+      "count": 22,
+      "connector_profiles": 22,
+      "quote_occurrences": 92
     },
     {
       "reason": "LOCATION_TARIFF_COMPONENTS_UNKNOWN",
       "count": 15,
       "connector_profiles": 15,
-      "quote_occurrences": 45
+      "quote_occurrences": 90
     },
     {
       "reason": "TIME",
       "count": 13,
       "connector_profiles": 13,
-      "quote_occurrences": 39
+      "quote_occurrences": 78
     },
     {
       "reason": "PARKING_TIME",
       "count": 1,
       "connector_profiles": 1,
-      "quote_occurrences": 3
+      "quote_occurrences": 6
     }
   ],
   "official_sources": {
@@ -551,13 +563,13 @@
   },
   "pricing_rule_verification": {
     "mode": "daily_verified_fail_closed",
-    "checked_at": "2026-08-28T12:25:33.461109+00:00",
+    "checked_at": "2026-08-28T12:59:59.802611+00:00",
     "all_ok": false,
     "disabled_rules": [
       "laadkompas_free",
+      "laadkompas_legacy_039",
       "lidl_direct_payment",
-      "shell_basic",
-      "vattenfall"
+      "shell_basic"
     ],
     "results": [
       {
@@ -602,23 +614,37 @@
         "id": "vattenfall",
         "provider": "Vattenfall InCharge",
         "plan": "Gratis laadpas",
-        "url": "https://incharge.vattenfall.nl/de-laadpas",
-        "status": "mismatch",
-        "missing": [
-          "laadpas heeft geen abonnementskosten",
-          "roaming starttarief blijft EUR 0,35 per sessie"
-        ],
+        "url": "https://incharge.vattenfall.nl/laadpas",
+        "status": "ok",
+        "missing": [],
+        "verified_url": "https://incharge.vattenfall.nl/laadpas",
         "attempted_urls": [
-          "https://incharge.vattenfall.nl/de-laadpas"
+          "https://incharge.vattenfall.nl/laadpas"
         ],
         "attempts": [
           {
-            "url": "https://incharge.vattenfall.nl/de-laadpas",
-            "status": "mismatch",
-            "missing": [
-              "laadpas heeft geen abonnementskosten",
-              "roaming starttarief blijft EUR 0,35 per sessie"
-            ]
+            "url": "https://incharge.vattenfall.nl/laadpas",
+            "status": "ok",
+            "missing": []
+          }
+        ]
+      },
+      {
+        "id": "vattenfall_roaming_fee",
+        "provider": "Vattenfall InCharge",
+        "plan": "Roaming starttarief",
+        "url": "https://incharge.vattenfall.nl/en/our-network/our-rates",
+        "status": "ok",
+        "missing": [],
+        "verified_url": "https://incharge.vattenfall.nl/en/our-network/our-rates",
+        "attempted_urls": [
+          "https://incharge.vattenfall.nl/en/our-network/our-rates"
+        ],
+        "attempts": [
+          {
+            "url": "https://incharge.vattenfall.nl/en/our-network/our-rates",
+            "status": "ok",
+            "missing": []
           }
         ]
       },
@@ -734,6 +760,28 @@
         ]
       },
       {
+        "id": "laadkompas_legacy_039",
+        "provider": "Laadkompas",
+        "plan": "Zonder abonnement, conflicterende oude tekst",
+        "url": "https://laadkompas.nl/laadpas/zonder-abonnement/",
+        "status": "mismatch",
+        "missing": [
+          "dezelfde officiële pagina bevat nog de conflicterende oude EUR 0,39-vermelding"
+        ],
+        "attempted_urls": [
+          "https://laadkompas.nl/laadpas/zonder-abonnement/"
+        ],
+        "attempts": [
+          {
+            "url": "https://laadkompas.nl/laadpas/zonder-abonnement/",
+            "status": "mismatch",
+            "missing": [
+              "dezelfde officiële pagina bevat nog de conflicterende oude EUR 0,39-vermelding"
+            ]
+          }
+        ]
+      },
+      {
         "id": "totalenergies_mrae",
         "provider": "TotalEnergies",
         "plan": "MRA-E regionale fallback",
@@ -842,6 +890,17 @@
     "missing_or_invalid_timestamp": 0,
     "stale_locations_over_7d": [
       {
+        "id": "7e0dfd1b-e2e7-46ff-bcff-53fb5c9af4bb",
+        "address": "Driftweg 24, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-07-31T13:43:40Z",
+        "age_days": 28.0
+      },
+      {
         "id": "74ac2267-f060-4c21-a3fd-483702b00a19",
         "address": "Mastspoor 3, Huizen",
         "operator": "Vattenfall InCharge",
@@ -864,15 +923,15 @@
         "age_days": 27.9
       },
       {
-        "id": "7e0dfd1b-e2e7-46ff-bcff-53fb5c9af4bb",
-        "address": "Driftweg 24, Huizen",
+        "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
+        "address": "Westkade 359, Huizen",
         "operator": "Vattenfall InCharge",
         "party_id": "NUO",
         "statuses": [
           "UNKNOWN"
         ],
-        "last_updated": "2026-07-31T13:43:40Z",
-        "age_days": 27.9
+        "last_updated": "2026-08-03T08:53:12Z",
+        "age_days": 25.2
       },
       {
         "id": "691343b7-cb61-4117-9d42-db44ceb4ba32",
@@ -905,17 +964,6 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T10:50:26Z",
-        "age_days": 25.1
-      },
-      {
-        "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
-        "address": "Westkade 359, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-08-03T08:53:12Z",
         "age_days": 25.1
       },
       {
@@ -1037,11 +1085,10 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE",
-              "CHARGING"
+              "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-28T09:32:43Z",
+            "last_updated": "2026-08-28T12:30:55Z",
             "evse_ids": [
               "NLLMSE1234937461*1",
               "NLLMSE1234937461*2"
@@ -1441,11 +1488,10 @@
             "operator": "TotalEnergies",
             "party_id": "GFX",
             "statuses": [
-              "AVAILABLE",
-              "CHARGING"
+              "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-28T11:05:58Z",
+            "last_updated": "2026-08-28T12:48:30Z",
             "evse_ids": [
               "NL*TCB*EPP002058*1",
               "NL*TCB*EPP002058*2"
@@ -1504,18 +1550,18 @@
     "recomputed_stats": {
       "total": 190,
       "connector_profiles": 209,
-      "available_snapshot": 159,
-      "comparison_ready": 132,
+      "available_snapshot": 153,
+      "comparison_ready": 140,
       "decision_ready": 23,
-      "indicative_only": 109,
-      "insufficient": 58,
+      "indicative_only": 117,
+      "insufficient": 50,
       "fully_reliable": 23,
       "unknown_base_rate": 23,
       "adhoc_priced": 131,
       "adhoc_priced_ndw": 0,
       "adhoc_priced_official": 131,
       "direct_payment_known": 151,
-      "msp_quotes_official": 38
+      "msp_quotes_official": 76
     }
   },
   "attention": [
@@ -1535,7 +1581,7 @@
       "severity": "high",
       "category": "decision_quality",
       "title": "Connectorprofielen met onvoldoende informatie voor vergelijking",
-      "count": 71
+      "count": 63
     },
     {
       "severity": "medium",
@@ -1553,7 +1599,7 @@
       "severity": "medium",
       "category": "cost_completeness",
       "title": "Prijsroutes met bekende maar nog niet volledig gemodelleerde kosten",
-      "count": 163
+      "count": 660
     },
     {
       "severity": "medium",

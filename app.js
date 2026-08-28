@@ -147,10 +147,8 @@ function billedEnergyKwh(requestedKwh, stepSizeWh) {
   return (Math.ceil((requestedWh - 1e-9) / step) * step) / 1000;
 }
 
-function sessionCostRange(quote) {
+function rawSessionCostRange(quote) {
   if (!quote || quote.kwh == null) return null;
-  const quality = quote.quality || {};
-  if (quality.decision_grade === 'exclude' || quality.cost_completeness === 'partial') return null;
 
   const billedKwh = billedEnergyKwh(energyKwh, quote.energy_step_size_wh);
   const kwhRange = quote.range?.length === 2 ? quote.range.map(Number) : [Number(quote.kwh), Number(quote.kwh)];
@@ -162,11 +160,9 @@ function sessionCostRange(quote) {
       ? quote.session_range.map(Number)
       : [cpoSession, cpoSession];
     const mspSession = Number(quote.msp_session || 0);
-    return {
-      min: (kwhRange[0] * billedKwh + cpoSessionRange[0]) * (1 + percentage) + mspSession,
-      max: (kwhRange[1] * billedKwh + cpoSessionRange[1]) * (1 + percentage) + mspSession,
-      mid: (Number(quote.kwh) * billedKwh + cpoSession) * (1 + percentage) + mspSession,
-    };
+    const min = (kwhRange[0] * billedKwh + cpoSessionRange[0]) * (1 + percentage) + mspSession;
+    const max = (kwhRange[1] * billedKwh + cpoSessionRange[1]) * (1 + percentage) + mspSession;
+    return { min, max, mid: (min + max) / 2 };
   }
 
   const sessionRange = quote.session_range?.length === 2
@@ -182,18 +178,26 @@ function sessionCostRange(quote) {
       ? quote.cpo_kwh_range.map(Number)
       : [Number(quote.cpo_kwh), Number(quote.cpo_kwh)];
     const mspKwh = Number(quote.msp_kwh || 0);
-    return {
-      min: (cpoRange[0] * billedKwh + mspKwh * energyKwh) * multiplier + sessionRange[0],
-      max: (cpoRange[1] * billedKwh + mspKwh * energyKwh) * multiplier + sessionRange[1],
-      mid: (Number(quote.cpo_kwh) * billedKwh + mspKwh * energyKwh) * multiplier + Number(quote.session || 0),
-    };
+    const min = (cpoRange[0] * billedKwh + mspKwh * energyKwh) * multiplier + sessionRange[0];
+    const max = (cpoRange[1] * billedKwh + mspKwh * energyKwh) * multiplier + sessionRange[1];
+    return { min, max, mid: (min + max) / 2 };
   }
 
-  return {
-    min: kwhRange[0] * billedKwh * multiplier + sessionRange[0],
-    max: kwhRange[1] * billedKwh * multiplier + sessionRange[1],
-    mid: Number(quote.kwh) * billedKwh * multiplier + Number(quote.session || 0),
-  };
+  const min = kwhRange[0] * billedKwh * multiplier + sessionRange[0];
+  const max = kwhRange[1] * billedKwh * multiplier + sessionRange[1];
+  return { min, max, mid: (min + max) / 2 };
+}
+
+function sessionCostRange(quote) {
+  if (!quote || quote.kwh == null) return null;
+  const quality = quote.quality || {};
+  if (quality.decision_grade === 'exclude' || quality.cost_completeness === 'partial') return null;
+  return rawSessionCostRange(quote);
+}
+
+function knownCostFloor(quote) {
+  if (!quote || quote.kwh == null) return null;
+  return rawSessionCostRange(quote);
 }
 
 function formatCostRange(cost) {
@@ -254,8 +258,8 @@ function rankForPass(cmp, passId) {
 function decisionLabel(quote) {
   const quality = quote?.quality || {};
   if (quality.decision_grade === 'reliable') return 'betrouwbaar vergelijkbaar';
-  if (quality.decision_grade === 'exclude') return 'onvolledige kosten, niet gerangschikt';
-  return 'indicatief';
+  if (quality.decision_grade === 'exclude') return 'onvolledig, niet gerangschikt';
+  return 'indicatief vergelijkbaar';
 }
 
 function specificityLabel(value) {
@@ -313,6 +317,8 @@ function formatUnmodelledCost(value) {
     INVALID_PRICE_COMPONENT: 'ongeldige OCPI-prijscomponent',
     UNSUPPORTED_PRICE_COMPONENT: 'niet-ondersteunde OCPI-prijscomponent',
     DUPLICATE_PRICE_DIMENSION: 'meerdere prijscomponenten voor dezelfde OCPI-dimensie',
+    MSP_TARIFF_COMPONENTS_UNKNOWN: 'aanvullende kosten van de laadpasaanbieder',
+    MSP_SESSION_FEE: 'sessiekosten van de laadpasaanbieder',
   };
   return labels[value] || String(value || 'onbekende kostencomponent');
 }
@@ -355,6 +361,9 @@ function quoteDetail(quote) {
   else if (Number(quote.session || 0) > 0) parts.push(`${euro(quote.session)} sessiekosten`);
   else if (!quote.percentage) parts.push('geen vaste sessiekosten');
   parts.push(decisionLabel(quote));
+  if ((quote.quality?.reasons || []).includes('tariff_restrictions_bounded')) {
+    parts.push('OCPI-voorwaarden verwerkt als bandbreedte');
+  }
   const specificity = specificityLabel(quote.quality?.price_specificity);
   if (specificity) parts.push(specificity);
   const sourceUrl = safeSourceUrl(quote.source_url);
@@ -364,6 +373,14 @@ function quoteDetail(quote) {
     parts.push(`<a href="${escapeHtml(sourceUrl)}" target="_blank" rel="noopener noreferrer">${label}</a>`);
   }
   if (feeSourceUrl) parts.push(`<a href="${escapeHtml(feeSourceUrl)}" target="_blank" rel="noopener noreferrer">starttarief-bron</a>`);
+  return parts.join(' · ');
+}
+
+function partialQuoteDetail(quote, knownCost) {
+  const missing = quote?.quality?.unmodelled_costs || [];
+  const parts = [quoteDetail(quote)];
+  if (knownCost) parts.push(`bekende component ${formatCostRange(knownCost)}`);
+  if (missing.length) parts.push(`nog niet meegerekend: ${missing.map(formatUnmodelledCost).join(', ')}`);
   return parts.join(' · ');
 }
 
@@ -400,7 +417,14 @@ function selectedRowsForPoint(pt, cmp) {
     .filter(pass => selectedPasses.has(pass.id))
     .map(pass => {
       const quote = quoteForPoint(pt, pass.id);
-      return { pass, quote, cost: sessionCostRange(quote), rank: rankForPass(cmp, pass.id) };
+      const cost = sessionCostRange(quote);
+      return {
+        pass,
+        quote,
+        cost,
+        knownCost: cost || knownCostFloor(quote),
+        rank: rankForPass(cmp, pass.id),
+      };
     })
     .sort((a, b) => {
       if (a.cost == null && b.cost == null) return passes.indexOf(a.pass) - passes.indexOf(b.pass);
@@ -414,11 +438,15 @@ function popupQuoteRows(pt, cmp) {
   if (cmp.connectorRequired) return '<div class="popup-quote"><div class="popup-quote-detail" style="padding-left:0">Kies hierboven eerst een aansluiting.</div></div>';
   if (selectedPasses.size === 0) return '<div class="popup-quote"><div class="popup-quote-detail" style="padding-left:0">Selecteer minimaal één betaaloptie.</div></div>';
 
-  return selectedRowsForPoint(pt, cmp).map(({ pass, quote, cost, rank }) => {
+  return selectedRowsForPoint(pt, cmp).map(({ pass, quote, cost, knownCost, rank }) => {
     if (cost == null) {
+      const partialPrice = knownCost ? `vanaf ${euro(knownCost.min)}` : 'niet gerangschikt';
+      const detail = knownCost && quote
+        ? partialQuoteDetail(quote, knownCost)
+        : escapeHtml(unknownQuoteDetail(pt, pass, quote));
       return `<div class="popup-quote">
-        <div class="popup-quote-main"><div class="popup-quote-pass"><span class="popup-quote-dot" style="background:${pass.color}"></span><span>${escapeHtml(pass.name)}</span></div><span class="popup-quote-price" style="color:var(--muted)">niet gerangschikt</span></div>
-        <div class="popup-quote-detail">${escapeHtml(unknownQuoteDetail(pt, pass, quote))}</div>
+        <div class="popup-quote-main"><div class="popup-quote-pass"><span class="popup-quote-dot" style="background:${pass.color}"></span><span>${escapeHtml(pass.name)}</span></div><span class="popup-quote-price" style="color:var(--muted)">${partialPrice}</span></div>
+        <div class="popup-quote-detail">${detail}</div>
       </div>`;
     }
     const topThree = rank && rank <= 3;
@@ -441,16 +469,20 @@ function makePopup(pt) {
   const idSource = profile?.evse_ids?.length ? profile.evse_ids : pt.evse_ids;
   const idLine = idSource?.length ? `<div class="sub">ID: ${escapeHtml(idSource[0])}</div>` : '';
 
-  return `<div class="popup"><h3>${escapeHtml(pt.name)}</h3><div class="sub">${escapeHtml(pt.operator)} · ${escapeHtml(pt.address)}</div>${idLine}<div class="sub">Status: ${statusLabel(pt)}</div>${connectorSelector(pt, true)}<div class="best">${bestHtml}</div><div class="popup-quotes"><div class="popup-quotes-title">Betaalopties voor ${energyKwh} kWh, Top 3 op berekende sessiekosten</div><div class="popup-quotes-list">${popupQuoteRows(pt, cmp)}</div><span class="source-pill ${src.cls}">${src.label}${cpoRange}</span></div></div>`;
+  return `<div class="popup"><h3>${escapeHtml(pt.name)}</h3><div class="sub">${escapeHtml(pt.operator)} · ${escapeHtml(pt.address)}</div>${idLine}<div class="sub">Status: ${statusLabel(pt)}</div>${connectorSelector(pt, true)}<div class="best">${bestHtml}</div><div class="popup-quotes"><div class="popup-quotes-title">Betaalopties voor ${energyKwh} kWh, Top 3 op verwachte sessiekosten, prijsbanden op middenwaarde</div><div class="popup-quotes-list">${popupQuoteRows(pt, cmp)}</div><span class="source-pill ${src.cls}">${src.label}${cpoRange}</span></div></div>`;
 }
 
 function renderQuoteRows(pt, cmp) {
   if (cmp.connectorRequired) return '<div class="empty">Kies hierboven eerst een aansluiting.</div>';
   if (selectedPasses.size === 0) return '<div class="empty">Selecteer minimaal één betaaloptie.</div>';
 
-  return selectedRowsForPoint(pt, cmp).map(({ pass, quote, cost, rank }) => {
+  return selectedRowsForPoint(pt, cmp).map(({ pass, quote, cost, knownCost, rank }) => {
     if (cost == null) {
-      return `<div class="quote-row"><div class="quote-main"><div class="quote-pass"><span class="quote-dot" style="background:${pass.color}"></span>${escapeHtml(pass.name)}</div><div class="quote-price" style="color:var(--muted)">niet gerangschikt</div></div><div class="quote-detail">${escapeHtml(unknownQuoteDetail(pt, pass, quote))}</div>${quote?.note ? `<div class="quote-note">${escapeHtml(quote.note)}</div>` : ''}</div>`;
+      const partialPrice = knownCost ? `vanaf ${euro(knownCost.min)}` : 'niet gerangschikt';
+      const detail = knownCost && quote
+        ? partialQuoteDetail(quote, knownCost)
+        : escapeHtml(unknownQuoteDetail(pt, pass, quote));
+      return `<div class="quote-row"><div class="quote-main"><div class="quote-pass"><span class="quote-dot" style="background:${pass.color}"></span>${escapeHtml(pass.name)}</div><div class="quote-price" style="color:var(--muted)">${partialPrice}</div></div><div class="quote-detail">${detail}</div>${quote?.note ? `<div class="quote-note">${escapeHtml(quote.note)}</div>` : ''}</div>`;
     }
     const topThree = rank && rank <= 3;
     return `<div class="quote-row ${topThree ? 'top-three' : ''}"><div class="quote-main"><div class="quote-pass">${topThree ? `<span class="rank-badge">#${rank}</span>` : `<span class="quote-dot" style="background:${pass.color}"></span>`}${escapeHtml(pass.name)}</div><div class="quote-price">${formatCostRange(cost)}</div></div><div class="quote-detail">${quoteDetail(quote)}</div>${quote.note ? `<div class="quote-note">${escapeHtml(quote.note)}</div>` : ''}</div>`;
@@ -524,7 +556,7 @@ function renderList(inputPoints) {
       <div class="tags">${pt.max_power ? `<span class="tag">max ${pt.max_power} kW</span>` : ''}${(pt.connectors || []).slice(0, 3).map(type => `<span class="tag">${escapeHtml(type)}</span>`).join('')}${pt.num_evses > 1 ? `<span class="tag">${pt.num_evses} aansluitingen</span>` : ''}${partyTag}${directTag}${decisionTag}</div>
       ${connectorSelector(pt)}
       <div class="best-row">${cardBestHtml(cmp)}</div>
-      <div class="breakdown"><div class="breakdown-title">Betaalopties voor ${energyKwh} kWh, alleen complete kosten worden gerangschikt</div>${renderQuoteRows(pt, cmp)}<span class="source-pill ${src.cls}">${src.label}${range}</span></div>
+      <div class="breakdown"><div class="breakdown-title">Betaalopties voor ${energyKwh} kWh, betrouwbare en begrensde indicaties worden gerangschikt op de middenwaarde, onvolledige routes tonen een vanaf-bedrag</div>${renderQuoteRows(pt, cmp)}<span class="source-pill ${src.cls}">${src.label}${range}</span></div>
       </div></article>`;
   }).join('');
 

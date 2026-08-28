@@ -46,11 +46,42 @@ class PricingRulesTest(unittest.TestCase):
         self.assertEqual(quote["session"], 0.0)
         self.assertEqual(quote["confidence"], "high")
 
-    def test_vattenfall_generic_roaming_stays_unknown_without_network_specific_kwh_rate(self):
+    def test_vattenfall_generic_roaming_keeps_known_cpo_component_as_partial_floor(self):
         pricing = process.build_pricing(0.42, "ndw", "Ubitricity", "AC")
-        self.assertNotIn("vattenfall", pricing)
+        quote = pricing["vattenfall"]
+        self.assertEqual(quote["kwh"], 0.42)
+        self.assertEqual(quote["quality"]["cost_completeness"], "partial")
+        self.assertEqual(quote["quality"]["decision_grade"], "exclude")
+        self.assertIn("MSP_TARIFF_COMPONENTS_UNKNOWN", quote["quality"]["unmodelled_costs"])
 
     def test_vattenfall_official_roaming_rate_adds_published_start_fee(self):
+        pricing = process.build_pricing(
+            0.335,
+            "ndw",
+            "Ubitricity",
+            "AC",
+            party_id="UB2",
+            msp_price_overrides={
+                "vattenfall": {
+                    "rate": 0.55,
+                    "basis": "official_cpo_msp_rate",
+                    "source_url": process.UBITRICITY_MRAE_DIRECT_SOURCE_URL,
+                    "confidence": "medium",
+                }
+            },
+            verified_rules={"vattenfall", "vattenfall_roaming_fee"},
+        )
+        quote = pricing["vattenfall"]
+        self.assertEqual(quote["kwh"], 0.55)
+        self.assertEqual(quote["session"], 0.35)
+        self.assertEqual(quote["msp_session"], 0.35)
+        self.assertEqual(quote["source_url"], process.UBITRICITY_MRAE_DIRECT_SOURCE_URL)
+        self.assertEqual(quote["fee_source_url"], process.VATTENFALL_ROAMING_FEE_SOURCE_URL)
+        self.assertEqual(quote["quality"]["cost_completeness"], "complete")
+        self.assertEqual(quote["quality"]["decision_grade"], "reliable")
+        self.assertEqual(round(35 * quote["kwh"] + quote["session"], 2), 19.60)
+
+    def test_vattenfall_roaming_degrades_to_partial_floor_when_fee_rule_is_disabled(self):
         pricing = process.build_pricing(
             0.335,
             "ndw",
@@ -69,32 +100,10 @@ class PricingRulesTest(unittest.TestCase):
         )
         quote = pricing["vattenfall"]
         self.assertEqual(quote["kwh"], 0.55)
-        self.assertEqual(quote["session"], 0.35)
-        self.assertEqual(quote["msp_session"], 0.35)
-        self.assertEqual(quote["source_url"], process.UBITRICITY_MRAE_DIRECT_SOURCE_URL)
-        self.assertEqual(quote["fee_source_url"], process.VATTENFALL_CHARGE_CARD_SOURCE_URL)
-        self.assertEqual(quote["quality"]["cost_completeness"], "complete")
-        self.assertEqual(quote["quality"]["decision_grade"], "reliable")
-        self.assertEqual(round(35 * quote["kwh"] + quote["session"], 2), 19.60)
-
-    def test_vattenfall_roaming_fails_closed_when_charge_card_rule_is_disabled(self):
-        pricing = process.build_pricing(
-            0.335,
-            "ndw",
-            "Ubitricity",
-            "AC",
-            party_id="UB2",
-            msp_price_overrides={
-                "vattenfall": {
-                    "rate": 0.55,
-                    "basis": "official_cpo_msp_rate",
-                    "source_url": process.UBITRICITY_MRAE_DIRECT_SOURCE_URL,
-                    "confidence": "medium",
-                }
-            },
-            verified_rules=set(),
-        )
-        self.assertNotIn("vattenfall", pricing)
+        self.assertEqual(quote["session"], 0.0)
+        self.assertEqual(quote["quality"]["cost_completeness"], "partial")
+        self.assertEqual(quote["quality"]["decision_grade"], "exclude")
+        self.assertIn("MSP_TARIFF_COMPONENTS_UNKNOWN", quote["quality"]["unmodelled_costs"])
 
     def test_eflux_flex_own_network_has_no_kwh_markup(self):
         quote = process.build_pricing(0.45, "ndw", "E-Flux by Road", "AC")["eflux_flex"]
@@ -131,12 +140,26 @@ class PricingRulesTest(unittest.TestCase):
 
     def test_shell_own_ac_is_not_invented_from_roaming_band(self):
         pricing = process.build_pricing(0.42, "ndw", "Shell Recharge", "AC", party_id="TNM")
-        self.assertNotIn("shell_basic", pricing)
+        quote = pricing["shell_basic"]
+        self.assertEqual(quote["kwh"], 0.42)
+        self.assertEqual(quote["quality"]["cost_completeness"], "partial")
+        self.assertEqual(quote["quality"]["decision_grade"], "exclude")
+        self.assertIn("MSP_TARIFF_COMPONENTS_UNKNOWN", quote["quality"]["unmodelled_costs"])
 
-    def test_laadkompas_free_uses_cpo_plus_session_fee(self):
+    def test_laadkompas_current_official_conflict_is_bounded_in_local_fallback(self):
         quote = process.build_pricing(0.40, "ndw", "50five", "AC")["laadkompas_free"]
         self.assertEqual(quote["kwh"], 0.40)
+        self.assertEqual(quote["session"], 0.43)
+        self.assertEqual(quote["session_range"], [0.39, 0.47])
+        self.assertEqual(quote["quality"]["decision_grade"], "indicative")
+        self.assertIn("official_source_internal_conflict", quote["quality"]["reasons"])
+
+    def test_laadkompas_becomes_exact_047_when_legacy_conflict_is_absent(self):
+        quote = process.build_pricing(
+            0.40, "ndw", "50five", "AC", verified_rules={"laadkompas_free"}
+        )["laadkompas_free"]
         self.assertEqual(quote["session"], 0.47)
+        self.assertNotIn("session_range", quote)
 
     def test_regular_lookup_ignores_profile_tariffs(self):
         tariffs = [{
@@ -1027,7 +1050,8 @@ class PricingRulesTest(unittest.TestCase):
             cpo_session=info["session"], cpo_unmodelled_types=info["unmodelled_types"],
         )
         self.assertEqual(pricing["anwb_free"]["session"], 1.14)
-        self.assertEqual(pricing["laadkompas_free"]["session"], 0.72)
+        self.assertEqual(pricing["laadkompas_free"]["session"], 0.68)
+        self.assertEqual(pricing["laadkompas_free"]["session_range"], [0.64, 0.72])
         self.assertEqual(pricing["anwb_free"]["quality"]["decision_grade"], "reliable")
 
     def test_time_component_fails_closed_for_session_ranking(self):
@@ -1073,6 +1097,68 @@ class PricingRulesTest(unittest.TestCase):
         )
         self.assertEqual(pricing["anwb_free"]["quality"]["decision_grade"], "exclude")
         self.assertIn("TARIFF_RESTRICTIONS", pricing["anwb_free"]["quality"]["unmodelled_costs"])
+
+    def test_bounded_energy_restrictions_become_indicative_complete_in_v21(self):
+        tariffs = [{
+            "country_code": "NL", "party_id": "UB2", "id": "restricted-band", "currency": "EUR",
+            "elements": [
+                {
+                    "restrictions": {"start_time": "07:00", "end_time": "19:00"},
+                    "price_components": [{"type": "ENERGY", "price": 0.3473, "step_size": 1}],
+                },
+                {
+                    "restrictions": {"start_time": "19:00", "end_time": "07:00"},
+                    "price_components": [{"type": "ENERGY", "price": 0.3231, "step_size": 1}],
+                },
+            ],
+        }]
+        info = process.get_cpo_price_info(
+            "restricted-band", process.build_tariff_index(tariffs), "NL", "UB2"
+        )
+        self.assertEqual(info["range"], [0.3231, 0.3473])
+        self.assertIn("TARIFF_RESTRICTIONS", info["unmodelled_types"])
+        pricing = process.build_pricing(
+            info["rate"], "ndw", "Ubitricity", "AC",
+            cpo_rate_range=info["range"],
+            cpo_unmodelled_types=info["unmodelled_types"],
+            cpo_restricted=info["restricted"],
+            cpo_energy_step_size_wh=info["energy_step_size_wh"],
+            verified_rules={"eflux_flex", "laadkompas_free"},
+        )
+        for pass_id in ("eflux_flex", "laadkompas_free"):
+            quality = pricing[pass_id]["quality"]
+            self.assertEqual(quality["cost_completeness"], "complete")
+            self.assertEqual(quality["decision_grade"], "indicative")
+            self.assertNotIn("TARIFF_RESTRICTIONS", quality["unmodelled_costs"])
+            self.assertIn("tariff_restrictions_bounded", quality["reasons"])
+
+        eflux = pricing["eflux_flex"]
+        low = eflux["cpo_kwh_range"][0] * 36 + eflux["msp_kwh"] * 36 + eflux["session_range"][0]
+        high = eflux["cpo_kwh_range"][1] * 36 + eflux["msp_kwh"] * 36 + eflux["session_range"][1]
+        self.assertEqual(round(low, 2), 12.81)
+        self.assertEqual(round(high, 2), 14.16)
+
+        laadkompas = pricing["laadkompas_free"]
+        self.assertEqual(round(laadkompas["range"][0] * 36 + laadkompas["session"], 2), 12.10)
+        self.assertEqual(round(laadkompas["range"][1] * 36 + laadkompas["session"], 2), 12.97)
+
+    def test_bounded_restricted_ad_hoc_range_is_indicative_not_excluded(self):
+        pricing = process.build_pricing(
+            0.3352, "ndw", "Ubitricity", "AC",
+            direct_price_info={
+                "rate": 0.3352,
+                "range": [0.3231, 0.3473],
+                "session": 0.0,
+                "basis": "ndw_ad_hoc",
+                "restricted": True,
+                "unmodelled_types": ["TARIFF_RESTRICTIONS"],
+            },
+        )
+        quality = pricing["direct_pay"]["quality"]
+        self.assertEqual(quality["cost_completeness"], "complete")
+        self.assertEqual(quality["decision_grade"], "indicative")
+        self.assertIn("tariff_restrictions_bounded", quality["reasons"])
+        self.assertNotIn("TARIFF_RESTRICTIONS", quality["unmodelled_costs"])
 
     def test_restricted_ad_hoc_tariff_is_not_ranked(self):
         pricing = process.build_pricing(
@@ -1121,7 +1207,15 @@ class PricingRulesTest(unittest.TestCase):
 
     def test_verified_rules_fail_closed_per_pass(self):
         pricing = process.build_pricing(0.40, "ndw", "50five", "AC", verified_rules={"anwb_free"})
-        self.assertEqual(set(pricing), {"anwb_free"})
+        self.assertEqual(
+            set(pricing),
+            {"anwb_free", "tap_light", "vattenfall", "eflux_flex", "shell_basic", "laadkompas_free"},
+        )
+        self.assertEqual(pricing["anwb_free"]["quality"]["decision_grade"], "reliable")
+        for pass_id in {"tap_light", "vattenfall", "eflux_flex", "shell_basic", "laadkompas_free"}:
+            self.assertEqual(pricing[pass_id]["quality"]["cost_completeness"], "partial")
+            self.assertEqual(pricing[pass_id]["quality"]["decision_grade"], "exclude")
+            self.assertIn("MSP_TARIFF_COMPONENTS_UNKNOWN", pricing[pass_id]["quality"]["unmodelled_costs"])
 
     def test_eflux_roaming_models_possible_clearing_fee_as_bounded_range(self):
         quote = process.build_pricing(0.45, "ndw", "Ubitricity", "AC")["eflux_flex"]
@@ -1466,6 +1560,56 @@ class P01SourcePrecedenceTest(unittest.TestCase):
         self.assertEqual(pricing["vattenfall"]["quality"]["decision_grade"], "reliable")
         self.assertEqual(pricing["vattenfall"]["session"], 0.35)
         self.assertEqual(result["connector_options"][0]["decision_status"], "reliable")
+
+    def test_moeflon_v21_keeps_bounded_routes_rankable_and_failed_shell_as_floor(self):
+        tariff = {
+            "country_code": "NL", "party_id": "UB2", "id": "generic", "currency": "EUR",
+            "elements": [
+                {
+                    "restrictions": {"start_time": "07:00", "end_time": "19:00"},
+                    "price_components": [{"type": "ENERGY", "price": 0.3473, "step_size": 1}],
+                },
+                {
+                    "restrictions": {"start_time": "19:00", "end_time": "07:00"},
+                    "price_components": [{"type": "ENERGY", "price": 0.3231, "step_size": 1}],
+                },
+            ],
+        }
+        verified = {
+            "anwb_free", "tap_light", "vattenfall", "vattenfall_roaming_fee",
+            "eflux_flex", "laadkompas_free", "laadkompas_legacy_039", "ubitricity_mrae_direct",
+        }
+        result = process.process_location(
+            self.ubitricity_location(["generic"]), process.build_tariff_index([tariff]), {},
+            official_direct=self.official_direct(), official_msp=self.official_msp(),
+            verified_rules=verified,
+        )
+        pricing = result["connector_options"][0]["pricing"]
+
+        for pass_id in ("direct_pay", "anwb_free", "tap_light", "vattenfall"):
+            self.assertEqual(pricing[pass_id]["quality"]["cost_completeness"], "complete")
+            self.assertEqual(pricing[pass_id]["quality"]["decision_grade"], "reliable")
+
+        for pass_id in ("eflux_flex", "laadkompas_free"):
+            self.assertEqual(pricing[pass_id]["quality"]["cost_completeness"], "complete")
+            self.assertEqual(pricing[pass_id]["quality"]["decision_grade"], "indicative")
+            self.assertIn("tariff_restrictions_bounded", pricing[pass_id]["quality"]["reasons"])
+
+        laadkompas = pricing["laadkompas_free"]
+        self.assertEqual(laadkompas["session_range"], [0.39, 0.47])
+        self.assertIn("official_source_internal_conflict", laadkompas["quality"]["reasons"])
+        self.assertEqual(round(laadkompas["range"][0] * 36 + laadkompas["session_range"][0], 2), 12.02)
+        self.assertEqual(round(laadkompas["range"][1] * 36 + laadkompas["session_range"][1], 2), 12.97)
+
+        shell = pricing["shell_basic"]
+        self.assertEqual(shell["kwh"], 0.55)
+        self.assertEqual(shell["session"], 0.0)
+        self.assertEqual(shell["quality"]["cost_completeness"], "partial")
+        self.assertEqual(shell["quality"]["decision_grade"], "exclude")
+        self.assertIn("MSP_TARIFF_COMPONENTS_UNKNOWN", shell["quality"]["unmodelled_costs"])
+
+        self.assertEqual(round(pricing["vattenfall"]["kwh"] * 36 + pricing["vattenfall"]["session"], 2), 20.15)
+        self.assertEqual(round(shell["kwh"] * 36 + shell["session"], 2), 19.80)
 
     def test_explicit_ndw_ad_hoc_still_beats_official_cpo_fallback(self):
         tariff = {

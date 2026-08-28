@@ -62,19 +62,29 @@
       "id": "vattenfall",
       "provider": "Vattenfall InCharge",
       "plan": "Gratis laadpas",
-      "url": "https://incharge.vattenfall.nl/de-laadpas",
+      "url": "https://incharge.vattenfall.nl/laadpas",
       "checks": [
         {
           "label": "laadpas heeft geen abonnementskosten",
           "patterns": [
-            "geen\\s+abonnementskosten"
+            "(?:gratis\\s+)?laadpas.{0,180}geen\\s+abonnementskosten",
+            "voor\\s+onze\\s+(?:gratis\\s+)?laadpas.{0,120}geen\\s+abonnementskosten",
+            "geen\\s+abonnement.{0,120}je\\s+betaalt\\s+alleen\\s+als\\s+je"
           ]
-        },
+        }
+      ]
+    },
+    {
+      "id": "vattenfall_roaming_fee",
+      "provider": "Vattenfall InCharge",
+      "plan": "Roaming starttarief",
+      "url": "https://incharge.vattenfall.nl/en/our-network/our-rates",
+      "checks": [
         {
           "label": "roaming starttarief blijft EUR 0,35 per sessie",
           "patterns": [
-            "starttarief\\s+van\\s+(?:€\\s*)?0[,.]35.{0,180}laadpalen\\s+die\\s+niet\\s+van\\s+ons\\s+zijn",
-            "(?:€\\s*)?0[,.]35.{0,160}starttarief.{0,180}laadpalen\\s+die\\s+niet\\s+van\\s+ons\\s+zijn"
+            "another\\s+provider.{0,180}(?:€\\s*)?0[,.]35.{0,120}per\\s+charging\\s+session",
+            "fee\\s+of\\s+(?:€\\s*)?0[,.]35.{0,80}per\\s+charging\\s+session"
           ]
         }
       ]
@@ -231,7 +241,24 @@
           "patterns": [
             "zonder\\s+abonnement.{0,420}(?:€\\s*)?0[,.]47.{0,160}(?:laadsessie|sessie)",
             "(?:€\\s*)?0[,.]47.{0,100}per\\s+(?:gestarte\\s+)?laadsessie",
-            "starttarief.{0,80}(?:€\\s*)?0[,.]47"
+            "starttarief.{0,80}(?:€\\s*)?0[,.]47",
+            "laadpas\\s+zonder\\s+abonnement.{0,180}(?:€\\s*)?0[,.]47",
+            "per\\s+(?:gestarte\\s+)?laadsessie.{0,80}(?:€\\s*)?0[,.]47"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "laadkompas_legacy_039",
+      "provider": "Laadkompas",
+      "plan": "Zonder abonnement, conflicterende oude tekst",
+      "url": "https://laadkompas.nl/laadpas/zonder-abonnement/",
+      "checks": [
+        {
+          "label": "dezelfde officiële pagina bevat nog de conflicterende oude EUR 0,39-vermelding",
+          "patterns": [
+            "scherpe\\s+tarief\\s+van\\s+(?:€\\s*)?0[,.]39",
+            "(?:€\\s*)?0[,.]39.{0,180}laadpas\\s+zonder\\s+abonnement"
           ]
         }
       ]

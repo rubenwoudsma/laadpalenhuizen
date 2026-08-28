@@ -16,13 +16,14 @@ De site vergelijkt alleen prijsroutes waarvoor voldoende openbare en reproduceer
 
 **Betrouwbaarheid gaat voor dekking.**
 
-De site onderscheidt drie uitkomsten:
+Quality Model v2.1 onderscheidt vier praktische uitkomsten:
 
 1. **Betrouwbaar vergelijkbaar**: de prijsroute is voldoende specifiek en volledig om een harde vergelijking te ondersteunen.
-2. **Indicatief vergelijkbaar**: een bedrag of prijsband is bruikbaar als indicatie, maar er is te veel onzekerheid voor een harde winnaar.
-3. **Geen veilige vergelijking**: bekende kosten, voorwaarden of prijsinformatie ontbreken, daarom wordt de route niet gerangschikt.
+2. **Indicatief vergelijkbaar**: alle geldcomponenten zijn numeriek begrensd, maar de precieze uitkomst hangt bijvoorbeeld af van een bekende prijsband, regionale specificiteit of een andere begrensde onzekerheid. Deze route wordt wel gerangschikt.
+3. **Onvolledig, vanaf-bedrag**: een bruikbare prijscomponent is bekend, maar minstens één geldcomponent is niet numeriek begrensd. De kaart toont de bekende component als `vanaf`, maar rangschikt de route niet.
+4. **Onbekend**: er is geen betekenisvolle numerieke basis voor een sessie-indicatie.
 
-Een onbekende prijs blijft onbekend. De applicatie vult geen prijs in om de dekking kunstmatig te verhogen.
+Een onbekende prijs blijft onbekend. De applicatie vult geen prijs in om de dekking kunstmatig te verhogen. Betrouwbaarheid bepaalt vooral hoe stellig de kaart mag adviseren, niet of een bruikbare begrensde indicatie überhaupt zichtbaar mag zijn.
 
 ## Connectorniveau
 
@@ -80,7 +81,7 @@ MSP-opslag          = gekozen kWh x eventuele MSP-opslag per kWh
 sessietotaal        = CPO-energie + vaste CPO-kosten + MSP-kosten en opslagen
 ```
 
-Prijsbanden worden als bandbreedte doorgerekend. Een harde winnaar wordt alleen getoond wanneer minimaal twee geselecteerde routes berekenbaar zijn en de Quality Model v2-regels een harde vergelijking toestaan. Als prijsbanden overlappen of een route alleen indicatief is, blijft de uitkomst expliciet onzeker.
+Prijsbanden worden als bandbreedte doorgerekend. Betrouwbare én complete indicatieve routes kunnen in Quality Model v2.1 worden gerangschikt. Voor de volgorde gebruikt de UI de middenwaarde van een prijsband, terwijl de volledige minimum- en maximumwaarde zichtbaar blijft. Een harde winnaar wordt alleen getoond wanneer de vergelijking daarvoor voldoende sterk is. Als prijsbanden overlappen of de voordeligste route slechts indicatief is, blijft de uitkomst expliciet onzeker. Een gedeeltelijke route met een bekende numerieke component toont een `vanaf`-bedrag maar doet niet mee aan de ranking.
 
 ## OCPI-tarieven
 
@@ -96,16 +97,15 @@ De huidige processor ondersteunt veilig:
 
 OCPI `price` is exclusief btw. Als een component een geldige `vat` bevat, wordt die toegevoegd. Als `vat` ontbreekt, wordt geen Nederlands btw-percentage aangenomen.
 
-De volgende constructies worden gedetecteerd, maar blokkeren ranking zolang de sessie-input of het prijsmodel onvoldoende informatie bevat:
+De volgende constructies worden gedetecteerd en blokkeren ranking wanneer hun geldimpact niet numeriek kan worden begrensd:
 
 - `TIME`;
 - `PARKING_TIME`;
-- `TariffRestrictions`;
 - `min_price` en `max_price`;
 - onbekende of ongeldige prijsdimensies;
 - conflicterende prijscomponenten of afrekenstappen.
 
-Dit is fail-closed gedrag. Een gebruiker kiest in de huidige interface alleen de hoeveelheid energie. Daarmee zijn duurafhankelijke of tijdens een sessie wisselende OCPI-voorwaarden niet deterministisch te berekenen.
+`TariffRestrictions` zijn in v2.1 niet automatisch een blocker. Een restriction is een toepassingsvoorwaarde, geen zelfstandige geldcomponent. Als de enige onzekerheid is welk tarief binnen een volledig bekende ENERGY- of sessieband geldt, blijft de route `complete` en wordt de volledige band als `indicative` gerangschikt. Zodra restrictions samenhangen met niet-berekenbare TIME-, PARKING_TIME-, minimum/maximum- of andere onbegrenste kosten blijft de route fail-closed buiten de ranking. Een gebruiker voert in de huidige interface alleen de hoeveelheid energie in.
 
 ## MSP-regels
 
@@ -116,7 +116,7 @@ Dit is fail-closed gedrag. Een gebruiker kiest in de huidige interface alleen de
 | Vattenfall InCharge | Eigen netwerk op `NUO` zonder extra MSP-starttarief. Bij roaming rekent Vattenfall EUR 0,35 starttarief per sessie. Een roamingroute wordt alleen berekend als voor dat netwerk ook een Vattenfall-specifiek kWh-tarief uit een officiële bron beschikbaar is. |
 | E-Flux Flex | EUR 0,31 per sessie, buiten E-Flux + EUR 0,024/kWh. De mogelijke extra clearingtoeslag wordt als sessieband meegenomen. |
 | Shell Recharge Basic | Gepubliceerd Shell snellaadtarief op eigen netwerk, of de gepubliceerde AC/DC roamingband bij andere aanbieders, + EUR 0,35 per sessie. Locatieafhankelijke extra kosten houden de route indicatief. |
-| Laadkompas zonder abonnement | CPO-prijs + EUR 0,47 per sessie. |
+| Laadkompas zonder abonnement | CPO-prijs + sessietarief. De actuele officiële pagina noemt herhaaldelijk EUR 0,47 maar bevat ook één conflicterende EUR 0,39-vermelding. Zolang beide teksten aanwezig zijn wordt daarom EUR 0,39-EUR 0,47 als begrensde sessieband gebruikt. |
 
 Eigen netwerk wordt primair via OCPI `party_id` bepaald. Een commerciële relatie tussen bedrijven is niet genoeg om twee netwerken als hetzelfde tarief te behandelen.
 
@@ -137,7 +137,7 @@ Voor Vattenfall InCharge in Noordwest-Nederland wordt dezelfde terughoudendheid 
 
 Een landelijk operatorgemiddelde wordt niet als CPO-fallback gebruikt. Zo'n gemiddelde zegt onvoldoende over het tarief van een specifieke concessie of connector in Huizen en telt daarom ook niet mee in de rangschikking.
 
-## Quality Model v2
+## Quality Model v2.1
 
 Iedere numerieke prijsroute heeft vier afzonderlijke kwaliteitsdimensies:
 
@@ -146,7 +146,7 @@ Iedere numerieke prijsroute heeft vier afzonderlijke kwaliteitsdimensies:
 - `cost_completeness`: `complete` of `partial`;
 - `decision_grade`: `reliable`, `indicative` of `exclude`.
 
-Een officiële bron kan dus `high` zijn terwijl de prijs toch `indicative` is, bijvoorbeeld omdat alleen een regionale prijsband bekend is.
+Een officiële bron kan dus `high` zijn terwijl de prijs toch `indicative` is, bijvoorbeeld omdat alleen een regionale prijsband bekend is. `partial` betekent niet meer dat alle numerieke informatie verdwijnt: als een onafhankelijke prijscomponent wel actueel en reproduceerbaar bekend is, kan die als niet-gerangschikt `vanaf`-bedrag zichtbaar blijven.
 
 `kwaliteit.html` scheidt daarom **decision quality** van **data quality**. Het rapport toont onder meer:
 
@@ -167,10 +167,10 @@ GitHub Actions controleert officiële prijsbronnen vóór de dagelijkse dataverw
 De regels zijn:
 
 - een tijdelijke netwerkfout op een CPO-bron blokkeert de NDW-update niet;
-- een mislukte of inhoudelijk gewijzigde statische prijsregel wordt voor die run uitgeschakeld;
+- een mislukte of inhoudelijk gewijzigde statische prijsregel wordt voor die run uitgeschakeld; onafhankelijk geverifieerde CPO- of netwerkcomponenten blijven wel als partiële informatie bruikbaar;
 - een alternatieve officiële URL is alleen een transportfallback na een ophaalfout;
 - een inhoudelijke mismatch op een bereikbare primaire pagina wordt niet gemaskeerd door een fallback-URL;
-- er is geen last-known-good prijsfallback;
+- er is geen last-known-good prijsfallback. Een mislukte MSP-controle mag dus geen oude MSP-fee laten doorlekken, maar wist ook geen onafhankelijk actuele CPO- of netwerkprijs;
 - aanvullende CPO-harvesting accepteert een tarief alleen als de verwachte semantiek tijdens de huidige run herkenbaar is.
 - de Vattenfall MRA-E-fallback is tweebronnig: de exacte MRA-bedragen moeten op de Vattenfall-tariefpagina staan en Laadwerk moet in dezelfde run de nieuwe/oude concessiecontext en de vervangingswaarschuwing bevestigen. Valt een van beide controles weg of spreken de bronnen elkaar tegen, dan wordt de regionale fallback voor die run uitgeschakeld.
 
@@ -184,7 +184,7 @@ De volgende beperkingen zijn bewust onderdeel van het huidige product:
 - **EQUANS / Velian**: tarieven zijn contract- en concessieafhankelijk. De openbare bronnen leveren voor de Huizen-records geen reproduceerbare station-specifieke koppeling.
 - **Vattenfall**: de officiële MRA-E-tarieven zijn regionaal reproduceerbaar, maar de publiek vindbare gemeentelijke ArcGIS-mirror van Laadwerk bevat `location_code` en `concession_id`, zonder EVSE-ID of tarief en vormt geen aangetoonde regionale Huizen-feed waarmee een NDW EVSE/location-ID veilig aan de toepasselijke concessie kan worden gekoppeld. Bij ontbrekend NDW-tarief gebruikt de kaart daarom de officiële regionale band in plaats van een verzonnen stationstarief. Direct/QR blijft per station fail-closed zolang de ondersteuning niet veilig gekoppeld kan worden.
 - **JOLT**: openbare officiële JOLT-pagina's tonen niet overal hetzelfde ad-hocbedrag. Zolang de bron voor het Huizen-station niet eenduidig en reproduceerbaar is, wordt geen generieke prijs toegepast.
-- **OCPI tijd en restricties**: `TIME`, `PARKING_TIME`, dynamische `TariffRestrictions` en correcte min/max-prijsgrenzen vereisen meer sessie-informatie dan alleen kWh. Deze routes blijven uitgesloten van ranking.
+- **OCPI tijd en restricties**: `TIME`, `PARKING_TIME` en correcte min/max-prijsgrenzen vereisen meer sessie-informatie dan alleen kWh en blijven daarom blockers. `TariffRestrictions` blokkeren alleen wanneer hun geldimpact niet binnen een bekende numerieke band kan worden begrensd.
 - **Operatortransities**: dezelfde adreslocatie kan meerdere CPO-records bevatten. Adres, nabijheid, ouderdom of operatorverschil is niet voldoende bewijs om een record automatisch te verwijderen.
 - **Beschikbaarheid**: de site toont de laatste verwerkte NDW-snapshot, niet gegarandeerd realtime status.
 
