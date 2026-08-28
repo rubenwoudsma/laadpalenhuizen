@@ -67,7 +67,7 @@ Aanvullende officiële Direct/QR-logica is aanwezig voor:
 - Ubitricity `UB2`, officieel MRA-E Direct/QR-tarief;
 - TotalEnergies `GFX`, de officiële regel dat de CPO-basisprijs ook de direct-payment prijs is;
 - Lidl `LDL`, het actuele Lidl.nl-tarief wordt per run apart voor AC en DC uit de officiële pagina gelezen. Wanneer NDW geen CPO-basistarief levert, mag dezelfde officiële AC/DC-prijs ook als network-specific CPO-basis worden gebruikt omdat Lidl die expliciet publiceert voor laden met een eigen laadpas;
-- Vattenfall `NUO`, Direct/QR-ondersteuning is bevestigd, maar zonder reproduceerbaar station-specifiek bedrag wordt geen numerieke prijs verzonnen.
+- Vattenfall `NUO` wordt niet generiek als Direct/QR ondersteund gemarkeerd. Laadwerk beschrijft direct betalen via QR in zijn laadnetwerk, maar zonder reproduceerbare stationkoppeling is dat onvoldoende bewijs voor ieder individueel NDW-profiel.
 
 ## Sessiekosten
 
@@ -133,6 +133,10 @@ Als dat ontbreekt:
 
 Voor TotalEnergies in het MRA-E-gebied bestaan meerdere officiële tariefgroepen. De publieke NDW/OCPI-kenmerken bevatten geen reproduceerbare station-specifieke sleutel waarmee een locatie veilig aan MRA-E 2-5, MRA-E 6 of MRA-E 6 Dynamic kan worden gekoppeld. `last_updated`, laadvermogen en ID-patronen worden daarom niet als concessieheuristiek gebruikt. De AC-fallback blijft een officiële regionale prijsband en dus indicatief.
 
+Voor Vattenfall InCharge in Noordwest-Nederland wordt dezelfde terughoudendheid toegepast. Wanneer NDW een bruikbaar connectorgebonden tarief levert, blijft dat de eerste bron. Ontbreekt zo'n tarief, dan mag alleen na succesvolle verificatie van zowel de officiële Vattenfall-tariefpagina als de actuele Laadwerk-concessiecontext een regionale AC-prijsband worden gebruikt. Vattenfall publiceert voor MRA 2021 EUR 0,5222/kWh en voor MRA 2024 EUR 0,3594/kWh in de piekperiode en EUR 0,3394/kWh in de dalperiode. Als de concessie van het individuele laadpunt niet reproduceerbaar is vastgesteld, wordt daarom de volledige band EUR 0,3394-EUR 0,5222/kWh getoond, met `source_quality = high`, `price_specificity = regional` en `decision_grade = indicative`. Adres, nabijheid, hardwareleeftijd en `last_updated` worden nooit gebruikt om MRA 2021 of MRA 2024 te gokken.
+
+Een landelijk operatorgemiddelde wordt niet als CPO-fallback gebruikt. Zo'n gemiddelde zegt onvoldoende over het tarief van een specifieke concessie of connector in Huizen en telt daarom ook niet mee in de rangschikking.
+
 ## Quality Model v2
 
 Iedere numerieke prijsroute heeft vier afzonderlijke kwaliteitsdimensies:
@@ -168,6 +172,7 @@ De regels zijn:
 - een inhoudelijke mismatch op een bereikbare primaire pagina wordt niet gemaskeerd door een fallback-URL;
 - er is geen last-known-good prijsfallback;
 - aanvullende CPO-harvesting accepteert een tarief alleen als de verwachte semantiek tijdens de huidige run herkenbaar is.
+- de Vattenfall MRA-E-fallback is tweebronnig: de exacte MRA-bedragen moeten op de Vattenfall-tariefpagina staan en Laadwerk moet in dezelfde run de nieuwe/oude concessiecontext en de vervangingswaarschuwing bevestigen. Valt een van beide controles weg of spreken de bronnen elkaar tegen, dan wordt de regionale fallback voor die run uitgeschakeld.
 
 De maandelijkse pricing monitor maakt bronproblemen zichtbaar via de workflow en GitHub issue-synchronisatie.
 
@@ -177,7 +182,7 @@ De volgende beperkingen zijn bewust onderdeel van het huidige product:
 
 - **Laadnet**: de eigenaar van een station kan het gasttarief instellen. Zonder openbare station-specifieke machineleesbare prijs wordt geen generiek Laadnet-tarief gebruikt.
 - **EQUANS / Velian**: tarieven zijn contract- en concessieafhankelijk. De openbare bronnen leveren voor de Huizen-records geen reproduceerbare station-specifieke koppeling.
-- **Vattenfall**: Direct/QR is ondersteund, maar voor een deel van het netwerk is de actuele prijs alleen per laadpunt of app zichtbaar. Zonder veilige mapping blijft de numerieke route onbekend.
+- **Vattenfall**: de officiële MRA-E-tarieven zijn regionaal reproduceerbaar, maar de publiek vindbare gemeentelijke ArcGIS-mirror van Laadwerk bevat `location_code` en `concession_id`, zonder EVSE-ID of tarief en vormt geen aangetoonde regionale Huizen-feed waarmee een NDW EVSE/location-ID veilig aan de toepasselijke concessie kan worden gekoppeld. Bij ontbrekend NDW-tarief gebruikt de kaart daarom de officiële regionale band in plaats van een verzonnen stationstarief. Direct/QR blijft per station fail-closed zolang de ondersteuning niet veilig gekoppeld kan worden.
 - **JOLT**: openbare officiële JOLT-pagina's tonen niet overal hetzelfde ad-hocbedrag. Zolang de bron voor het Huizen-station niet eenduidig en reproduceerbaar is, wordt geen generieke prijs toegepast.
 - **OCPI tijd en restricties**: `TIME`, `PARKING_TIME`, dynamische `TariffRestrictions` en correcte min/max-prijsgrenzen vereisen meer sessie-informatie dan alleen kWh. Deze routes blijven uitgesloten van ranking.
 - **Operatortransities**: dezelfde adreslocatie kan meerdere CPO-records bevatten. Adres, nabijheid, ouderdom of operatorverschil is niet voldoende bewijs om een record automatisch te verwijderen.
