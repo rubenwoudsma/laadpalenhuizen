@@ -4,7 +4,10 @@ on:
   push:
     paths:
       - "process.py"
+      - "app.js"
+      - "index.html"
       - "pricing-sources.json"
+      - "tests/test_frontend_contract.py"
       - "tests/test_pricing.py"
       - "tests/test_pricing_monitor.py"
       - "tests/test_quality_report.py"
