@@ -91,6 +91,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
     <li>Een tijdens dezelfde run geverifieerde officiële CPO-bron die reproduceerbaar aan het relevante netwerk of connectortype kan worden gekoppeld.</li>
     <li>Een geverifieerde regionale fallback wanneer de bron aantoonbaar voor die regio en CPO geldt.</li>
     <li>Een operator-mediaan uitsluitend als diagnostische schatting, nooit als complete sessieprijs of basis voor een winnaar.</li>
+    <li>Een extern landelijk operatorgemiddelde wordt niet gebruikt als vervanging voor een lokale prijs.</li>
     <li>Geen prijs wanneer geen veilige bron beschikbaar is.</li>
   </ol>
   <p>Voor Direct / QR geldt een afzonderlijke prioriteit: expliciet OCPI <code>AD_HOC_PAYMENT</code>, daarna een tijdens dezelfde run geverifieerde officiële CPO Direct/QR-prijs, daarna alleen een generiek OCPI-tarief zonder type wanneer direct betalen los daarvan is bevestigd. Een expliciete Direct/QR-prijs erft geen restricties van een onafhankelijk generiek NDW-tarief.</p>
@@ -103,9 +104,16 @@ code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
         <tr><td>Ubitricity</td><td><code>UB2</code></td><td>Het officiële MRA-E Direct/QR-tarief en, wanneer de tabel veilig kan worden gekoppeld, netwerk-specifieke kWh-prijzen voor geselecteerde MSP's worden tijdens de run uit de officiële bron gelezen.</td></tr>
         <tr><td>TotalEnergies</td><td><code>GFX</code></td><td>De officiële regel dat de CPO-basisprijs ook de ad-hocprijs is kan worden toegepast. De prijs-specificiteit blijft gelijk aan die van de onderliggende CPO-prijs.</td></tr>
         <tr><td>Lidl</td><td><code>LDL</code></td><td>De officiële Lidl.nl-pagina publiceert afzonderlijke AC- en DC-tarieven voor zowel Direct/QR als laden met een eigen laadpas. Beide secties worden apart gecontroleerd. Ontbreekt het NDW-basistarief, dan mag het tarief uit de eigen-laadpas-sectie als high-quality, network-specific CPO-basis worden gebruikt. De connector krijgt alleen het tarief dat bij zijn vastgestelde stroomsoort hoort.</td></tr>
-        <tr><td>Vattenfall</td><td><code>NUO</code></td><td>Direct betalen via QR is bevestigd. Zonder reproduceerbaar numeriek tarief voor het betreffende laadpunt of de toepasselijke concessie wordt geen Direct/QR-bedrag ingevuld.</td></tr>
+        <tr><td>Vattenfall</td><td><code>NUO</code></td><td>Laadwerk beschrijft Direct/QR binnen zijn laadnetwerk, maar de publiek vindbare gemeentelijke ArcGIS-mirror bevat geen EVSE-ID of tarief en levert geen aangetoonde regionale Huizen-koppeling naar ieder NDW-profiel. Daarom wordt Direct/QR niet generiek op basis van alleen <code>NUO</code> aangezet. Voor het CPO-basistarief kan bij ontbrekend NDW-tarief wel de geverifieerde officiële MRA-E-prijsband worden gebruikt.</td></tr>
       </tbody>
     </table>
+  </div>
+
+  <div class="card good">
+    <strong>Vattenfall MRA-E zonder valse exactheid</strong>
+    <p>Vattenfall publiceert voor Noordwest-Nederland MRA 2021 tegen &euro;0,5222/kWh en MRA 2024 tegen &euro;0,3594/kWh in de piekperiode en &euro;0,3394/kWh in de dalperiode. Laadwerk bevestigt daarnaast de concessiecontext: nieuw geplaatste Vattenfall-palen vanaf 1 juli 2024 circa &euro;0,36/kWh, oudere concessie circa &euro;0,52/kWh, waarbij een fysiek vervangen paal het oude tarief kan behouden.</p>
+    <p>Als NDW geen bruikbaar connectorgebonden tarief bevat en de individuele concessie niet met een duurzame station- of EVSE-identificatie is vastgesteld, gebruikt de processor uitsluitend de volledige officiële band &euro;0,3394-&euro;0,5222/kWh. De bron is dan high-quality, de specificiteit regional en de decision-grade indicative. Adres, proximity, hardwareleeftijd en <code>last_updated</code> zijn expliciet afgewezen als concessieheuristiek.</p>
+    <p>De fallback is alleen actief wanneer in dezelfde run zowel de Vattenfall-bedragen als de Laadwerk-concessietekst semantisch zijn geverifieerd en onderling overeenkomen. Daarmee kan een bereikbare maar inhoudelijk gewijzigde pagina geen oude prijs laten doorlekken.</p>
   </div>
 
   <h2>7. MSP-regels</h2>
@@ -143,7 +151,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
     <li><strong>TotalEnergies:</strong> het MRA-E-gebied kent meerdere officiële AC-tariefgroepen. De publieke NDW/OCPI-data bevat geen reproduceerbare station-specifieke sleutel waarmee een individuele locatie veilig aan MRA-E 2-5, MRA-E 6 of MRA-E 6 Dynamic kan worden gekoppeld. <code>last_updated</code>, laadvermogen en ID-patronen worden niet als concessieheuristiek gebruikt. De AC-fallback blijft daarom een officiële regionale prijsband en indicatief.</li>
     <li><strong>Laadnet:</strong> het gasttarief kan door de eigenaar van het laadpunt worden ingesteld. Zonder openbare, reproduceerbare station-specifieke prijs wordt geen netwerkbreed bedrag aangenomen.</li>
     <li><strong>EQUANS / Velian:</strong> publieke tarieven zijn afhankelijk van contract of concessie. Voor de Huizen-records is geen officiële station-specifieke tariefkoppeling beschikbaar.</li>
-    <li><strong>Vattenfall:</strong> verschillende concessies en laadpunten kunnen verschillende tarieven hebben. Direct/QR-ondersteuning alleen is onvoldoende om een numeriek tarief toe te kennen.</li>
+    <li><strong>Vattenfall:</strong> de MRA-E-bedragen zijn officieel en reproduceerbaar, maar de publiek vindbare gemeentelijke ArcGIS-mirror bevat <code>location_code</code> en <code>concession_id</code>, zonder EVSE-ID of tarief en geen aangetoonde regionale Huizen-koppeling waarmee de individuele concessie veilig aan NDW kan worden vastgesteld. Bij ontbrekend NDW-tarief blijft het CPO-bedrag daarom een regionale band. Direct/QR wordt niet generiek geactiveerd op alleen operator of adres.</li>
     <li><strong>JOLT:</strong> officiële Nederlandse JOLT-pagina's publiceren niet overal hetzelfde ad-hocbedrag. Zonder eenduidige bron voor de Huizen-locatie wordt geen generieke prijs toegepast.</li>
     <li><strong>OCPI tijd en restricties:</strong> duurafhankelijke componenten, dynamische restrictions en correcte min/max-grenzen vereisen meer sessiecontext dan de huidige kWh-invoer biedt. Deze routes blijven buiten ranking.</li>
     <li><strong>Operatortransities:</strong> meerdere records op hetzelfde adres kunnen een overgangssignaal vormen, maar adres, nabijheid, ouderdom of een andere CPO is geen bewijs dat een record is vervangen. Zonder reproduceerbare station- of EVSE-koppeling worden records niet automatisch onderdrukt.</li>
@@ -152,7 +160,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
 
   <h2>10. Bronmonitoring en fail-closed gedrag</h2>
   <p><code>scripts/check_pricing_sources.py</code> controleert de officiële prijsregels die door statische of aanvullende prijslogica worden gebruikt. Een tijdelijke netwerkfout op een CPO-bron blokkeert de NDW-update niet. De betrokken prijsregel wordt voor die run wel uitgeschakeld wanneer de bron niet betrouwbaar kan worden bevestigd.</p>
-  <p>Een alternatieve officiële URL mag alleen als transportfallback worden gebruikt na een ophaalfout. Wanneer de primaire pagina bereikbaar is maar de verwachte inhoud niet meer bevat, faalt de regel inhoudelijk en wordt geen fallback gebruikt om die wijziging te maskeren. Er is geen last-known-good prijsfallback.</p>
+  <p>Een alternatieve officiële URL mag alleen als transportfallback worden gebruikt na een ophaalfout. Wanneer de primaire pagina bereikbaar is maar de verwachte inhoud niet meer bevat, faalt de regel inhoudelijk en wordt geen fallback gebruikt om die wijziging te maskeren. Er is geen last-known-good prijsfallback. De Vattenfall MRA-E-regel vereist twee onafhankelijke actuele controles in dezelfde run: de exacte bedragen op de Vattenfall-tariefpagina en de concessiecontext op Laadwerk. Bij ontbrekende tekst, een veranderd bedrag of onderlinge tegenspraak wordt de regionale fallback uitgeschakeld.</p>
   <p>De afzonderlijke pricing-monitor maakt bronwijzigingen zichtbaar in de workflow en, wanneer Issues beschikbaar is, via issue-synchronisatie.</p>
 
   <h2>11. Datastroom en actualiteit</h2>
@@ -166,8 +174,9 @@ code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
     <li><a href="https://ubitricity.com/nl/bestuurder/mrae-laadprijzen/">Ubitricity MRA-E laadprijzen</a>.</li>
     <li><a href="https://totalenergies.nl/elektrisch-rijden/vind-laadpunt">TotalEnergies laadpunt- en MRA-E-tarieven</a>.</li>
     <li><a href="https://www.lidl.nl/c/laadpalen/s10015078">Lidl laadpalen</a>, AC- en DC-tarieven voor Direct/QR en laden met eigen laadpas.</li>
-    <li><a href="https://incharge.vattenfall.nl/blog/snel-en-eenvoudig-laden-zonder-laadpas">Vattenfall Direct/QR</a> en de openbare Vattenfall-tariefinformatie.</li>
-    <li><a href="https://www.laadwerk.nl/">Laadwerk</a>, regionale concessie- en tariefcontext.</li>
+    <li><a href="https://incharge.vattenfall.nl/onze-tarieven?to-id=publiektarief">Vattenfall openbare tarieven</a>, officiële MRA 2021- en MRA 2024-bedragen.</li>
+    <li><a href="https://www.laadwerk.nl/veelgestelde-vragen">Laadwerk veelgestelde vragen</a>, actuele oude/nieuwe concessieprijzen en de waarschuwing dat fysieke vervanging niet automatisch een nieuwe concessie betekent.</li>
+    <li><a href="https://laadkaart.laadwerk.nl/">Laadwerk laadkaart</a>, officiële locatiegerichte prijsreferentie. De kaart wordt niet automatisch gematcht zolang geen gedeelde duurzame station-ID tussen Laadwerk en NDW plus een reproduceerbare koppeling naar de tariefgroep is aangetoond.</li>
     <li>De afzonderlijke MSP-bronnen die in <code>pricing-sources.json</code> zijn vastgelegd en tijdens de broncontrole semantisch worden geverifieerd.</li>
   </ul>
   <p class="muted">De berekeningen zijn een vergelijkingshulpmiddel. Controleer vóór het starten van een sessie het actuele tarief en de voorwaarden van de gekozen aanbieder.</p>

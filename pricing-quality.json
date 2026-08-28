@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-28T09:46:11.291240+00:00",
+  "generated_at": "2026-08-28T11:46:49.211183+00:00",
   "input_schema_version": 5,
   "legacy_profile_fallback": false,
   "coverage": {
@@ -8,23 +8,23 @@
     "connector_profiles": 209,
     "reliable_locations": 23,
     "reliable_locations_pct": 12.1,
-    "indicative_locations": 108,
-    "indicative_locations_pct": 56.8,
-    "insufficient_locations": 59,
-    "insufficient_locations_pct": 31.1,
-    "comparison_ready": 131,
-    "comparison_ready_pct": 68.9,
+    "indicative_locations": 109,
+    "indicative_locations_pct": 57.4,
+    "insufficient_locations": 58,
+    "insufficient_locations_pct": 30.5,
+    "comparison_ready": 132,
+    "comparison_ready_pct": 69.5,
     "fully_reliable_locations": 23,
-    "available_snapshot": 152
+    "available_snapshot": 158
   },
   "connector_coverage": {
     "total_profiles": 209,
     "reliable": 25,
-    "indicative": 112,
-    "insufficient": 72,
+    "indicative": 113,
+    "insufficient": 71,
     "reliable_pct": 12.0,
-    "indicative_pct": 53.6,
-    "insufficient_pct": 34.4
+    "indicative_pct": 54.1,
+    "insufficient_pct": 34.0
   },
   "direct_payment": {
     "known_profiles": 151,
@@ -44,6 +44,20 @@
         "operator": "Laadnet",
         "count": 13,
         "examples": [
+          {
+            "id": "1701826",
+            "name": "Laadnet Landal Gooise Heide",
+            "address": "Woensbergweg 5, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 11.0,
+            "evse_ids": [
+              "NL*LNT*E1722089*001",
+              "NL*LNT*E1722089*002",
+              "NL*LNT*E1722090*001",
+              "NL*LNT*E1722090*002"
+            ]
+          },
           {
             "id": "4208919",
             "name": "Laadnet Veiligheidsregio Nevenpost Huizen",
@@ -87,17 +101,6 @@
             "evse_ids": [
               "NL*LNT*E2086401*001",
               "NL*LNT*E2086401*002"
-            ]
-          },
-          {
-            "id": "4237279",
-            "name": "Laadnet Driftweg 19",
-            "address": "Veldweg 19, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 11.0,
-            "evse_ids": [
-              "NL*LNT*E4287031*001"
             ]
           }
         ]
@@ -190,17 +193,31 @@
     ]
   },
   "base_pricing": {
-    "known_profiles": 185,
-    "known_pct": 88.5,
+    "known_profiles": 186,
+    "known_pct": 89.0,
     "specific_profiles": 58,
     "specific_pct": 27.8,
-    "unknown_profiles": 24,
+    "unknown_profiles": 23,
     "unknown_by_operator": [
       {
         "party_id": "LNT",
         "operator": "Laadnet",
         "count": 13,
         "examples": [
+          {
+            "id": "1701826",
+            "name": "Laadnet Landal Gooise Heide",
+            "address": "Woensbergweg 5, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 11.0,
+            "evse_ids": [
+              "NL*LNT*E1722089*001",
+              "NL*LNT*E1722089*002",
+              "NL*LNT*E1722090*001",
+              "NL*LNT*E1722090*002"
+            ]
+          },
           {
             "id": "4208919",
             "name": "Laadnet Veiligheidsregio Nevenpost Huizen",
@@ -244,17 +261,6 @@
             "evse_ids": [
               "NL*LNT*E2086401*001",
               "NL*LNT*E2086401*002"
-            ]
-          },
-          {
-            "id": "4237279",
-            "name": "Laadnet Driftweg 19",
-            "address": "Veldweg 19, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 11.0,
-            "evse_ids": [
-              "NL*LNT*E4287031*001"
             ]
           }
         ]
@@ -344,25 +350,6 @@
             ]
           }
         ]
-      },
-      {
-        "party_id": "NUO",
-        "operator": "Vattenfall InCharge",
-        "count": 1,
-        "examples": [
-          {
-            "id": "acbe9fd2-a94e-4760-88c5-72fbb962e753",
-            "name": "Vloedwal",
-            "address": "Vloedwal 50, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 3.7,
-            "evse_ids": [
-              "1ca48e90439e4caf0be2714aa778b2e6",
-              "5bfd374bc67fd40f130306843b81342d"
-            ]
-          }
-        ]
       }
     ],
     "sources": [
@@ -378,8 +365,8 @@
       },
       {
         "id": "unknown",
-        "profiles": 24,
-        "pct": 11.5
+        "profiles": 23,
+        "pct": 11.0
       },
       {
         "id": "operator_median",
@@ -395,32 +382,37 @@
         "id": "totalenergies_mrae_dc",
         "profiles": 1,
         "pct": 0.5
+      },
+      {
+        "id": "vattenfall_mrae",
+        "profiles": 1,
+        "pct": 0.5
       }
     ]
   },
   "data_quality": {
-    "high_quality_source_profiles": 170,
-    "high_quality_source_pct": 81.3,
-    "base_tariff_known_profiles": 185,
-    "base_tariff_known_pct": 88.5,
+    "high_quality_source_profiles": 171,
+    "high_quality_source_pct": 81.8,
+    "base_tariff_known_profiles": 186,
+    "base_tariff_known_pct": 89.0,
     "direct_priced_profiles": 131,
     "direct_known_profiles": 151,
     "direct_priced_pct_of_known": 86.8,
-    "complete_price_routes": 523,
-    "total_price_routes": 722,
-    "complete_price_routes_pct": 72.4
+    "complete_price_routes": 527,
+    "total_price_routes": 726,
+    "complete_price_routes_pct": 72.6
   },
   "quality_dimensions": {
     "profile_source_quality": [
       {
         "id": "high",
-        "count": 170,
-        "pct": 81.3
+        "count": 171,
+        "pct": 81.8
       },
       {
         "id": "medium",
-        "count": 24,
-        "pct": 11.5
+        "count": 23,
+        "pct": 11.0
       },
       {
         "id": "low",
@@ -441,8 +433,8 @@
       },
       {
         "id": "regional",
-        "count": 112,
-        "pct": 53.6
+        "count": 113,
+        "pct": 54.1
       },
       {
         "id": "operator_estimate",
@@ -451,52 +443,52 @@
       },
       {
         "id": "unknown",
-        "count": 24,
-        "pct": 11.5
+        "count": 23,
+        "pct": 11.0
       }
     ],
     "quote_cost_completeness": [
       {
         "id": "complete",
-        "count": 523,
-        "pct": 72.4
+        "count": 527,
+        "pct": 72.6
       },
       {
         "id": "partial",
         "count": 199,
-        "pct": 27.6
+        "pct": 27.4
       }
     ],
     "quote_decision_grade": [
       {
         "id": "reliable",
         "count": 69,
-        "pct": 9.6
+        "pct": 9.5
       },
       {
         "id": "indicative",
-        "count": 454,
-        "pct": 62.9
+        "count": 458,
+        "pct": 63.1
       },
       {
         "id": "exclude",
         "count": 199,
-        "pct": 27.6
+        "pct": 27.4
       }
     ]
   },
   "decision_reasons": [
     {
       "reason": "bounded_price_uncertainty",
-      "count": 118,
-      "connector_profiles": 118,
-      "quote_occurrences": 451
+      "count": 119,
+      "connector_profiles": 119,
+      "quote_occurrences": 455
     },
     {
       "reason": "specificity_regional",
-      "count": 112,
-      "connector_profiles": 112,
-      "quote_occurrences": 448
+      "count": 113,
+      "connector_profiles": 113,
+      "quote_occurrences": 452
     },
     {
       "reason": "known_cost_component_not_modelled",
@@ -550,8 +542,8 @@
     }
   ],
   "official_sources": {
-    "total": 4,
-    "ok": 3,
+    "total": 5,
+    "ok": 4,
     "failed": 1,
     "failed_sources": [
       {
@@ -565,7 +557,7 @@
   },
   "pricing_rule_verification": {
     "mode": "daily_verified_fail_closed",
-    "checked_at": "2026-08-28T09:45:57.228541+00:00",
+    "checked_at": "2026-08-28T11:46:37.903527+00:00",
     "all_ok": false,
     "disabled_rules": [
       "laadkompas_free",
@@ -625,6 +617,44 @@
         "attempts": [
           {
             "url": "https://incharge.vattenfall.nl/laadpas/",
+            "status": "ok",
+            "missing": []
+          }
+        ]
+      },
+      {
+        "id": "vattenfall_mrae",
+        "provider": "Vattenfall InCharge",
+        "plan": "MRA-E regionale fallback",
+        "url": "https://incharge.vattenfall.nl/onze-tarieven?to-id=publiektarief",
+        "status": "ok",
+        "missing": [],
+        "verified_url": "https://incharge.vattenfall.nl/onze-tarieven?to-id=publiektarief",
+        "attempted_urls": [
+          "https://incharge.vattenfall.nl/onze-tarieven?to-id=publiektarief"
+        ],
+        "attempts": [
+          {
+            "url": "https://incharge.vattenfall.nl/onze-tarieven?to-id=publiektarief",
+            "status": "ok",
+            "missing": []
+          }
+        ]
+      },
+      {
+        "id": "laadwerk_vattenfall_context",
+        "provider": "Laadwerk",
+        "plan": "Vattenfall concessiecontext Noordwest",
+        "url": "https://www.laadwerk.nl/veelgestelde-vragen",
+        "status": "ok",
+        "missing": [],
+        "verified_url": "https://www.laadwerk.nl/veelgestelde-vragen",
+        "attempted_urls": [
+          "https://www.laadwerk.nl/veelgestelde-vragen"
+        ],
+        "attempts": [
+          {
+            "url": "https://www.laadwerk.nl/veelgestelde-vragen",
             "status": "ok",
             "missing": []
           }
@@ -820,7 +850,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T12:44:41Z",
-        "age_days": 27.9
+        "age_days": 28.0
       },
       {
         "id": "50cf8798-1841-4b66-8f8c-86c43af6dfea",
@@ -831,7 +861,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T14:36:10Z",
-        "age_days": 27.8
+        "age_days": 27.9
       },
       {
         "id": "7e0dfd1b-e2e7-46ff-bcff-53fb5c9af4bb",
@@ -842,7 +872,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T13:43:40Z",
-        "age_days": 27.8
+        "age_days": 27.9
       },
       {
         "id": "691343b7-cb61-4117-9d42-db44ceb4ba32",
@@ -853,7 +883,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T07:46:28Z",
-        "age_days": 25.1
+        "age_days": 25.2
       },
       {
         "id": "715d923d-4113-4e5a-8c20-7c41a9b78227",
@@ -864,6 +894,28 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T09:49:33Z",
+        "age_days": 25.1
+      },
+      {
+        "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
+        "address": "Westkade 359, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-08-03T08:53:12Z",
+        "age_days": 25.1
+      },
+      {
+        "id": "6c715014-aa5e-46e6-9aab-4da426e6b9f2",
+        "address": "Salamander 2, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-08-03T12:12:52Z",
         "age_days": 25.0
       },
       {
@@ -878,28 +930,6 @@
         "age_days": 25.0
       },
       {
-        "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
-        "address": "Westkade 359, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-08-03T08:53:12Z",
-        "age_days": 25.0
-      },
-      {
-        "id": "6c715014-aa5e-46e6-9aab-4da426e6b9f2",
-        "address": "Salamander 2, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-08-03T12:12:52Z",
-        "age_days": 24.9
-      },
-      {
         "id": "acbe9fd2-a94e-4760-88c5-72fbb962e753",
         "address": "Vloedwal 50, Huizen",
         "operator": "Vattenfall InCharge",
@@ -909,7 +939,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-04T07:12:23Z",
-        "age_days": 24.1
+        "age_days": 24.2
       }
     ]
   },
@@ -953,7 +983,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-28T01:15:57.382Z",
+            "last_updated": "2026-08-28T09:34:18.806Z",
             "evse_ids": [
               "NL*EFL*EV3893250*C1",
               "NL*EFL*EV6652420*C1"
@@ -1050,10 +1080,11 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE"
+              "AVAILABLE",
+              "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-08-28T09:12:06Z",
+            "last_updated": "2026-08-28T10:13:45Z",
             "evse_ids": [
               "NLLMSE1234937418*1",
               "NLLMSE1234937418*2"
@@ -1081,7 +1112,7 @@
               "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-08-28T07:42:36Z",
+            "last_updated": "2026-08-28T09:56:54Z",
             "evse_ids": [
               "NLLMSE1234937533*1",
               "NLLMSE1234937533*2"
@@ -1135,11 +1166,11 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "CHARGING",
+              "AVAILABLE",
               "OUTOFORDER"
             ],
-            "available": false,
-            "last_updated": "2026-08-27T23:41:44Z",
+            "available": true,
+            "last_updated": "2026-08-28T10:36:06Z",
             "evse_ids": [
               "NLLMSE1234937612*1",
               "NLLMSE1234937612*2"
@@ -1158,6 +1189,21 @@
         "reason": "possible_operator_transition",
         "locations": [
           {
+            "id": "91525597",
+            "name": "EQUANS Vloedwal 50",
+            "operator": "EQUANS",
+            "party_id": "LMS",
+            "statuses": [
+              "AVAILABLE"
+            ],
+            "available": true,
+            "last_updated": "2026-08-28T06:18:21Z",
+            "evse_ids": [
+              "NLLMSE1234937579*1",
+              "NLLMSE1234937579*2"
+            ]
+          },
+          {
             "id": "acbe9fd2-a94e-4760-88c5-72fbb962e753",
             "name": "Vloedwal",
             "operator": "Vattenfall InCharge",
@@ -1173,21 +1219,6 @@
               "5bfd374bc67fd40f130306843b81342d",
               "NL*NUO*EEVB*P1406030*1",
               "NL*NUO*EEVB*P1406030*2"
-            ]
-          },
-          {
-            "id": "91525597",
-            "name": "EQUANS Vloedwal 50",
-            "operator": "EQUANS",
-            "party_id": "LMS",
-            "statuses": [
-              "AVAILABLE"
-            ],
-            "available": true,
-            "last_updated": "2026-08-28T06:18:21Z",
-            "evse_ids": [
-              "NLLMSE1234937579*1",
-              "NLLMSE1234937579*2"
             ]
           }
         ]
@@ -1308,11 +1339,10 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE",
-              "CHARGING"
+              "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-28T07:15:33Z",
+            "last_updated": "2026-08-28T10:01:06Z",
             "evse_ids": [
               "NLLMSE1234937613*1",
               "NLLMSE1234937613*2"
@@ -1411,10 +1441,11 @@
             "operator": "TotalEnergies",
             "party_id": "GFX",
             "statuses": [
-              "AVAILABLE"
+              "AVAILABLE",
+              "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-08-28T08:16:06Z",
+            "last_updated": "2026-08-28T11:05:58Z",
             "evse_ids": [
               "NL*TCB*EPP002058*1",
               "NL*TCB*EPP002058*2"
@@ -1473,13 +1504,13 @@
     "recomputed_stats": {
       "total": 190,
       "connector_profiles": 209,
-      "available_snapshot": 152,
-      "comparison_ready": 131,
+      "available_snapshot": 158,
+      "comparison_ready": 132,
       "decision_ready": 23,
-      "indicative_only": 108,
-      "insufficient": 59,
+      "indicative_only": 109,
+      "insufficient": 58,
       "fully_reliable": 23,
-      "unknown_base_rate": 24,
+      "unknown_base_rate": 23,
       "adhoc_priced": 131,
       "adhoc_priced_ndw": 0,
       "adhoc_priced_official": 131,
@@ -1504,7 +1535,7 @@
       "severity": "high",
       "category": "decision_quality",
       "title": "Connectorprofielen met onvoldoende informatie voor vergelijking",
-      "count": 72
+      "count": 71
     },
     {
       "severity": "medium",
@@ -1516,7 +1547,7 @@
       "severity": "medium",
       "category": "base_tariff",
       "title": "Connectorprofielen zonder CPO-basistarief",
-      "count": 24
+      "count": 23
     },
     {
       "severity": "medium",

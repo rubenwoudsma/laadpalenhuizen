@@ -44,7 +44,15 @@ let searchQuery = '';
 const selectedConnectorByPoint = new Map();
 
 function euro(value, digits = 2) {
-  return `€${Number(value).toFixed(digits).replace('.', ',')}`;
+  const formatted = Number(value).toLocaleString('nl-NL', {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  });
+  return `€${formatted}`;
+}
+
+function euroKwh(value) {
+  return `€${Number(value).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}`;
 }
 
 function escapeHtml(value) {
@@ -277,6 +285,9 @@ function sourceInfo(pt) {
   if (source === 'official_cpo_tariff') return { cls: 'source-direct', label: 'Officieel CPO-netwerktarief', tariff };
   if (source === 'totalenergies_mrae') return { cls: 'source-regional', label: 'Officiële TotalEnergies MRA-E prijsband', tariff };
   if (source === 'totalenergies_mrae_dc') return { cls: 'source-regional', label: 'Officieel TotalEnergies MRA-E DC-tarief', tariff };
+  if (source === 'vattenfall_mrae') return { cls: 'source-regional', label: 'Indicatief Vattenfall MRA-E tarief, concessie onbekend', tariff };
+  if (source === 'vattenfall_mrae_2021') return { cls: 'source-regional', label: 'Officieel Vattenfall MRA 2021-tarief', tariff };
+  if (source === 'vattenfall_mrae_2024') return { cls: 'source-regional', label: 'Officiële Vattenfall MRA 2024 prijsband', tariff };
   if (source === 'operator_median') return { cls: 'source-estimate', label: 'Schatting via operator-mediaan', tariff };
   return { cls: 'source-unknown', label: 'CPO-basistarief onbekend', tariff };
 }
@@ -336,8 +347,8 @@ function safeSourceUrl(value) {
 
 function quoteDetail(quote) {
   const parts = [`<span class="route-pill">${escapeHtml(routeLabel(quote))}</span>`];
-  if (quote.range?.length === 2) parts.push(`${euro(quote.range[0], 3)}-${euro(quote.range[1], 3)}/kWh`);
-  else if (quote.kwh != null) parts.push(`${euro(quote.kwh, 3)}/kWh`);
+  if (quote.range?.length === 2) parts.push(`${euroKwh(quote.range[0])}-${euroKwh(quote.range[1])}/kWh`);
+  else if (quote.kwh != null) parts.push(`${euroKwh(quote.kwh)}/kWh`);
   if (quote.energy_step_size_wh) parts.push(`afrekening per ${Number(quote.energy_step_size_wh)} Wh`);
   if (quote.percentage) parts.push(`+${Math.round(Number(quote.percentage) * 100)}% transactiekosten`);
   if (quote.session_range?.length === 2) parts.push(`${euro(quote.session_range[0])}-${euro(quote.session_range[1])} sessiekosten`);
@@ -420,7 +431,7 @@ function makePopup(pt) {
   else if (cmp.likely) bestHtml = `<span>Enige berekenbare optie</span><strong>${formatCostRange(cmp.likely.cost)}</strong>`;
 
   const tariff = src.tariff || {};
-  const cpoRange = tariff.rate_range?.length === 2 ? ` · CPO ${euro(tariff.rate_range[0], 3)}-${euro(tariff.rate_range[1], 3)}/kWh` : '';
+  const cpoRange = tariff.rate_range?.length === 2 ? ` · CPO ${euroKwh(tariff.rate_range[0])}-${euroKwh(tariff.rate_range[1])}/kWh` : '';
   const profile = selectedConnector(pt);
   const idSource = profile?.evse_ids?.length ? profile.evse_ids : pt.evse_ids;
   const idLine = idSource?.length ? `<div class="sub">ID: ${escapeHtml(idSource[0])}</div>` : '';
@@ -496,7 +507,7 @@ function renderList(inputPoints) {
     const profile = selectedConnector(pt);
     const tariff = src.tariff || {};
     const distance = distanceLabel(pt);
-    const range = tariff.rate_range?.length === 2 ? ` · CPO-range ${euro(tariff.rate_range[0], 3)}-${euro(tariff.rate_range[1], 3)}` : '';
+    const range = tariff.rate_range?.length === 2 ? ` · CPO-range ${euroKwh(tariff.rate_range[0])}-${euroKwh(tariff.rate_range[1])}/kWh` : '';
     const partyTag = pt.party_id ? `<span class="tag">CPO ${escapeHtml(pt.party_id)}</span>` : '';
     const directTag = knownDirectPayment(pt) ? '<span class="tag">Direct betalen</span>' : '';
     const decision = profile?.decision_status || pt.decision_status || 'insufficient';

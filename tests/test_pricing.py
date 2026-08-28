@@ -179,6 +179,57 @@ class PricingRulesTest(unittest.TestCase):
         self.assertEqual(fallback["rate"], 0.54)
         self.assertIsNone(fallback["range"])
 
+    def test_vattenfall_mrae_parser_extracts_official_concession_rates(self):
+        page = process.normalize_public_page(
+            "<h3>Openbare laadpalen in Noordwest-Nederland</h3>"
+            "<p>Vattenfall InCharge in Metropoolregio Amsterdam (MRA 2021) €0,5222 NVT</p>"
+            "<p>Vattenfall InCharge in Metropoolregio Amsterdam (MRA 2024) €0,3594 €0,3394</p>"
+        )
+        self.assertEqual(process.parse_vattenfall_mrae_rates(page), {
+            "mra_2021": 0.5222,
+            "mra_2024_peak": 0.3594,
+            "mra_2024_off_peak": 0.3394,
+        })
+
+    def test_vattenfall_mrae_parser_fails_closed_when_one_rate_disappears(self):
+        page = "vattenfall incharge in metropoolregio amsterdam (mra 2021) €0,5222 mra 2024 €0,3594"
+        self.assertIsNone(process.parse_vattenfall_mrae_rates(page))
+
+    def test_laadwerk_vattenfall_context_requires_replacement_caveat(self):
+        complete = (
+            "nieuwe laadpalen, geplaatst vanaf 1 juli 2024: vattenfall incharge: €0,36. "
+            "laadpalen geplaatst vóór 1 juli 2024: bij deze laadpalen geldt het oude tarief, "
+            "ook als ze vervangen worden door een nieuwe laadpaal met een digitaal scherm: "
+            "vattenfall incharge: €0,52"
+        )
+        self.assertEqual(process.parse_laadwerk_vattenfall_context(complete), {
+            "new_from_2024_07_01": 0.36,
+            "old_before_2024_07_01": 0.52,
+            "replacement_keeps_old_tariff": True,
+        })
+        without_caveat = complete.replace("bij deze laadpalen geldt het oude tarief, ook als ze vervangen worden door een nieuwe laadpaal met een digitaal scherm: ", "")
+        self.assertIsNone(process.parse_laadwerk_vattenfall_context(without_caveat))
+
+    def test_vattenfall_unknown_concession_uses_full_official_range(self):
+        rates = {"mra_2021": 0.5222, "mra_2024_peak": 0.3594, "mra_2024_off_peak": 0.3394}
+        fallback = process.vattenfall_mrae_fallback("Vattenfall InCharge", "AC", rates)
+        self.assertEqual(fallback["source"], "vattenfall_mrae")
+        self.assertEqual(fallback["range"], [0.3394, 0.5222])
+        self.assertEqual(fallback["rate"], 0.4308)
+
+    def test_vattenfall_mra_2021_and_2024_stay_distinct_when_verified(self):
+        rates = {"mra_2021": 0.5222, "mra_2024_peak": 0.3594, "mra_2024_off_peak": 0.3394}
+        old = process.vattenfall_mrae_fallback("Vattenfall", "AC", rates, "MRA_2021")
+        new = process.vattenfall_mrae_fallback("Vattenfall", "AC", rates, "MRA_2024")
+        self.assertEqual(old["rate"], 0.5222)
+        self.assertIsNone(old["range"])
+        self.assertEqual(new["range"], [0.3394, 0.3594])
+        self.assertEqual(new["rate"], 0.3494)
+
+    def test_vattenfall_concession_is_never_guessed_from_unknown_label(self):
+        rates = {"mra_2021": 0.5222, "mra_2024_peak": 0.3594, "mra_2024_off_peak": 0.3394}
+        self.assertIsNone(process.vattenfall_mrae_fallback("Vattenfall", "AC", rates, "hardware_looks_new"))
+
     def test_totalenergies_is_excluded_from_operator_median(self):
         self.assertIsNone(process.find_operator_median("TotalEnergies", {"totalenergies": 0.42}))
 
@@ -246,6 +297,90 @@ class PricingRulesTest(unittest.TestCase):
         self.assertEqual(result["pricing_source"], "totalenergies_mrae")
         self.assertEqual(result["cpo_rate_range"], [0.34, 0.48])
         self.assertEqual(result["pricing"]["anwb_free"]["range"], [0.34, 0.48])
+
+    def test_process_location_uses_vattenfall_regional_range_after_missing_ndw_tariff(self):
+        loc = {
+            "id": "vf-huizen",
+            "country_code": "NL",
+            "party_id": "NUO",
+            "coordinates": {"latitude": "52.29", "longitude": "5.24"},
+            "operator": {"name": "Vattenfall InCharge"},
+            "address": "Teststraat 1",
+            "city": "Huizen",
+            "evses": [{"evse_id": "NL*NUO*E123*1", "status": "AVAILABLE", "connectors": [{
+                "standard": "IEC_62196_T2", "power_type": "AC_3_PHASE", "max_electric_power": 11000,
+                "tariff_ids": ["missing"],
+            }]}],
+        }
+        official_cpo = {"NUO": {
+            "mode": "regional_range", "current_type": "AC", "rate": 0.4308,
+            "range": [0.3394, 0.5222], "session": 0.0, "basis": "vattenfall_mrae",
+            "source_id": "vattenfall_mrae", "source_url": process.VATTENFALL_PUBLIC_TARIFF_SOURCE_URL,
+            "context_source_url": process.LAADWERK_TARIFF_SOURCE_URL,
+            "verification_rule_ids": ["vattenfall_mrae", "laadwerk_vattenfall_context"],
+        }}
+        result = process.process_location(
+            loc, process.build_tariff_index([]), {}, official_cpo=official_cpo,
+            verified_rules={"vattenfall_mrae", "laadwerk_vattenfall_context", "vattenfall"},
+        )
+        self.assertEqual(result["pricing_source"], "vattenfall_mrae")
+        self.assertEqual(result["cpo_rate_range"], [0.3394, 0.5222])
+        self.assertEqual(result["pricing"]["vattenfall"]["range"], [0.3394, 0.5222])
+        self.assertEqual(result["pricing"]["vattenfall"]["quality"]["decision_grade"], "indicative")
+        self.assertFalse(result["direct_payment"]["supported"])
+        self.assertNotIn("direct_pay", result["pricing"])
+        tariff = result["connector_options"][0]["tariff"]
+        self.assertEqual(tariff["source_url"], process.VATTENFALL_PUBLIC_TARIFF_SOURCE_URL)
+        self.assertEqual(tariff["context_source_url"], process.LAADWERK_TARIFF_SOURCE_URL)
+
+    def test_vattenfall_regional_fallback_is_not_matched_by_address_or_proximity(self):
+        loc = {
+            "id": "other-at-vf-address", "country_code": "NL", "party_id": "OTHER",
+            "coordinates": {"latitude": "52.297953", "longitude": "5.229585"},
+            "operator": {"name": "Other Operator"}, "address": "De Ruyterstraat 7", "city": "Huizen",
+            "evses": [{"status": "AVAILABLE", "connectors": [{"standard": "IEC_62196_T2", "power_type": "AC_3_PHASE", "tariff_ids": []}]}],
+        }
+        official_cpo = {"NUO": {
+            "mode": "regional_range", "current_type": "AC", "rate": 0.4308,
+            "range": [0.3394, 0.5222], "basis": "vattenfall_mrae", "source_id": "vattenfall_mrae",
+        }}
+        result = process.process_location(loc, process.build_tariff_index([]), {}, official_cpo=official_cpo)
+        self.assertEqual(result["pricing_source"], "unknown")
+
+    def test_vattenfall_ndw_connector_tariff_beats_regional_fallback(self):
+        tariffs = [{
+            "country_code": "NL", "party_id": "NUO", "id": "vf-exact", "currency": "EUR",
+            "elements": [{"price_components": [{"type": "ENERGY", "price": 0.5222, "step_size": 1}]}],
+        }]
+        loc = {
+            "id": "vf-old", "country_code": "NL", "party_id": "NUO",
+            "coordinates": {"latitude": "52.29", "longitude": "5.24"},
+            "operator": {"name": "Vattenfall InCharge"}, "address": "Teststraat 2", "city": "Huizen",
+            "evses": [{"status": "AVAILABLE", "connectors": [{"standard": "IEC_62196_T2", "power_type": "AC_3_PHASE", "tariff_ids": ["vf-exact"]}]}],
+        }
+        official_cpo = {"NUO": {"mode": "regional_range", "current_type": "AC", "rate": 0.4308, "range": [0.3394, 0.5222], "basis": "vattenfall_mrae", "source_id": "vattenfall_mrae"}}
+        result = process.process_location(loc, process.build_tariff_index(tariffs), {}, official_cpo=official_cpo)
+        self.assertEqual(result["pricing_source"], "ndw")
+        self.assertEqual(result["cpo_rate"], 0.5222)
+        self.assertIsNone(result["cpo_rate_range"])
+
+    def test_vattenfall_regional_fallback_requires_both_monitor_rules_when_status_present(self):
+        loc = {
+            "id": "vf-disabled", "country_code": "NL", "party_id": "NUO",
+            "coordinates": {"latitude": "52.29", "longitude": "5.24"},
+            "operator": {"name": "Vattenfall InCharge"}, "address": "Teststraat 3", "city": "Huizen",
+            "evses": [{"status": "AVAILABLE", "connectors": [{"standard": "IEC_62196_T2", "power_type": "AC_3_PHASE", "tariff_ids": []}]}],
+        }
+        official_cpo = {"NUO": {
+            "mode": "regional_range", "current_type": "AC", "rate": 0.4308, "range": [0.3394, 0.5222],
+            "basis": "vattenfall_mrae", "source_id": "vattenfall_mrae",
+            "verification_rule_ids": ["vattenfall_mrae", "laadwerk_vattenfall_context"],
+        }}
+        result = process.process_location(
+            loc, process.build_tariff_index([]), {}, official_cpo=official_cpo,
+            verified_rules={"vattenfall_mrae", "vattenfall"},
+        )
+        self.assertEqual(result["pricing_source"], "unknown")
 
 
     def test_ad_hoc_tariff_is_separate_from_regular_tariff_and_keeps_flat_fee(self):
@@ -457,6 +592,17 @@ class PricingRulesTest(unittest.TestCase):
                 "het laadtarief bestaat uit een basisprijs (cpo-prijs), "
                 "dit is ook de ad-hoc of direct payment prijs"
             ),
+            process.VATTENFALL_PUBLIC_TARIFF_SOURCE_URL: (
+                "openbare laadpalen in noordwest-nederland "
+                "vattenfall incharge in metropoolregio amsterdam (mra 2021) €0,5222 nvt "
+                "vattenfall incharge in metropoolregio amsterdam (mra 2024) €0,3594 €0,3394"
+            ),
+            process.LAADWERK_TARIFF_SOURCE_URL: (
+                "nieuwe laadpalen, geplaatst vanaf 1 juli 2024: vattenfall incharge: €0,36. "
+                "laadpalen geplaatst vóór 1 juli 2024: bij deze laadpalen geldt het oude tarief, "
+                "ook als ze vervangen worden door een nieuwe laadpaal met een digitaal scherm: "
+                "vattenfall incharge: €0,52"
+            ),
             process.LIDL_DIRECT_SOURCE_URL: (
                 "opladen via lidl.nl lidl.nl-tarief regulier-laadstation: € 0.55 €/kwh (ac) "
                 "lidl.nl-tarief snel-laadstation: € 0.60 €/kwh (dc) "
@@ -470,9 +616,47 @@ class PricingRulesTest(unittest.TestCase):
         self.assertEqual(harvest["direct_by_party"]["GFX"]["mode"], "mirror_cpo")
         self.assertEqual(harvest["direct_by_party"]["LDL"]["rates"], {"AC": 0.55, "DC": 0.60})
         self.assertEqual(harvest["cpo_by_party"]["LDL"]["rates"], {"AC": 0.55, "DC": 0.60})
+        self.assertEqual(harvest["cpo_by_party"]["NUO"]["range"], [0.3394, 0.5222])
+        self.assertEqual(harvest["cpo_by_party"]["NUO"]["basis"], "vattenfall_mrae")
         self.assertEqual(harvest["msp_by_party"]["UB2"]["anwb_free"]["rate"], 0.35)
         self.assertEqual(harvest["msp_by_party"]["UB2"]["shell_basic"]["rate"], 0.55)
         self.assertTrue(all(source["status"] == "ok" for source in harvest["sources"]))
+
+    def test_vattenfall_harvest_fails_closed_when_sources_disagree(self):
+        pages = {
+            process.VATTENFALL_PUBLIC_TARIFF_SOURCE_URL: (
+                "vattenfall incharge in metropoolregio amsterdam (mra 2021) €0,5222 "
+                "vattenfall incharge in metropoolregio amsterdam (mra 2024) €0,3594 €0,3394"
+            ),
+            process.LAADWERK_TARIFF_SOURCE_URL: (
+                "nieuwe laadpalen, geplaatst vanaf 1 juli 2024: vattenfall incharge: €0,40. "
+                "laadpalen geplaatst vóór 1 juli 2024: bij deze laadpalen geldt het oude tarief, "
+                "ook als ze vervangen worden door een nieuwe laadpaal met een digitaal scherm: vattenfall incharge: €0,52"
+            ),
+        }
+        def fetcher(url):
+            if url in pages:
+                return pages[url]
+            raise RuntimeError("not relevant")
+        harvest = process.harvest_official_pricing(fetcher=fetcher)
+        self.assertNotIn("NUO", harvest["cpo_by_party"])
+        status = next(source for source in harvest["sources"] if source["id"] == "vattenfall_mrae")
+        self.assertEqual(status["status"], "unavailable")
+        self.assertIn("conflicts", status["error"])
+
+    def test_vattenfall_harvest_fails_closed_when_laadwerk_fetch_fails(self):
+        def fetcher(url):
+            if url == process.VATTENFALL_PUBLIC_TARIFF_SOURCE_URL:
+                return (
+                    "vattenfall incharge in metropoolregio amsterdam (mra 2021) €0,5222 "
+                    "vattenfall incharge in metropoolregio amsterdam (mra 2024) €0,3594 €0,3394"
+                )
+            raise RuntimeError("HTTP 503")
+        harvest = process.harvest_official_pricing(fetcher=fetcher)
+        self.assertNotIn("NUO", harvest["cpo_by_party"])
+        status = next(source for source in harvest["sources"] if source["id"] == "vattenfall_mrae")
+        self.assertEqual(status["status"], "unavailable")
+        self.assertIn("503", status["error"])
 
     def test_lidl_official_direct_rates_follow_connector_current_type(self):
         location = {

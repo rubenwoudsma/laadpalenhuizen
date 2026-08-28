@@ -80,6 +80,72 @@
       ]
     },
     {
+      "id": "vattenfall_mrae",
+      "provider": "Vattenfall InCharge",
+      "plan": "MRA-E regionale fallback",
+      "url": "https://incharge.vattenfall.nl/onze-tarieven?to-id=publiektarief",
+      "checks": [
+        {
+          "label": "MRA 2021 blijft EUR 0,5222 per kWh",
+          "patterns": [
+            "mra\\s*2021.{0,120}(?:€\\s*)?0[,.]5222"
+          ]
+        },
+        {
+          "label": "MRA 2024 piek blijft EUR 0,3594 per kWh",
+          "patterns": [
+            "mra\\s*2024.{0,160}(?:€\\s*)?0[,.]3594"
+          ]
+        },
+        {
+          "label": "MRA 2024 dal blijft EUR 0,3394 per kWh",
+          "patterns": [
+            "mra\\s*2024.{0,220}0[,.]3594.{0,120}(?:€\\s*)?0[,.]3394"
+          ]
+        }
+      ],
+      "scope": {
+        "start": "openbare laadpalen in noordwest-nederland",
+        "end": "andere openbare laadpalen"
+      }
+    },
+    {
+      "id": "laadwerk_vattenfall_context",
+      "provider": "Laadwerk",
+      "plan": "Vattenfall concessiecontext Noordwest",
+      "url": "https://www.laadwerk.nl/veelgestelde-vragen",
+      "checks": [
+        {
+          "label": "nieuwe Vattenfall-palen vanaf 1 juli 2024 blijven circa EUR 0,36",
+          "patterns": [
+            "nieuwe\\s+laadpalen.{0,180}vanaf\\s+1\\s+juli\\s+2024.{0,500}vattenfall\\s+incharge.{0,60}(?:€\\s*)?0[,.]36"
+          ]
+        },
+        {
+          "label": "oude Vattenfall-concessie blijft circa EUR 0,52",
+          "patterns": [
+            "laadpalen\\s+geplaatst\\s+v[oó][oó]?r\\s+1\\s+juli\\s+2024.{0,500}vattenfall\\s+incharge.{0,60}(?:€\\s*)?0[,.]52"
+          ]
+        },
+        {
+          "label": "fysieke vervanging wijzigt het oude tarief niet automatisch",
+          "patterns": [
+            "oude\\s+tarief.{0,180}vervangen.{0,180}nieuwe\\s+laadpaal"
+          ]
+        },
+        {
+          "label": "Laadwerk-kaart blijft aangewezen als meest accurate laadpuntprijs",
+          "patterns": [
+            "laadkaart\\.laadwerk\\.nl.{0,220}(?:meest\\s+accurate|meest\\s+nauwkeurige)"
+          ]
+        }
+      ],
+      "scope": {
+        "start": "wat kost laden op een laadpaal van laadwerk?",
+        "end": "bewonersvragen & bezwaar"
+      }
+    },
+    {
       "id": "eflux_flex",
       "provider": "E-Flux by Road",
       "plan": "Flex",

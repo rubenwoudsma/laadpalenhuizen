@@ -16,9 +16,10 @@ Pricing philosophy:
 - If a regular connector tariff is missing, an operator median may be exposed as
   a diagnostic estimate when enough nationwide samples exist, but it is never
   treated as a complete session price or ranking input.
-- TotalEnergies locations in Huizen use an official MRA-E regional price range
-  when NDW does not expose a usable connector tariff. This is a targeted fallback
-  based on public concession tariffs, not a generic invented price.
+- TotalEnergies and Vattenfall locations in Huizen can use an official MRA-E
+  regional price range when NDW does not expose a usable connector tariff. These
+  are targeted fallbacks based on public concession tariffs, not generic
+  operator averages.
 - Charge-pass fees are modelled separately as per-session fees, percentage fees
   and kWh markups, with explicit own-network versus roaming classification.
 - The browser calculates session totals for the user's selected amount of energy.
@@ -98,6 +99,22 @@ TOTALENERGIES_MRAE_RESOLUTION_NOTE = (
 )
 HUIZEN_CHARGING_SOURCE_URL = "https://www.huizen.nl/elektrisch-laden"
 LAADWERK_SOURCE_URL = "https://www.laadwerk.nl/diensten/laadinfra"
+
+# Vattenfall publishes the exact current MRA 2021 and MRA 2024 peak/off-peak
+# tariffs. Laadwerk independently documents the old/new concession split and
+# explicitly warns that physical replacement of an older pole does not change
+# its tariff group. The pipeline therefore never infers a concession from
+# hardware age, last_updated, address or proximity. When no connector tariff is
+# available and no verified concession mapping exists, the complete official
+# MRA price envelope is exposed as a regional range.
+VATTENFALL_PUBLIC_TARIFF_SOURCE_URL = "https://incharge.vattenfall.nl/onze-tarieven?to-id=publiektarief"
+VATTENFALL_MRAE_VERIFIED_AT = "2026-08-28"
+VATTENFALL_MRAE_RESOLUTION_NOTE = (
+    "Een publiek vindbare gemeentelijke ArcGIS-mirror van Laadwerk charge stations bevat onder meer "
+    "id, location_code en concession_id, maar geen EVSE-ID of tarief en is geen aangetoonde regionale "
+    "Huizen-feed. Daardoor is geen duurzame stationkoppeling naar NDW plus tariefgroep bewezen. Adres, "
+    "coördinaat, hardwareouderdom en NDW last_updated worden niet gebruikt om MRA 2021 versus MRA 2024 te gokken."
+)
 
 # Supplemental official CPO sources are harvested on every data run. They are
 # deliberately limited to rules that can be verified from a public operator
@@ -423,6 +440,71 @@ def parse_totalenergies_direct_rule(page_text: str) -> bool:
     ))
 
 
+def parse_vattenfall_mrae_rates(page_text: str) -> Optional[dict]:
+    """Extract exact Vattenfall MRA 2021 and MRA 2024 public tariffs.
+
+    The official page currently publishes one MRA 2021 rate and separate peak
+    and off-peak rates for MRA 2024. All three values are required. A partial
+    parse fails closed so a redesigned page cannot silently shrink the range.
+    """
+    text = re.sub(r"\s+", " ", (page_text or "").lower())
+    old_match = re.search(
+        r"metropoolregio\s+amsterdam\s*\(mra\s*2021\).{0,120}?€?\s*([0-9]+[,.][0-9]{4})",
+        text,
+        flags=re.IGNORECASE,
+    )
+    new_match = re.search(
+        r"metropoolregio\s+amsterdam\s*\(mra\s*2024\).{0,160}?€?\s*([0-9]+[,.][0-9]{4}).{0,100}?€?\s*([0-9]+[,.][0-9]{4})",
+        text,
+        flags=re.IGNORECASE,
+    )
+    if not old_match or not new_match:
+        return None
+    mra_2021 = round(float(old_match.group(1).replace(",", ".")), 4)
+    mra_2024_peak = round(float(new_match.group(1).replace(",", ".")), 4)
+    mra_2024_off_peak = round(float(new_match.group(2).replace(",", ".")), 4)
+    if min(mra_2021, mra_2024_peak, mra_2024_off_peak) <= 0:
+        return None
+    return {
+        "mra_2021": mra_2021,
+        "mra_2024_peak": mra_2024_peak,
+        "mra_2024_off_peak": mra_2024_off_peak,
+    }
+
+
+def parse_laadwerk_vattenfall_context(page_text: str) -> Optional[dict]:
+    """Verify Laadwerk's Vattenfall old/new concession context.
+
+    Rounded Laadwerk prices are used as a cross-check, not as a replacement for
+    Vattenfall's more precise published values. The physical-replacement caveat
+    is mandatory because it is the reason hardware age cannot be a safe mapping
+    heuristic.
+    """
+    text = re.sub(r"\s+", " ", (page_text or "").lower())
+    new_section = re.search(
+        r"nieuwe\s+laadpalen.{0,120}vanaf\s+1\s+juli\s+2024.{0,500}?vattenfall\s+incharge\s*:\s*€?\s*([0-9]+[,.][0-9]{2})",
+        text,
+        flags=re.IGNORECASE,
+    )
+    old_section = re.search(
+        r"laadpalen\s+geplaatst\s+v[oó][oó]?r\s+1\s+juli\s+2024.{0,500}?vattenfall\s+incharge\s*:\s*€?\s*([0-9]+[,.][0-9]{2})",
+        text,
+        flags=re.IGNORECASE,
+    )
+    replacement_caveat = bool(re.search(
+        r"oude\s+tarief.{0,180}(?:vervangen|nieuwe\s+laadpaal).{0,180}(?:digitaal\s+scherm|laadpaal)",
+        text,
+        flags=re.IGNORECASE,
+    ))
+    if not new_section or not old_section or not replacement_caveat:
+        return None
+    return {
+        "new_from_2024_07_01": round(float(new_section.group(1).replace(",", ".")), 2),
+        "old_before_2024_07_01": round(float(old_section.group(1).replace(",", ".")), 2),
+        "replacement_keeps_old_tariff": True,
+    }
+
+
 def _parse_lidl_rates_in_section(page_text: str, heading: str, stop_heading: Optional[str] = None) -> dict[str, float]:
     """Extract AC/DC Lidl.nl rates only from the named visible page section."""
     text = re.sub(r"\s+", " ", (page_text or "").lower())
@@ -559,6 +641,64 @@ def harvest_official_pricing(fetcher=fetch_public_page) -> dict:
             "source_url": TOTALENERGIES_DIRECT_RULE_SOURCE_URL,
         })
 
+    # Vattenfall MRA-E regional fallback. Both sources must agree in the same
+    # run: Vattenfall supplies the exact concession rates, Laadwerk confirms
+    # the old/new regional split and the non-obvious replacement caveat.
+    try:
+        vattenfall_page = fetcher(VATTENFALL_PUBLIC_TARIFF_SOURCE_URL)
+        laadwerk_page = fetcher(LAADWERK_TARIFF_SOURCE_URL)
+        exact_rates = parse_vattenfall_mrae_rates(vattenfall_page)
+        laadwerk_context = parse_laadwerk_vattenfall_context(laadwerk_page)
+        if not exact_rates:
+            raise ValueError("Vattenfall MRA 2021/2024 tariffs not found")
+        if not laadwerk_context:
+            raise ValueError("Laadwerk Vattenfall concession context not found")
+        if round(exact_rates["mra_2021"], 2) != laadwerk_context["old_before_2024_07_01"]:
+            raise ValueError("Vattenfall MRA 2021 rate conflicts with Laadwerk old-concession rate")
+        if round(exact_rates["mra_2024_peak"], 2) != laadwerk_context["new_from_2024_07_01"]:
+            raise ValueError("Vattenfall MRA 2024 peak rate conflicts with Laadwerk new-concession rate")
+
+        low = min(exact_rates["mra_2024_off_peak"], exact_rates["mra_2024_peak"], exact_rates["mra_2021"])
+        high = max(exact_rates["mra_2024_off_peak"], exact_rates["mra_2024_peak"], exact_rates["mra_2021"])
+        cpo_by_party["NUO"] = {
+            "mode": "regional_range",
+            "current_type": "AC",
+            "rate": round((low + high) / 2, 4),
+            "range": [low, high],
+            "session": 0.0,
+            "basis": "vattenfall_mrae",
+            "source_id": "vattenfall_mrae",
+            "source_url": VATTENFALL_PUBLIC_TARIFF_SOURCE_URL,
+            "context_source_url": LAADWERK_TARIFF_SOURCE_URL,
+            "source_checked_at": checked_at,
+            "verification_rule_ids": ["vattenfall_mrae", "laadwerk_vattenfall_context"],
+            "confidence": "medium",
+            "concession_rates": exact_rates,
+            "note": (
+                "Officiële Vattenfall MRA-E prijsband. De exacte concessie voor dit laadpunt is niet "
+                "vastgesteld; daarom wordt MRA 2024 dal/piek tot en met MRA 2021 als band getoond."
+            ),
+        }
+        results.append({
+            "id": "vattenfall_mrae",
+            "party_id": "NUO",
+            "status": "ok",
+            "range": [low, high],
+            "concession_rates": exact_rates,
+            "laadwerk_context": laadwerk_context,
+            "source_url": VATTENFALL_PUBLIC_TARIFF_SOURCE_URL,
+            "context_source_url": LAADWERK_TARIFF_SOURCE_URL,
+        })
+    except Exception as exc:
+        results.append({
+            "id": "vattenfall_mrae",
+            "party_id": "NUO",
+            "status": "unavailable",
+            "error": str(exc),
+            "source_url": VATTENFALL_PUBLIC_TARIFF_SOURCE_URL,
+            "context_source_url": LAADWERK_TARIFF_SOURCE_URL,
+        })
+
     try:
         page = fetcher(LIDL_DIRECT_SOURCE_URL)
     except Exception as exc:
@@ -651,7 +791,32 @@ def supplemental_cpo_price_info(
 ) -> Optional[dict]:
     """Return a verified network CPO base tariff when NDW has none."""
     source = (official_cpo or {}).get((party_id or "").upper())
-    if not source or source.get("mode") != "by_current_type":
+    if not source:
+        return None
+    if source.get("mode") == "regional_range":
+        expected_type = str(source.get("current_type") or "").upper()
+        actual_type = str(current_type or "").upper()
+        if expected_type and actual_type != expected_type:
+            return None
+        return {
+            "rate": float(source["rate"]),
+            "range": list(source.get("range") or []) or None,
+            "session": float(source.get("session", 0.0)),
+            "session_range": None,
+            "unmodelled_types": [],
+            "quality_reasons": [],
+            "energy_step_size_wh": None,
+            "tariff_id": None,
+            "restricted": False,
+            "basis": source.get("basis", "regional_official"),
+            "source_id": source.get("source_id"),
+            "source_url": source.get("source_url"),
+            "context_source_url": source.get("context_source_url"),
+            "source_checked_at": source.get("source_checked_at"),
+            "verification_rule_ids": list(source.get("verification_rule_ids") or []),
+            "note": source.get("note"),
+        }
+    if source.get("mode") != "by_current_type":
         return None
     rate = (source.get("rates") or {}).get(str(current_type or "").upper())
     if rate is None:
@@ -1180,7 +1345,10 @@ def confidence_for_source(source: str) -> str:
     """
     if source in {"ndw", "official_cpo_tariff"}:
         return "high"
-    if source in {"operator_median", "totalenergies_mrae", "totalenergies_mrae_dc"}:
+    if source in {
+        "operator_median", "totalenergies_mrae", "totalenergies_mrae_dc",
+        "vattenfall_mrae", "vattenfall_mrae_2021", "vattenfall_mrae_2024",
+    }:
         return "medium"
     return "low"
 
@@ -1223,6 +1391,7 @@ def source_quality_for_basis(basis: str, inherited_base_source: Optional[str] = 
         "ndw", "ndw_ad_hoc", "ndw_ad_hoc_compatible", "official_cpo_adhoc", "official_cpo_msp_rate",
         "official_cpo_tariff",
         "official_cpo_direct_rule", "totalenergies_mrae", "totalenergies_mrae_dc",
+        "vattenfall_mrae", "vattenfall_mrae_2021", "vattenfall_mrae_2024",
         "published_shell", "published_band",
     }:
         return "high"
@@ -1237,7 +1406,10 @@ def price_specificity_for_basis(basis: str, inherited_base_source: Optional[str]
         return "connector"
     if source in {"official_cpo_adhoc", "official_cpo_msp_rate", "official_cpo_tariff"}:
         return "network"
-    if source in {"totalenergies_mrae", "totalenergies_mrae_dc"}:
+    if source in {
+        "totalenergies_mrae", "totalenergies_mrae_dc",
+        "vattenfall_mrae", "vattenfall_mrae_2021", "vattenfall_mrae_2024",
+    }:
         return "regional"
     if source == "official_cpo_direct_rule":
         return "regional"
@@ -1346,6 +1518,68 @@ def totalenergies_mrae_fallback(operator_name: str, current_type: str) -> Option
         "unmodelled_types": [],
         "source": "totalenergies_mrae",
         "note": "Officiële MRA-E prijsband van TotalEnergies; de exacte concessie en eventuele dynamische prijs zijn niet uit NDW af te leiden.",
+    }
+
+
+def vattenfall_mrae_fallback(
+    operator_name: str,
+    current_type: str,
+    rates: dict,
+    concession: Optional[str] = None,
+) -> Optional[dict]:
+    """Return a Vattenfall MRA price only from verified official rate input.
+
+    ``concession`` is accepted solely for an independently verified mapping.
+    The normal Huizen pipeline passes no concession and therefore receives the
+    full MRA 2024 off-peak/peak through MRA 2021 envelope. No location age,
+    address or proximity heuristic is used here.
+    """
+    op = operator_key(operator_name)
+    if not any(token in op for token in ("vattenfall", "incharge", "nuon")):
+        return None
+    if str(current_type).upper() != "AC":
+        return None
+    required = {"mra_2021", "mra_2024_peak", "mra_2024_off_peak"}
+    if not rates or not required.issubset(rates):
+        return None
+
+    old = float(rates["mra_2021"])
+    peak = float(rates["mra_2024_peak"])
+    off_peak = float(rates["mra_2024_off_peak"])
+    group = str(concession or "").strip().upper().replace("-", "_").replace(" ", "_")
+    if group == "MRA_2021":
+        return {
+            "rate": old,
+            "range": None,
+            "session": 0.0,
+            "session_range": None,
+            "unmodelled_types": [],
+            "source": "vattenfall_mrae_2021",
+            "note": "Officieel Vattenfall MRA 2021-tarief; concessiegroep is onafhankelijk vastgesteld.",
+        }
+    if group == "MRA_2024":
+        low, high = min(off_peak, peak), max(off_peak, peak)
+        return {
+            "rate": round((low + high) / 2, 4),
+            "range": [low, high],
+            "session": 0.0,
+            "session_range": None,
+            "unmodelled_types": [],
+            "source": "vattenfall_mrae_2024",
+            "note": "Officiële Vattenfall MRA 2024 dal-/piekprijsband; het tijdstip van de laadsessie bepaalt het kWh-tarief.",
+        }
+    if group:
+        return None
+
+    low, high = min(off_peak, peak, old), max(off_peak, peak, old)
+    return {
+        "rate": round((low + high) / 2, 4),
+        "range": [low, high],
+        "session": 0.0,
+        "session_range": None,
+        "unmodelled_types": [],
+        "source": "vattenfall_mrae",
+        "note": "Officiële Vattenfall MRA-E prijsband; MRA 2021 versus MRA 2024 is voor dit laadpunt niet vastgesteld.",
     }
 
 
@@ -1966,7 +2200,13 @@ def process_location(
 
             if cpo_info is None:
                 supplemental_cpo = supplemental_cpo_price_info(party_id, current_type, official_cpo)
+                supplemental_rule_ids = []
                 if supplemental_cpo:
+                    supplemental_rule_ids = list(supplemental_cpo.get("verification_rule_ids") or [])
+                    if not supplemental_rule_ids and supplemental_cpo.get("source_id"):
+                        supplemental_rule_ids = [supplemental_cpo["source_id"]]
+                rules_enabled = verified_rules is None or all(rule_id in verified_rules for rule_id in supplemental_rule_ids)
+                if supplemental_cpo and rules_enabled:
                     cpo_info = supplemental_cpo
                     source = supplemental_cpo.get("basis", "official_cpo_tariff")
                     cpo_note = supplemental_cpo.get("note")
@@ -2123,6 +2363,7 @@ def process_location(
                     "note": cpo_note,
                     "source_id": cpo_info.get("source_id") if cpo_info else None,
                     "source_url": cpo_info.get("source_url") if cpo_info else None,
+                    "context_source_url": cpo_info.get("context_source_url") if cpo_info else None,
                     "source_checked_at": cpo_info.get("source_checked_at") if cpo_info else None,
                     "quality": {
                         "source_quality": source_quality_for_basis(source),
@@ -2362,7 +2603,11 @@ def main() -> None:
     profiles = [profile for row in results for profile in row.get("connector_options", [])]
     direct = sum(1 for p in profiles if p.get("tariff", {}).get("source") == "ndw")
     median = sum(1 for p in profiles if p.get("tariff", {}).get("source") == "operator_median")
-    regional = sum(1 for p in profiles if p.get("tariff", {}).get("source") in {"totalenergies_mrae", "totalenergies_mrae_dc"})
+    regional_sources = {
+        "totalenergies_mrae", "totalenergies_mrae_dc",
+        "vattenfall_mrae", "vattenfall_mrae_2021", "vattenfall_mrae_2024",
+    }
+    regional = sum(1 for p in profiles if p.get("tariff", {}).get("source") in regional_sources)
     unknown = sum(1 for p in profiles if p.get("tariff", {}).get("rate") is None)
     comparison_ready = sum(1 for r in results if r.get("decision_status") in {"reliable", "indicative"})
     decision_ready = sum(1 for r in results if r.get("decision_status") == "reliable")
@@ -2430,7 +2675,16 @@ def main() -> None:
                 "rejected_heuristics": ["tnlp_or_pp_number", "evse_id_pattern", "power_kw", "last_updated"],
                 "municipality_source_url": HUIZEN_CHARGING_SOURCE_URL,
                 "laadwerk_source_url": LAADWERK_SOURCE_URL,
-            }
+            },
+            "vattenfall_mrae": {
+                "verified_at": VATTENFALL_MRAE_VERIFIED_AT,
+                "source_url": VATTENFALL_PUBLIC_TARIFF_SOURCE_URL,
+                "laadwerk_tariff_source_url": LAADWERK_TARIFF_SOURCE_URL,
+                "resolution_status": "unresolved_per_connector_without_strong_identifier",
+                "resolution_note": VATTENFALL_MRAE_RESOLUTION_NOTE,
+                "rejected_heuristics": ["address_only", "proximity_only", "hardware_age", "last_updated"],
+                "municipality_source_url": HUIZEN_CHARGING_SOURCE_URL,
+            },
         },
         "bbox": {
             "lat_min": LAT_MIN,
