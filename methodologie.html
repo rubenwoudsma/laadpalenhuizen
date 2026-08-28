@@ -133,6 +133,11 @@ code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
     </table>
   </div>
   <p>Een officiele regionale prijs kan dus een hoge bronkwaliteit hebben, maar toch alleen indicatief zijn omdat de exacte connectorprijs niet vaststaat. Dat is informatiever dan dezelfde quote simpelweg als low confidence tellen.</p>
+  <p>De quality-pagina scheidt daarom ook <strong>data quality</strong> van <strong>decision quality</strong>. Het percentage betrouwbaar vergelijkbare locaties meet of de strengste gebruikersvergelijking mogelijk is. Het is geen percentage betrouwbare bronrecords. High-quality brondata, bekende basistarieven, Direct/QR-prijsdekking en complete prijsroutes worden afzonderlijk gemeten.</p>
+
+  <h3>TotalEnergies / MRA-E</h3>
+  <p>TotalEnergies publiceert voor het MRA-E-gebied verschillende AC-tariefgroepen, waaronder MRA-E 2 t/m 5, MRA-E 6 en MRA-E 6 Dynamic. Laadwerk publiceert daarnaast een contractgrens voor laadpalen geplaatst vanaf 1 juli 2024 versus oudere locaties. Die grens kan niet veilig uit <code>last_updated</code> worden afgeleid: dat is geen plaatsingsdatum, en Laadwerk vermeldt expliciet dat een oudere locatie ook na vervanging van de fysieke paal het oude tarief kan behouden. In de onderzochte publieke NDW/OCPI-metadata en officiele bronnen is daarom nog geen reproduceerbare sleutel gevonden die een individueel TNLP/PP-/EVSE-ID aan een concrete tariefgroep koppelt. Nummerreeksen, laadvermogen en <code>last_updated</code> worden niet als concessieheuristiek gebruikt.</p>
+  <p>De openbare tabellen mogen ook niet zonder bewijs aan elkaar gelijk worden gesteld: TotalEnergies noemt MRA-E 6 als concessietarief, terwijl Laadwerk voor nieuwe TotalEnergies-palen een eigen maximaal afgesproken direct-payment tarief publiceert. MRA-E 6 Dynamic is bovendien tijdsblokafhankelijk. De uiteindelijk afgerekende prijs volgt de hoeveelheid energie die in ieder tijdsblok is geladen. Een laadpunt alleen als "Dynamic" of "nieuw" herkennen is dus nog onvoldoende om voor een sessie een exacte vaste kWh-prijs te claimen. De huidige AC-fallback blijft om die redenen bewust regionaal en indicatief totdat een officiele laadpunt-specifieke bron of expliciet OCPI-tarief beschikbaar is.</p>
 
   <h2>9. Datakwaliteit</h2>
   <p>Na iedere datarun genereert <code>scripts/generate_quality_report.py</code> onafhankelijk <code>pricing-quality.json</code>. De pagina <a href="kwaliteit.html">Datakwaliteit</a> toont:</p>
@@ -153,6 +158,7 @@ code { font-family:'IBM Plex Mono',monospace; font-size:.92em; }
   <h2>11. Automatische broncontrole</h2>
   <p>Voor iedere dagelijkse data-update controleert <code>scripts/check_pricing_sources.py</code> de publieke regels waarop statische MSP-berekeningen rusten. Een gewijzigde ANWB-, Tap-, Vattenfall-, E-Flux-, Shell- of Laadkompas-pagina kan daardoor niet ongemerkt wekenlang een verouderde formule blijven voeden.</p>
   <p>Bij een mismatch wordt alleen de getroffen statische regel uitgeschakeld. NDW, andere geverifieerde regels en aanvullende CPO-harvesting blijven beschikbaar.</p>
+  <p>Wanneer een aanbieder meerdere officiele publieke pagina's met dezelfde tariefregel onderhoudt, mag de monitor alleen na een ophaalfout een alternatieve live URL proberen. Een inhoudelijke mismatch op een wel opgehaalde primaire pagina stopt direct fail-closed. Daarmee kan oudere wording op een alternatieve officiele pagina een echte tariefwijziging niet maskeren. De fallback wordt tijdens dezelfde run live opgehaald en moet alle geconfigureerde controles doorstaan. Er wordt nooit teruggevallen op een eerder opgeslagen prijs of een last-known-good HTML-versie.</p>
 
   <h2>12. Bekende beperkingen</h2>
   <div class="card warning">

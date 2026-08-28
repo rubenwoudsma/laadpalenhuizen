@@ -68,6 +68,72 @@ class PricingMonitorTest(unittest.TestCase):
         self.assertIn("repo.has_issues", workflow)
         self.assertIn("Job Summary", workflow)
 
+    def test_live_official_fallback_url_can_verify_same_rule(self):
+        source = {
+            "id": "example",
+            "provider": "Example",
+            "plan": "Free",
+            "url": "https://official.example/primary",
+            "urls": ["https://official.example/fallback"],
+            "checks": [{"label": "fee", "patterns": [r"0[,.]47"]}],
+        }
+        calls = []
+
+        def fetcher(url):
+            calls.append(url)
+            if url.endswith("primary"):
+                raise RuntimeError("temporary upstream error")
+            return "<p>Starttarief € 0,47 per sessie</p>"
+
+        results, ok = monitor.run({"sources": [source]}, fetcher=fetcher)
+        self.assertTrue(ok)
+        self.assertEqual(results[0]["status"], "ok")
+        self.assertEqual(results[0]["verified_url"], "https://official.example/fallback")
+        self.assertEqual(calls, ["https://official.example/primary", "https://official.example/fallback"])
+
+    def test_primary_semantic_mismatch_is_not_masked_by_fallback(self):
+        source = {
+            "id": "example",
+            "provider": "Example",
+            "plan": "Free",
+            "url": "https://official.example/primary",
+            "urls": ["https://official.example/fallback"],
+            "checks": [{"label": "fee", "patterns": [r"0[,.]47"]}],
+        }
+        calls = []
+
+        def fetcher(url):
+            calls.append(url)
+            if url.endswith("primary"):
+                return "<p>Nieuw tarief € 0,99</p>"
+            return "<p>Oude campagnepagina: € 0,47</p>"
+
+        results, ok = monitor.run({"sources": [source]}, fetcher=fetcher)
+        self.assertFalse(ok)
+        self.assertEqual(results[0]["status"], "mismatch")
+        self.assertEqual(results[0]["missing"], ["fee"])
+        self.assertEqual(calls, ["https://official.example/primary"])
+
+    def test_fallback_mismatch_fails_closed_after_primary_fetch_error(self):
+        source = {
+            "id": "example",
+            "provider": "Example",
+            "plan": "Free",
+            "url": "https://official.example/primary",
+            "urls": ["https://official.example/fallback"],
+            "checks": [{"label": "fee", "patterns": [r"0[,.]47"]}],
+        }
+
+        def fetcher(url):
+            if url.endswith("primary"):
+                raise RuntimeError("temporary upstream error")
+            return "<p>Tarief € 0,99</p>"
+
+        results, ok = monitor.run({"sources": [source]}, fetcher=fetcher)
+        self.assertFalse(ok)
+        self.assertEqual(results[0]["status"], "mismatch")
+        self.assertEqual(results[0]["missing"], ["fee"])
+
     def test_mismatch_is_reported(self):
         source = {
             "checks": [{"label": "expected fee", "patterns": [r"0[,.]89"]}],

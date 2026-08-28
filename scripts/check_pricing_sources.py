@@ -83,6 +83,23 @@ def evaluate_source(source: dict, page_text: str) -> list[str]:
     return missing
 
 
+def source_urls(source: dict) -> list[str]:
+    """Return ordered live official URLs for the same pricing rule.
+
+    Fallback URLs are transport fallbacks only. A semantic mismatch on a fetched
+    primary page is authoritative for that run and must fail closed instead of
+    being masked by older wording on another official page.
+    """
+    urls = []
+    primary = source.get("url")
+    if primary:
+        urls.append(primary)
+    for url in source.get("urls") or []:
+        if url and url not in urls:
+            urls.append(url)
+    return urls
+
+
 def load_config(path: Path) -> dict:
     data = json.loads(path.read_text(encoding="utf-8"))
     if data.get("schema_version") != 1:
@@ -90,7 +107,7 @@ def load_config(path: Path) -> dict:
     if not data.get("sources"):
         raise ValueError("pricing-sources.json contains no sources")
     for source in data["sources"]:
-        if not source.get("id") or not source.get("url") or not source.get("checks"):
+        if not source.get("id") or not source_urls(source) or not source.get("checks"):
             raise ValueError(f"Incomplete pricing source entry: {source!r}")
     return data
 
@@ -109,7 +126,11 @@ def build_report(results: list[dict], verified_at: str) -> str:
         marker = "OK" if result["status"] == "ok" else "ACTIE NODIG"
         lines.append(f"## {marker}: {result['provider']} [{result['plan']}]")
         lines.append("")
-        lines.append(f"Bron: {result['url']}")
+        evidence_url = result.get("verified_url") or result.get("url")
+        lines.append(f"Bron: {evidence_url}")
+        attempted = result.get("attempted_urls") or []
+        if len(attempted) > 1:
+            lines.append(f"Geprobeerd: {', '.join(attempted)}")
         lines.append("")
         if result["status"] == "ok":
             lines.append("Alle verwachte tariefvoorwaarden zijn teruggevonden.")
@@ -146,18 +167,64 @@ def build_status(results: list[dict], verified_at: str, checked_at: str | None =
 def run(config: dict, fetcher=fetch_page) -> tuple[list[dict], bool]:
     results = []
     for source in config["sources"]:
+        urls = source_urls(source)
         base = {
             "id": source["id"],
             "provider": source["provider"],
             "plan": source["plan"],
-            "url": source["url"],
+            "url": urls[0],
         }
-        try:
-            page_text = normalize_page(fetcher(source["url"]))
-            missing = evaluate_source(source, page_text)
-            results.append({**base, "status": "mismatch" if missing else "ok", "missing": missing})
-        except Exception as exc:
-            results.append({**base, "status": "fetch_error", "error": str(exc), "missing": []})
+        attempts = []
+        verified_url = None
+        mismatch = None
+        for url in urls:
+            try:
+                page_text = normalize_page(fetcher(url))
+                missing = evaluate_source(source, page_text)
+                attempt = {"url": url, "status": "mismatch" if missing else "ok", "missing": missing}
+                attempts.append(attempt)
+                if missing:
+                    # A fetched official page that no longer proves the configured
+                    # rule is a semantic warning, not a transport problem. Stop
+                    # immediately so another page cannot mask a real tariff change.
+                    mismatch = attempt
+                    break
+                verified_url = url
+                break
+            except Exception as exc:
+                attempts.append({"url": url, "status": "fetch_error", "error": str(exc), "missing": []})
+
+        if verified_url:
+            results.append({
+                **base,
+                "status": "ok",
+                "missing": [],
+                "verified_url": verified_url,
+                "attempted_urls": [attempt["url"] for attempt in attempts],
+                "attempts": attempts,
+            })
+            continue
+
+        if mismatch:
+            results.append({
+                **base,
+                "status": "mismatch",
+                "missing": mismatch.get("missing", []),
+                "attempted_urls": [attempt["url"] for attempt in attempts],
+                "attempts": attempts,
+            })
+        else:
+            error = "; ".join(
+                f"{attempt['url']}: {attempt.get('error', 'onbekende fout')}" for attempt in attempts
+            )
+            results.append({
+                **base,
+                "status": "fetch_error",
+                "error": error or "geen bron-URL beschikbaar",
+                "missing": [],
+                "attempted_urls": [attempt["url"] for attempt in attempts],
+                "attempts": attempts,
+            })
     return results, all(result["status"] == "ok" for result in results)
 
 

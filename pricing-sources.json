@@ -158,7 +158,7 @@
       "id": "laadkompas_free",
       "provider": "Laadkompas",
       "plan": "Zonder abonnement",
-      "url": "https://laadkompas.nl/campagne/laadpas/",
+      "url": "https://laadkompas.nl/laadpas/zonder-abonnement/",
       "checks": [
         {
           "label": "starttarief blijft EUR 0,47 per sessie",
@@ -168,6 +168,9 @@
             "starttarief.{0,80}(?:€\\s*)?0[,.]47"
           ]
         }
+      ],
+      "urls": [
+        "https://laadkompas.nl/campagne/laadpas/"
       ]
     },
     {

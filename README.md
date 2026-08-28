@@ -121,6 +121,14 @@ Iedere prijsquote heeft vier afzonderlijke kwaliteitsdimensies:
 
 Hierdoor wordt een officiele regionale prijsband niet meer simpelweg als `low confidence` behandeld. De bron kan uitstekend zijn terwijl de locatiespecificiteit beperkt is. Dat onderscheid is zichtbaar in `pricing-quality.json` en op `kwaliteit.html`.
 
+De quality-pagina maakt daarnaast expliciet onderscheid tussen **decision quality** en **data quality**. `reliable_locations` is de strengste maat voor de vraag of een gebruiker op een locatie veilig meerdere routes kan vergelijken. Het is geen percentage "goede data". Afzonderlijke KPI's tonen daarom high-quality brondata, bekende basistarieven, geprijsde Direct/QR-routes en complete prijsroutes.
+
+### TotalEnergies / MRA-E resolutie
+
+De actuele officiele TotalEnergies-bron publiceert voor MRA-E meerdere AC-tariefgroepen: MRA-E 2 t/m 5, MRA-E 6 en MRA-E 6 Dynamic. Laadwerk publiceert daarnaast een eigen contractindeling voor regio Noordwest: laadpalen geplaatst vanaf 1 juli 2024 vallen onder de nieuwe afspraken, oudere locaties onder de oude afspraken. Dat is bruikbare concessie-informatie, maar nog geen veilige connector-mapping. In NDW is `last_updated` geen plaatsingsdatum en een vervangen fysieke paal kan volgens Laadwerk het oude tarief behouden. Voor Huizen is daarom in de publieke NDW/OCPI-kenmerken en de onderzochte officiele bronnen nog geen reproduceerbare koppeling gevonden waarmee een individueel TNLP/PP-/EVSE-ID veilig aan een concrete tariefgroep kan worden toegewezen. TNLP-/PP-nummerreeksen, vermogen en `last_updated` worden daarom **niet** als concessieheuristiek gebruikt.
+
+Er is bovendien een semantisch verschil tussen de openbare tabellen: TotalEnergies publiceert MRA-E 6 als concessietarief, terwijl Laadwerk voor nieuwe TotalEnergies-palen een eigen maximaal afgesproken direct-payment tarief publiceert. Die labels worden niet als hetzelfde contract behandeld zonder laadpunt-specifiek bewijs. Dat is extra belangrijk voor MRA-E 6 Dynamic: het tarief wisselt per tijdsblok en de uiteindelijke sessieprijs is de som van de energie die in ieder tijdsblok daadwerkelijk is geladen. Alleen het label "Dynamic" of "nieuw" herkennen zou dus nog geen betrouwbare vaste kWh-prijs opleveren. Totdat een officiele laadpunt-specifieke bron of expliciet OCPI-tarief deze koppeling levert, blijft de AC-fallback bewust regionaal en indicatief.
+
 ## Databron en datastroom
 
 Primaire bron: NDW DOT-NL OCPI snapshots.
@@ -202,7 +210,7 @@ Een operator-mediaan wordt niet gebruikt voor een sessieranking, omdat lokale va
 6. schrijft de kwaliteits-KPI's naar de GitHub Actions summary;
 7. commit beide gegenereerde JSON-bestanden als ze zijn gewijzigd.
 
-Een mislukte publieke MSP-broncontrole schakelt die ene statische regel fail-closed uit. De gehele kaartupdate wordt daardoor niet onnodig geblokkeerd.
+Een mislukte publieke MSP-broncontrole schakelt die ene statische regel fail-closed uit. De gehele kaartupdate wordt daardoor niet onnodig geblokkeerd. Voor bronnen met meerdere officiele, inhoudelijk equivalente publieke pagina's mag de monitor alleen bij een ophaalfout een tweede live URL proberen. Een inhoudelijke mismatch op een wel opgehaalde primaire pagina stopt direct fail-closed, zodat oudere wording op een alternatieve pagina een echte prijswijziging niet kan maskeren. Zo'n fallback is geen last-known-good cache: ook de fallbackpagina wordt tijdens diezelfde run live opgehaald en moet alle semantische prijscontroles doorstaan.
 
 `.github/workflows/pricing-monitor.yml` blijft daarnaast de periodieke bronmonitor en maakt wijzigingen zichtbaar.
 

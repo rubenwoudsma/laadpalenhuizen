@@ -84,8 +84,18 @@ SKIP_OPERATOR_MEDIAN = {
 # DC: MRA-E = EUR 0.54/kWh incl. VAT.
 TOTALENERGIES_MRAE_AC_RANGE = (0.34, 0.48)
 TOTALENERGIES_MRAE_DC_RATE = 0.54
-TOTALENERGIES_MRAE_VERIFIED_AT = "2026-08-12"
+TOTALENERGIES_MRAE_VERIFIED_AT = "2026-08-27"
 TOTALENERGIES_MRAE_SOURCE_URL = "https://totalenergies.nl/elektrisch-rijden/vind-laadpunt"
+TOTALENERGIES_MRAE_HISTORY_SOURCE_URL = "https://totalenergies.nl/historische-laadtarieven-concessie"
+TOTALENERGIES_MRAE_DYNAMIC_SOURCE_URL = "https://totalenergies.nl/elektrisch-rijden/dynamische-tarieven"
+LAADWERK_TARIFF_SOURCE_URL = "https://www.laadwerk.nl/veelgestelde-vragen"
+TOTALENERGIES_MRAE_RESOLUTION_NOTE = (
+    "Geen officiële machineleesbare koppeling gevonden tussen TNLP/PP-/EVSE-ID, vermogen of "
+    "last_updated en MRA-E 2-5, MRA-E 6 of MRA-E 6 Dynamic. Laadwerk publiceert wel een "
+    "plaatsingsgrens voor oude versus nieuwe concessietarieven, maar NDW last_updated is geen "
+    "plaatsingsdatum en nieuwe palen kunnen dynamische prijzen hebben. Deze kenmerken worden "
+    "daarom niet als concessieheuristiek gebruikt; dynamische tarieven zijn tijdsblokafhankelijk."
+)
 HUIZEN_CHARGING_SOURCE_URL = "https://www.huizen.nl/elektrisch-laden"
 LAADWERK_SOURCE_URL = "https://www.laadwerk.nl/diensten/laadinfra"
 
@@ -2225,6 +2235,12 @@ def main() -> None:
                 "dc_rate": TOTALENERGIES_MRAE_DC_RATE,
                 "verified_at": TOTALENERGIES_MRAE_VERIFIED_AT,
                 "source_url": TOTALENERGIES_MRAE_SOURCE_URL,
+                "history_source_url": TOTALENERGIES_MRAE_HISTORY_SOURCE_URL,
+                "dynamic_source_url": TOTALENERGIES_MRAE_DYNAMIC_SOURCE_URL,
+                "laadwerk_tariff_source_url": LAADWERK_TARIFF_SOURCE_URL,
+                "resolution_status": "unresolved_per_connector",
+                "resolution_note": TOTALENERGIES_MRAE_RESOLUTION_NOTE,
+                "rejected_heuristics": ["tnlp_or_pp_number", "evse_id_pattern", "power_kw", "last_updated"],
                 "municipality_source_url": HUIZEN_CHARGING_SOURCE_URL,
                 "laadwerk_source_url": LAADWERK_SOURCE_URL,
             }
