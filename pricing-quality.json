@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-08-30T12:11:45.428986+00:00",
+  "generated_at": "2026-08-31T14:23:07.314111+00:00",
   "input_schema_version": 5,
   "legacy_profile_fallback": false,
   "coverage": {
@@ -15,7 +15,7 @@
     "comparison_ready": 140,
     "comparison_ready_pct": 73.7,
     "fully_reliable_locations": 23,
-    "available_snapshot": 159
+    "available_snapshot": 157
   },
   "connector_coverage": {
     "total_profiles": 209,
@@ -45,31 +45,6 @@
         "count": 13,
         "examples": [
           {
-            "id": "4763548",
-            "name": "Laadnet Thuis",
-            "address": "Eemnesserweg 65, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 11.0,
-            "evse_ids": [
-              "NL*LNT*E4818895*001"
-            ]
-          },
-          {
-            "id": "1701826",
-            "name": "Laadnet Landal Gooise Heide",
-            "address": "Woensbergweg 5, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 11.0,
-            "evse_ids": [
-              "NL*LNT*E1722089*001",
-              "NL*LNT*E1722089*002",
-              "NL*LNT*E1722090*001",
-              "NL*LNT*E1722090*002"
-            ]
-          },
-          {
             "id": "4208919",
             "name": "Laadnet Veiligheidsregio Nevenpost Huizen",
             "address": "Bovenmaatweg 2, Huizen",
@@ -92,6 +67,17 @@
             ]
           },
           {
+            "id": "4763548",
+            "name": "Laadnet Thuis",
+            "address": "Eemnesserweg 65, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 11.0,
+            "evse_ids": [
+              "NL*LNT*E4818895*001"
+            ]
+          },
+          {
             "id": "4237279",
             "name": "Laadnet Driftweg 19",
             "address": "Veldweg 19, Huizen",
@@ -100,6 +86,18 @@
             "power_kw": 11.0,
             "evse_ids": [
               "NL*LNT*E4287031*001"
+            ]
+          },
+          {
+            "id": "1696485",
+            "name": "Laadnet Alliantie werkplaats Huizen",
+            "address": "Energieweg 23, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 22.0,
+            "evse_ids": [
+              "NL*LNT*E2086401*001",
+              "NL*LNT*E2086401*002"
             ]
           }
         ]
@@ -145,18 +143,6 @@
             ]
           },
           {
-            "id": "803b1f5c-cd85-464d-bf95-e7fd2f1bc69d",
-            "name": "LNL01EVCP36",
-            "address": "Havenstraat 71, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 22.0,
-            "evse_ids": [
-              "NL*LDL*E00000413",
-              "NL*LDL*E00000414"
-            ]
-          },
-          {
             "id": "eb8361f7-ea8f-42c0-a2ac-89a1177d5426",
             "name": "Lidl HUIZEN",
             "address": "Warandebergstraat, Huizen",
@@ -166,6 +152,18 @@
             "evse_ids": [
               "NL*LDL*E00000280",
               "NL*LDL*E00000282"
+            ]
+          },
+          {
+            "id": "803b1f5c-cd85-464d-bf95-e7fd2f1bc69d",
+            "name": "LNL01EVCP36",
+            "address": "Havenstraat 71, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 22.0,
+            "evse_ids": [
+              "NL*LDL*E00000413",
+              "NL*LDL*E00000414"
             ]
           }
         ]
@@ -204,31 +202,6 @@
         "count": 13,
         "examples": [
           {
-            "id": "4763548",
-            "name": "Laadnet Thuis",
-            "address": "Eemnesserweg 65, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 11.0,
-            "evse_ids": [
-              "NL*LNT*E4818895*001"
-            ]
-          },
-          {
-            "id": "1701826",
-            "name": "Laadnet Landal Gooise Heide",
-            "address": "Woensbergweg 5, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 11.0,
-            "evse_ids": [
-              "NL*LNT*E1722089*001",
-              "NL*LNT*E1722089*002",
-              "NL*LNT*E1722090*001",
-              "NL*LNT*E1722090*002"
-            ]
-          },
-          {
             "id": "4208919",
             "name": "Laadnet Veiligheidsregio Nevenpost Huizen",
             "address": "Bovenmaatweg 2, Huizen",
@@ -251,6 +224,17 @@
             ]
           },
           {
+            "id": "4763548",
+            "name": "Laadnet Thuis",
+            "address": "Eemnesserweg 65, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 11.0,
+            "evse_ids": [
+              "NL*LNT*E4818895*001"
+            ]
+          },
+          {
             "id": "4237279",
             "name": "Laadnet Driftweg 19",
             "address": "Veldweg 19, Huizen",
@@ -259,6 +243,18 @@
             "power_kw": 11.0,
             "evse_ids": [
               "NL*LNT*E4287031*001"
+            ]
+          },
+          {
+            "id": "1696485",
+            "name": "Laadnet Alliantie werkplaats Huizen",
+            "address": "Energieweg 23, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 22.0,
+            "evse_ids": [
+              "NL*LNT*E2086401*001",
+              "NL*LNT*E2086401*002"
             ]
           }
         ]
@@ -561,7 +557,7 @@
   },
   "pricing_rule_verification": {
     "mode": "daily_verified_fail_closed",
-    "checked_at": "2026-08-30T12:11:30.938890+00:00",
+    "checked_at": "2026-08-31T14:22:54.860919+00:00",
     "all_ok": false,
     "disabled_rules": [
       "laadkompas_free",
@@ -883,8 +879,8 @@
   },
   "freshness": {
     "older_than_24h": 17,
-    "older_than_7d": 9,
-    "older_than_30d": 0,
+    "older_than_7d": 8,
+    "older_than_30d": 3,
     "missing_or_invalid_timestamp": 0,
     "stale_locations_over_7d": [
       {
@@ -896,7 +892,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T12:44:41Z",
-        "age_days": 30.0
+        "age_days": 31.1
       },
       {
         "id": "50cf8798-1841-4b66-8f8c-86c43af6dfea",
@@ -907,7 +903,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T14:36:10Z",
-        "age_days": 29.9
+        "age_days": 31.0
       },
       {
         "id": "7e0dfd1b-e2e7-46ff-bcff-53fb5c9af4bb",
@@ -918,7 +914,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T13:43:40Z",
-        "age_days": 29.9
+        "age_days": 31.0
       },
       {
         "id": "691343b7-cb61-4117-9d42-db44ceb4ba32",
@@ -929,7 +925,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T07:46:28Z",
-        "age_days": 27.2
+        "age_days": 28.3
       },
       {
         "id": "715d923d-4113-4e5a-8c20-7c41a9b78227",
@@ -940,18 +936,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T09:49:33Z",
-        "age_days": 27.1
-      },
-      {
-        "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
-        "address": "Waterland 2, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-08-03T10:50:26Z",
-        "age_days": 27.1
+        "age_days": 28.2
       },
       {
         "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
@@ -962,7 +947,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T08:53:12Z",
-        "age_days": 27.1
+        "age_days": 28.2
       },
       {
         "id": "6c715014-aa5e-46e6-9aab-4da426e6b9f2",
@@ -973,19 +958,18 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T12:12:52Z",
-        "age_days": 27.0
+        "age_days": 28.1
       },
       {
-        "id": "acbe9fd2-a94e-4760-88c5-72fbb962e753",
-        "address": "Vloedwal 50, Huizen",
+        "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
+        "address": "Waterland 2, Huizen",
         "operator": "Vattenfall InCharge",
         "party_id": "NUO",
         "statuses": [
-          "REMOVED",
           "UNKNOWN"
         ],
-        "last_updated": "2026-08-04T07:12:23Z",
-        "age_days": 26.2
+        "last_updated": "2026-08-03T10:50:26Z",
+        "age_days": 28.1
       }
     ]
   },
@@ -1011,10 +995,11 @@
             "operator": "E-Flux by Road",
             "party_id": "EFL",
             "statuses": [
-              "AVAILABLE"
+              "AVAILABLE",
+              "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-08-30T09:51:38.051Z",
+            "last_updated": "2026-08-31T09:20:44.687Z",
             "evse_ids": [
               "NL*EFL*EV3893250*C1",
               "NL*EFL*EV6652420*C1"
@@ -1041,11 +1026,10 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE",
-              "CHARGING"
+              "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-30T09:06:22Z",
+            "last_updated": "2026-08-31T12:28:31Z",
             "evse_ids": [
               "NLLMSE1234937483*1",
               "NLLMSE1234937483*2"
@@ -1087,7 +1071,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-30T10:05:25Z",
+            "last_updated": "2026-08-31T09:07:08Z",
             "evse_ids": [
               "NLLMSE1234937461*1",
               "NLLMSE1234937461*2"
@@ -1126,11 +1110,10 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE",
-              "CHARGING"
+              "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-30T11:44:16Z",
+            "last_updated": "2026-08-31T06:25:13Z",
             "evse_ids": [
               "NLLMSE1234937418*1",
               "NLLMSE1234937418*2"
@@ -1157,7 +1140,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-29T23:38:31Z",
+            "last_updated": "2026-08-31T13:51:53Z",
             "evse_ids": [
               "NLLMSE1234937533*1",
               "NLLMSE1234937533*2"
@@ -1215,55 +1198,10 @@
               "OUTOFORDER"
             ],
             "available": true,
-            "last_updated": "2026-08-30T00:20:01Z",
+            "last_updated": "2026-08-31T06:02:40Z",
             "evse_ids": [
               "NLLMSE1234937612*1",
               "NLLMSE1234937612*2"
-            ]
-          }
-        ]
-      },
-      {
-        "address": "Vloedwal 50, Huizen",
-        "normalized_address": "vloedwal 50, huizen",
-        "count": 2,
-        "operators": [
-          "EQUANS",
-          "Vattenfall InCharge"
-        ],
-        "reason": "possible_operator_transition",
-        "locations": [
-          {
-            "id": "acbe9fd2-a94e-4760-88c5-72fbb962e753",
-            "name": "Vloedwal",
-            "operator": "Vattenfall InCharge",
-            "party_id": "NUO",
-            "statuses": [
-              "REMOVED",
-              "UNKNOWN"
-            ],
-            "available": false,
-            "last_updated": "2026-08-04T07:12:23Z",
-            "evse_ids": [
-              "1ca48e90439e4caf0be2714aa778b2e6",
-              "5bfd374bc67fd40f130306843b81342d",
-              "NL*NUO*EEVB*P1406030*1",
-              "NL*NUO*EEVB*P1406030*2"
-            ]
-          },
-          {
-            "id": "91525597",
-            "name": "EQUANS Vloedwal 50",
-            "operator": "EQUANS",
-            "party_id": "LMS",
-            "statuses": [
-              "AVAILABLE"
-            ],
-            "available": true,
-            "last_updated": "2026-08-29T23:38:46Z",
-            "evse_ids": [
-              "NLLMSE1234937579*1",
-              "NLLMSE1234937579*2"
             ]
           }
         ]
@@ -1302,10 +1240,53 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-30T06:51:38Z",
+            "last_updated": "2026-08-30T23:38:00Z",
             "evse_ids": [
               "NLLMSE1234937467*1",
               "NLLMSE1234937467*2"
+            ]
+          }
+        ]
+      },
+      {
+        "address": "Westkade 359, Huizen",
+        "normalized_address": "westkade 359, huizen",
+        "count": 2,
+        "operators": [
+          "EQUANS",
+          "Vattenfall InCharge"
+        ],
+        "reason": "possible_operator_transition",
+        "locations": [
+          {
+            "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
+            "name": "Westkade",
+            "operator": "Vattenfall InCharge",
+            "party_id": "NUO",
+            "statuses": [
+              "UNKNOWN"
+            ],
+            "available": false,
+            "last_updated": "2026-08-03T08:53:12Z",
+            "evse_ids": [
+              "NL*NUO*EEVB*P1339393*1",
+              "NL*NUO*EEVB*P1339393*2"
+            ]
+          },
+          {
+            "id": "91525624",
+            "name": "EQUANS Westkade 359",
+            "operator": "EQUANS",
+            "party_id": "LMS",
+            "statuses": [
+              "AVAILABLE",
+              "CHARGING"
+            ],
+            "available": true,
+            "last_updated": "2026-08-31T11:06:36Z",
+            "evse_ids": [
+              "NLLMSE1234937606*1",
+              "NLLMSE1234937606*2"
             ]
           }
         ]
@@ -1344,7 +1325,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-29T23:38:57Z",
+            "last_updated": "2026-08-31T06:04:16Z",
             "evse_ids": [
               "NLLMSE1234937613*1",
               "NLLMSE1234937613*2"
@@ -1367,11 +1348,10 @@
             "operator": "Lidl",
             "party_id": "LDL",
             "statuses": [
-              "AVAILABLE",
               "INOPERATIVE"
             ],
-            "available": true,
-            "last_updated": "2026-08-30T10:59:42Z",
+            "available": false,
+            "last_updated": "2026-08-31T12:19:58Z",
             "evse_ids": [
               "NL*LDL*E00000148",
               "NL*LDL*E00000149",
@@ -1389,7 +1369,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-30T06:01:27Z",
+            "last_updated": "2026-08-31T14:12:28Z",
             "evse_ids": [
               "NL*LDL*E00000280",
               "NL*LDL*E00000282"
@@ -1405,7 +1385,7 @@
               "INOPERATIVE"
             ],
             "available": true,
-            "last_updated": "2026-08-30T07:01:36Z",
+            "last_updated": "2026-08-31T05:01:09Z",
             "evse_ids": [
               "NL*LDL*E00000286",
               "NL*LDL*E00000288"
@@ -1431,7 +1411,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-29T23:26:23Z",
+            "last_updated": "2026-08-30T23:26:13Z",
             "evse_ids": [
               "NL*PCB*ETNLP007370*1",
               "NL*PCB*ETNLP007370*2"
@@ -1443,10 +1423,10 @@
             "operator": "TotalEnergies",
             "party_id": "GFX",
             "statuses": [
-              "CHARGING"
+              "AVAILABLE"
             ],
-            "available": false,
-            "last_updated": "2026-08-30T11:23:28Z",
+            "available": true,
+            "last_updated": "2026-08-31T01:59:06Z",
             "evse_ids": [
               "NL*TCB*EPP002058*1",
               "NL*TCB*EPP002058*2"
@@ -1472,7 +1452,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-29T23:06:18Z",
+            "last_updated": "2026-08-30T23:06:22Z",
             "evse_ids": [
               "NL505E1234831790*1"
             ]
@@ -1486,7 +1466,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-08-29T23:06:16Z",
+            "last_updated": "2026-08-30T23:06:20Z",
             "evse_ids": [
               "NL505E1234766701*1",
               "NL505E1234767111*1",
@@ -1498,8 +1478,8 @@
         ]
       },
       {
-        "address": "Westkade 359, Huizen",
-        "normalized_address": "westkade 359, huizen",
+        "address": "Vloedwal 50, Huizen",
+        "normalized_address": "vloedwal 50, huizen",
         "count": 2,
         "operators": [
           "EQUANS",
@@ -1508,33 +1488,37 @@
         "reason": "multiple_operators_same_address",
         "locations": [
           {
-            "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
-            "name": "Westkade",
+            "id": "acbe9fd2-a94e-4760-88c5-72fbb962e753",
+            "name": "Vloedwal",
             "operator": "Vattenfall InCharge",
             "party_id": "NUO",
             "statuses": [
+              "REMOVED",
               "UNKNOWN"
             ],
             "available": false,
-            "last_updated": "2026-08-03T08:53:12Z",
+            "last_updated": "2026-08-31T11:16:20Z",
             "evse_ids": [
-              "NL*NUO*EEVB*P1339393*1",
-              "NL*NUO*EEVB*P1339393*2"
+              "1ca48e90439e4caf0be2714aa778b2e6",
+              "5bfd374bc67fd40f130306843b81342d",
+              "NL*NUO*EEVB*P1406030*1",
+              "NL*NUO*EEVB*P1406030*2"
             ]
           },
           {
-            "id": "91525624",
-            "name": "EQUANS Westkade 359",
+            "id": "91525597",
+            "name": "EQUANS Vloedwal 50",
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE"
+              "AVAILABLE",
+              "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-08-28T23:39:29Z",
+            "last_updated": "2026-08-31T13:29:53Z",
             "evse_ids": [
-              "NLLMSE1234937606*1",
-              "NLLMSE1234937606*2"
+              "NLLMSE1234937579*1",
+              "NLLMSE1234937579*2"
             ]
           }
         ]
@@ -1547,7 +1531,7 @@
     "recomputed_stats": {
       "total": 190,
       "connector_profiles": 209,
-      "available_snapshot": 159,
+      "available_snapshot": 157,
       "comparison_ready": 140,
       "decision_ready": 23,
       "indicative_only": 117,
@@ -1602,7 +1586,7 @@
       "severity": "medium",
       "category": "freshness",
       "title": "Locatiestatus ouder dan zeven dagen",
-      "count": 9
+      "count": 8
     },
     {
       "severity": "medium",
