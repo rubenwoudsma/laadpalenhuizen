@@ -1,29 +1,29 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-09-13T12:15:58.429913+00:00",
+  "generated_at": "2026-09-14T13:18:13.607724+00:00",
   "input_schema_version": 5,
   "legacy_profile_fallback": false,
   "coverage": {
     "total_locations": 191,
     "connector_profiles": 209,
-    "reliable_locations": 24,
-    "reliable_locations_pct": 12.6,
-    "indicative_locations": 140,
-    "indicative_locations_pct": 73.3,
+    "reliable_locations": 38,
+    "reliable_locations_pct": 19.9,
+    "indicative_locations": 126,
+    "indicative_locations_pct": 66.0,
     "insufficient_locations": 27,
     "insufficient_locations_pct": 14.1,
     "comparison_ready": 164,
     "comparison_ready_pct": 85.9,
-    "fully_reliable_locations": 24,
-    "available_snapshot": 156
+    "fully_reliable_locations": 38,
+    "available_snapshot": 161
   },
   "connector_coverage": {
     "total_profiles": 209,
-    "reliable": 26,
-    "indicative": 145,
+    "reliable": 41,
+    "indicative": 130,
     "insufficient": 38,
-    "reliable_pct": 12.4,
-    "indicative_pct": 69.4,
+    "reliable_pct": 19.6,
+    "indicative_pct": 62.2,
     "insufficient_pct": 18.2
   },
   "direct_payment": {
@@ -73,9 +73,9 @@
     "direct_priced_profiles": 151,
     "direct_known_profiles": 151,
     "direct_priced_pct_of_known": 100.0,
-    "complete_price_routes": 498,
+    "complete_price_routes": 669,
     "total_price_routes": 1405,
-    "complete_price_routes_pct": 35.4
+    "complete_price_routes_pct": 47.6
   },
   "quality_dimensions": {
     "profile_source_quality": [
@@ -100,30 +100,30 @@
     "quote_cost_completeness": [
       {
         "id": "complete",
-        "count": 498,
-        "pct": 35.4
+        "count": 669,
+        "pct": 47.6
       },
       {
         "id": "partial",
-        "count": 907,
-        "pct": 64.6
+        "count": 736,
+        "pct": 52.4
       }
     ],
     "quote_decision_grade": [
       {
         "id": "reliable",
-        "count": 95,
-        "pct": 6.8
+        "count": 136,
+        "pct": 9.7
       },
       {
         "id": "indicative",
-        "count": 403,
-        "pct": 28.7
+        "count": 533,
+        "pct": 37.9
       },
       {
         "id": "exclude",
-        "count": 907,
-        "pct": 64.6
+        "count": 736,
+        "pct": 52.4
       }
     ]
   },
@@ -132,19 +132,25 @@
       "reason": "known_cost_component_not_modelled",
       "count": 209,
       "connector_profiles": 209,
-      "quote_occurrences": 907
+      "quote_occurrences": 736
     },
     {
       "reason": "bounded_price_uncertainty",
       "count": 161,
       "connector_profiles": 161,
-      "quote_occurrences": 401
+      "quote_occurrences": 521
     },
     {
       "reason": "specificity_regional",
       "count": 112,
       "connector_profiles": 112,
-      "quote_occurrences": 336
+      "quote_occurrences": 448
+    },
+    {
+      "reason": "potential_network_discount",
+      "count": 121,
+      "connector_profiles": 121,
+      "quote_occurrences": 121
     },
     {
       "reason": "tariff_restrictions_bounded",
@@ -158,7 +164,7 @@
       "reason": "MSP_TARIFF_COMPONENTS_UNKNOWN",
       "count": 209,
       "connector_profiles": 209,
-      "quote_occurrences": 800
+      "quote_occurrences": 591
     },
     {
       "reason": "TIME",
@@ -195,10 +201,9 @@
   },
   "pricing_rule_verification": {
     "mode": "daily_verified_fail_closed",
-    "checked_at": "2026-09-13T12:15:42.147486+00:00",
+    "checked_at": "2026-09-14T13:17:58.799987+00:00",
     "all_ok": false,
     "disabled_rules": [
-      "anwb_free",
       "laadkompas_free",
       "laadkompas_legacy_039",
       "lidl_direct_payment",
@@ -210,22 +215,17 @@
         "provider": "ANWB",
         "plan": "Zonder abonnement",
         "url": "https://www.anwb.nl/auto/elektrisch-rijden/laadpas-abonnement",
-        "status": "mismatch",
-        "missing": [
-          "gratis plan zonder abonnement bestaat",
-          "starttarief is EUR 0,89 per sessie"
-        ],
+        "status": "ok",
+        "missing": [],
+        "verified_url": "https://www.anwb.nl/auto/elektrisch-rijden/laadpas-abonnement",
         "attempted_urls": [
           "https://www.anwb.nl/auto/elektrisch-rijden/laadpas-abonnement"
         ],
         "attempts": [
           {
             "url": "https://www.anwb.nl/auto/elektrisch-rijden/laadpas-abonnement",
-            "status": "mismatch",
-            "missing": [
-              "gratis plan zonder abonnement bestaat",
-              "starttarief is EUR 0,89 per sessie"
-            ]
+            "status": "ok",
+            "missing": []
           }
         ]
       },
@@ -522,11 +522,22 @@
     ]
   },
   "freshness": {
-    "older_than_24h": 13,
+    "older_than_24h": 18,
     "older_than_7d": 8,
     "older_than_30d": 8,
     "missing_or_invalid_timestamp": 0,
     "stale_locations_over_7d": [
+      {
+        "id": "7e0dfd1b-e2e7-46ff-bcff-53fb5c9af4bb",
+        "address": "Driftweg 24, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-07-31T13:43:40Z",
+        "age_days": 45.0
+      },
       {
         "id": "74ac2267-f060-4c21-a3fd-483702b00a19",
         "address": "Mastspoor 3, Huizen",
@@ -536,7 +547,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T12:44:41Z",
-        "age_days": 44.0
+        "age_days": 45.0
       },
       {
         "id": "50cf8798-1841-4b66-8f8c-86c43af6dfea",
@@ -547,51 +558,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T14:36:10Z",
-        "age_days": 43.9
-      },
-      {
-        "id": "7e0dfd1b-e2e7-46ff-bcff-53fb5c9af4bb",
-        "address": "Driftweg 24, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-07-31T13:43:40Z",
-        "age_days": 43.9
-      },
-      {
-        "id": "691343b7-cb61-4117-9d42-db44ceb4ba32",
-        "address": "Zomerkade 290, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-08-03T07:46:28Z",
-        "age_days": 41.2
-      },
-      {
-        "id": "715d923d-4113-4e5a-8c20-7c41a9b78227",
-        "address": "Eierlanden 93, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-08-03T09:49:33Z",
-        "age_days": 41.1
-      },
-      {
-        "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
-        "address": "Waterland 2, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-08-03T10:50:26Z",
-        "age_days": 41.1
+        "age_days": 44.9
       },
       {
         "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
@@ -602,7 +569,40 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T08:53:12Z",
-        "age_days": 41.1
+        "age_days": 42.2
+      },
+      {
+        "id": "691343b7-cb61-4117-9d42-db44ceb4ba32",
+        "address": "Zomerkade 290, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-08-03T07:46:28Z",
+        "age_days": 42.2
+      },
+      {
+        "id": "715d923d-4113-4e5a-8c20-7c41a9b78227",
+        "address": "Eierlanden 93, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-08-03T09:49:33Z",
+        "age_days": 42.1
+      },
+      {
+        "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
+        "address": "Waterland 2, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-08-03T10:50:26Z",
+        "age_days": 42.1
       },
       {
         "id": "6c715014-aa5e-46e6-9aab-4da426e6b9f2",
@@ -613,7 +613,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T12:12:52Z",
-        "age_days": 41.0
+        "age_days": 42.0
       }
     ]
   },
@@ -634,6 +634,21 @@
         "reason": "possible_operator_transition",
         "locations": [
           {
+            "id": "50cf8798-1841-4b66-8f8c-86c43af6dfea",
+            "name": "De Ruyterstraat",
+            "operator": "Vattenfall InCharge",
+            "party_id": "NUO",
+            "statuses": [
+              "UNKNOWN"
+            ],
+            "available": false,
+            "last_updated": "2026-07-31T14:36:10Z",
+            "evse_ids": [
+              "NL*NUO*EEVB*P1512159*1",
+              "NL*NUO*EEVB*P1512159*2"
+            ]
+          },
+          {
             "id": "91525500",
             "name": "EQUANS De Ruyterstraat 7",
             "operator": "EQUANS",
@@ -642,7 +657,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-09-13T12:08:48Z",
+            "last_updated": "2026-09-14T12:57:06Z",
             "evse_ids": [
               "NLLMSE1234937483*1",
               "NLLMSE1234937483*2"
@@ -658,25 +673,10 @@
               "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-09-12T20:56:37.613Z",
+            "last_updated": "2026-09-14T06:25:44.940Z",
             "evse_ids": [
               "NL*EFL*EV3893250*C1",
               "NL*EFL*EV6652420*C1"
-            ]
-          },
-          {
-            "id": "50cf8798-1841-4b66-8f8c-86c43af6dfea",
-            "name": "De Ruyterstraat",
-            "operator": "Vattenfall InCharge",
-            "party_id": "NUO",
-            "statuses": [
-              "UNKNOWN"
-            ],
-            "available": false,
-            "last_updated": "2026-07-31T14:36:10Z",
-            "evse_ids": [
-              "NL*NUO*EEVB*P1512159*1",
-              "NL*NUO*EEVB*P1512159*2"
             ]
           }
         ]
@@ -715,7 +715,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-09-13T09:38:08Z",
+            "last_updated": "2026-09-14T10:38:27Z",
             "evse_ids": [
               "NLLMSE1234937461*1",
               "NLLMSE1234937461*2"
@@ -754,11 +754,10 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE",
-              "CHARGING"
+              "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-09-13T10:59:47Z",
+            "last_updated": "2026-09-14T06:35:02Z",
             "evse_ids": [
               "NLLMSE1234937418*1",
               "NLLMSE1234937418*2"
@@ -786,7 +785,7 @@
               "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-09-13T11:14:39Z",
+            "last_updated": "2026-09-14T05:44:55Z",
             "evse_ids": [
               "NLLMSE1234937533*1",
               "NLLMSE1234937533*2"
@@ -828,7 +827,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-09-13T10:24:54Z",
+            "last_updated": "2026-09-14T07:28:56Z",
             "evse_ids": [
               "NLLMSE1234937612*1",
               "NLLMSE1234937612*2"
@@ -862,6 +861,21 @@
         "reason": "possible_operator_transition",
         "locations": [
           {
+            "id": "91525484",
+            "name": "EQUANS Waterland 2",
+            "operator": "EQUANS",
+            "party_id": "LMS",
+            "statuses": [
+              "AVAILABLE"
+            ],
+            "available": true,
+            "last_updated": "2026-09-14T04:00:20Z",
+            "evse_ids": [
+              "NLLMSE1234937467*1",
+              "NLLMSE1234937467*2"
+            ]
+          },
+          {
             "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
             "name": "Waterland",
             "operator": "Vattenfall InCharge",
@@ -874,21 +888,6 @@
             "evse_ids": [
               "NL*NUO*EEVB*P1512126*1",
               "NL*NUO*EEVB*P1512126*2"
-            ]
-          },
-          {
-            "id": "91525484",
-            "name": "EQUANS Waterland 2",
-            "operator": "EQUANS",
-            "party_id": "LMS",
-            "statuses": [
-              "AVAILABLE"
-            ],
-            "available": true,
-            "last_updated": "2026-09-12T23:34:28Z",
-            "evse_ids": [
-              "NLLMSE1234937467*1",
-              "NLLMSE1234937467*2"
             ]
           }
         ]
@@ -927,7 +926,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-09-12T23:35:13Z",
+            "last_updated": "2026-09-14T04:23:32Z",
             "evse_ids": [
               "NLLMSE1234937606*1",
               "NLLMSE1234937606*2"
@@ -966,11 +965,10 @@
             "operator": "EQUANS",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE",
-              "CHARGING"
+              "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-09-13T11:08:17Z",
+            "last_updated": "2026-09-14T08:29:43Z",
             "evse_ids": [
               "NLLMSE1234937613*1",
               "NLLMSE1234937613*2"
@@ -997,7 +995,7 @@
               "INOPERATIVE"
             ],
             "available": true,
-            "last_updated": "2026-09-13T11:17:39Z",
+            "last_updated": "2026-09-14T12:59:05Z",
             "evse_ids": [
               "NL*LDL*E00000148",
               "NL*LDL*E00000149",
@@ -1016,7 +1014,7 @@
               "INOPERATIVE"
             ],
             "available": true,
-            "last_updated": "2026-09-13T07:01:51Z",
+            "last_updated": "2026-09-14T05:01:20Z",
             "evse_ids": [
               "NL*LDL*E00000286",
               "NL*LDL*E00000288"
@@ -1031,7 +1029,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-09-13T11:49:58Z",
+            "last_updated": "2026-09-14T05:01:20Z",
             "evse_ids": [
               "NL*LDL*E00000280",
               "NL*LDL*E00000282"
@@ -1057,7 +1055,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-09-12T23:26:19Z",
+            "last_updated": "2026-09-13T23:26:20Z",
             "evse_ids": [
               "NL*PCB*ETNLP007370*1",
               "NL*PCB*ETNLP007370*2"
@@ -1072,7 +1070,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-09-13T06:00:05Z",
+            "last_updated": "2026-09-14T11:57:00Z",
             "evse_ids": [
               "NL*TCB*EPP002058*1",
               "NL*TCB*EPP002058*2"
@@ -1098,7 +1096,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-09-12T23:03:16Z",
+            "last_updated": "2026-09-13T23:02:59Z",
             "evse_ids": [
               "NL505E1234766701*1",
               "NL505E1234767111*1",
@@ -1116,7 +1114,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-09-12T23:03:19Z",
+            "last_updated": "2026-09-13T23:03:01Z",
             "evse_ids": [
               "NL505E1234831790*1"
             ]
@@ -1131,12 +1129,12 @@
     "recomputed_stats": {
       "total": 191,
       "connector_profiles": 209,
-      "available_snapshot": 156,
+      "available_snapshot": 161,
       "comparison_ready": 164,
-      "decision_ready": 24,
-      "indicative_only": 140,
+      "decision_ready": 38,
+      "indicative_only": 126,
       "insufficient": 27,
-      "fully_reliable": 24,
+      "fully_reliable": 38,
       "unknown_base_rate": 0,
       "adhoc_priced": 151,
       "adhoc_priced_ndw": 20,
@@ -1150,7 +1148,7 @@
       "severity": "high",
       "category": "pricing_rule_verification",
       "title": "Prijsregels fail-closed uitgeschakeld na broncontrole",
-      "count": 5
+      "count": 4
     },
     {
       "severity": "high",
@@ -1174,7 +1172,7 @@
       "severity": "medium",
       "category": "cost_completeness",
       "title": "Prijsroutes met bekende maar nog niet volledig gemodelleerde kosten",
-      "count": 907
+      "count": 736
     },
     {
       "severity": "medium",
