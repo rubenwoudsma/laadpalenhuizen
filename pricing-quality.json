@@ -1,30 +1,30 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-10-06T13:34:53.548604+00:00",
+  "generated_at": "2026-10-07T13:51:14.133843+00:00",
   "input_schema_version": 5,
   "legacy_profile_fallback": false,
   "coverage": {
-    "total_locations": 178,
-    "connector_profiles": 195,
+    "total_locations": 179,
+    "connector_profiles": 196,
     "reliable_locations": 25,
     "reliable_locations_pct": 14.0,
     "indicative_locations": 117,
-    "indicative_locations_pct": 65.7,
-    "insufficient_locations": 36,
-    "insufficient_locations_pct": 20.2,
+    "indicative_locations_pct": 65.4,
+    "insufficient_locations": 37,
+    "insufficient_locations_pct": 20.7,
     "comparison_ready": 142,
-    "comparison_ready_pct": 79.8,
+    "comparison_ready_pct": 79.3,
     "fully_reliable_locations": 25,
-    "available_snapshot": 148
+    "available_snapshot": 153
   },
   "connector_coverage": {
-    "total_profiles": 195,
+    "total_profiles": 196,
     "reliable": 27,
     "indicative": 121,
-    "insufficient": 47,
+    "insufficient": 48,
     "reliable_pct": 13.8,
-    "indicative_pct": 62.1,
-    "insufficient_pct": 24.1
+    "indicative_pct": 61.7,
+    "insufficient_pct": 24.5
   },
   "direct_payment": {
     "known_profiles": 152,
@@ -41,22 +41,22 @@
     "unpriced_by_operator": []
   },
   "base_pricing": {
-    "known_profiles": 195,
+    "known_profiles": 196,
     "known_pct": 100.0,
-    "specific_profiles": 83,
-    "specific_pct": 42.6,
+    "specific_profiles": 84,
+    "specific_pct": 42.9,
     "unknown_profiles": 0,
     "unknown_by_operator": [],
     "sources": [
       {
         "id": "totalenergies_mrae",
         "profiles": 111,
-        "pct": 56.9
+        "pct": 56.6
       },
       {
         "id": "ndw",
-        "profiles": 83,
-        "pct": 42.6
+        "profiles": 84,
+        "pct": 42.9
       },
       {
         "id": "totalenergies_mrae_dc",
@@ -66,73 +66,73 @@
     ]
   },
   "data_quality": {
-    "high_quality_source_profiles": 195,
+    "high_quality_source_profiles": 196,
     "high_quality_source_pct": 100.0,
-    "base_tariff_known_profiles": 195,
+    "base_tariff_known_profiles": 196,
     "base_tariff_known_pct": 100.0,
     "direct_priced_profiles": 152,
     "direct_known_profiles": 152,
     "direct_priced_pct_of_known": 100.0,
     "complete_price_routes": 325,
-    "total_price_routes": 1322,
-    "complete_price_routes_pct": 24.6
+    "total_price_routes": 1328,
+    "complete_price_routes_pct": 24.5
   },
   "quality_dimensions": {
     "profile_source_quality": [
       {
         "id": "high",
-        "count": 195,
+        "count": 196,
         "pct": 100.0
       }
     ],
     "profile_price_specificity": [
       {
         "id": "connector",
-        "count": 83,
-        "pct": 42.6
+        "count": 84,
+        "pct": 42.9
       },
       {
         "id": "regional",
         "count": 112,
-        "pct": 57.4
+        "pct": 57.1
       }
     ],
     "quote_cost_completeness": [
       {
         "id": "complete",
         "count": 325,
-        "pct": 24.6
+        "pct": 24.5
       },
       {
         "id": "partial",
-        "count": 997,
-        "pct": 75.4
+        "count": 1003,
+        "pct": 75.5
       }
     ],
     "quote_decision_grade": [
       {
         "id": "reliable",
         "count": 83,
-        "pct": 6.3
+        "pct": 6.2
       },
       {
         "id": "indicative",
         "count": 242,
-        "pct": 18.3
+        "pct": 18.2
       },
       {
         "id": "exclude",
-        "count": 997,
-        "pct": 75.4
+        "count": 1003,
+        "pct": 75.5
       }
     ]
   },
   "decision_reasons": [
     {
       "reason": "known_cost_component_not_modelled",
-      "count": 195,
-      "connector_profiles": 195,
-      "quote_occurrences": 997
+      "count": 196,
+      "connector_profiles": 196,
+      "quote_occurrences": 1003
     },
     {
       "reason": "bounded_price_uncertainty",
@@ -156,9 +156,9 @@
   "decision_blockers": [
     {
       "reason": "MSP_TARIFF_COMPONENTS_UNKNOWN",
-      "count": 195,
-      "connector_profiles": 195,
-      "quote_occurrences": 938
+      "count": 196,
+      "connector_profiles": 196,
+      "quote_occurrences": 943
     },
     {
       "reason": "TIME",
@@ -174,9 +174,9 @@
     },
     {
       "reason": "TARIFF_RESTRICTIONS",
-      "count": 21,
-      "connector_profiles": 21,
-      "quote_occurrences": 86
+      "count": 22,
+      "connector_profiles": 22,
+      "quote_occurrences": 92
     }
   ],
   "official_sources": {
@@ -195,7 +195,7 @@
   },
   "pricing_rule_verification": {
     "mode": "daily_verified_fail_closed",
-    "checked_at": "2026-10-06T13:34:37.183046+00:00",
+    "checked_at": "2026-10-07T13:50:57.195138+00:00",
     "all_ok": false,
     "disabled_rules": [
       "anwb_free",
@@ -544,7 +544,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T14:36:10Z",
-        "age_days": 67.0
+        "age_days": 68.0
       },
       {
         "id": "7e0dfd1b-e2e7-46ff-bcff-53fb5c9af4bb",
@@ -555,7 +555,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T13:43:40Z",
-        "age_days": 67.0
+        "age_days": 68.0
       },
       {
         "id": "74ac2267-f060-4c21-a3fd-483702b00a19",
@@ -566,29 +566,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T12:44:41Z",
-        "age_days": 67.0
-      },
-      {
-        "id": "715d923d-4113-4e5a-8c20-7c41a9b78227",
-        "address": "Eierlanden 93, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-08-03T09:49:33Z",
-        "age_days": 64.2
-      },
-      {
-        "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
-        "address": "Westkade 359, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-08-03T08:53:12Z",
-        "age_days": 64.2
+        "age_days": 68.0
       },
       {
         "id": "691343b7-cb61-4117-9d42-db44ceb4ba32",
@@ -599,7 +577,29 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T07:46:28Z",
-        "age_days": 64.2
+        "age_days": 65.3
+      },
+      {
+        "id": "715d923d-4113-4e5a-8c20-7c41a9b78227",
+        "address": "Eierlanden 93, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-08-03T09:49:33Z",
+        "age_days": 65.2
+      },
+      {
+        "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
+        "address": "Westkade 359, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-08-03T08:53:12Z",
+        "age_days": 65.2
       },
       {
         "id": "6c715014-aa5e-46e6-9aab-4da426e6b9f2",
@@ -610,7 +610,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T12:12:52Z",
-        "age_days": 64.1
+        "age_days": 65.1
       },
       {
         "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
@@ -621,7 +621,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T10:50:26Z",
-        "age_days": 64.1
+        "age_days": 65.1
       }
     ]
   },
@@ -647,10 +647,11 @@
             "operator": "EQUANS ",
             "party_id": "LMS",
             "statuses": [
+              "AVAILABLE",
               "CHARGING"
             ],
-            "available": false,
-            "last_updated": "2026-10-06T10:31:26Z",
+            "available": true,
+            "last_updated": "2026-10-07T11:11:09Z",
             "evse_ids": [
               "NLLMSE1234937483*1",
               "NLLMSE1234937483*2"
@@ -677,10 +678,11 @@
             "operator": "E-Flux by Road",
             "party_id": "EFL",
             "statuses": [
+              "AVAILABLE",
               "CHARGING"
             ],
-            "available": false,
-            "last_updated": "2026-10-06T09:53:37.367Z",
+            "available": true,
+            "last_updated": "2026-10-07T09:54:30.741Z",
             "evse_ids": [
               "NL*EFL*EV3893250*C1",
               "NL*EFL*EV6652420*C1"
@@ -722,7 +724,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-10-06T12:03:20Z",
+            "last_updated": "2026-10-07T12:00:45Z",
             "evse_ids": [
               "NLLMSE1234937461*1",
               "NLLMSE1234937461*2"
@@ -761,10 +763,11 @@
             "operator": "EQUANS ",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE"
+              "AVAILABLE",
+              "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-10-06T06:26:54Z",
+            "last_updated": "2026-10-07T11:00:41Z",
             "evse_ids": [
               "NLLMSE1234937418*1",
               "NLLMSE1234937418*2"
@@ -788,10 +791,11 @@
             "operator": "EQUANS ",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE"
+              "AVAILABLE",
+              "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-10-05T23:33:03Z",
+            "last_updated": "2026-10-07T11:02:14Z",
             "evse_ids": [
               "NLLMSE1234937533*1",
               "NLLMSE1234937533*2"
@@ -825,6 +829,21 @@
         "reason": "possible_operator_transition",
         "locations": [
           {
+            "id": "91525630",
+            "name": "EQUANS Salamander 2",
+            "operator": "EQUANS ",
+            "party_id": "LMS",
+            "statuses": [
+              "AVAILABLE"
+            ],
+            "available": true,
+            "last_updated": "2026-10-06T23:32:41Z",
+            "evse_ids": [
+              "NLLMSE1234937612*1",
+              "NLLMSE1234937612*2"
+            ]
+          },
+          {
             "id": "6c715014-aa5e-46e6-9aab-4da426e6b9f2",
             "name": "Salamander",
             "operator": "Vattenfall InCharge",
@@ -837,21 +856,6 @@
             "evse_ids": [
               "NL*NUO*EEVB*P1339398*1",
               "NL*NUO*EEVB*P1339398*2"
-            ]
-          },
-          {
-            "id": "91525630",
-            "name": "EQUANS Salamander 2",
-            "operator": "EQUANS ",
-            "party_id": "LMS",
-            "statuses": [
-              "AVAILABLE"
-            ],
-            "available": true,
-            "last_updated": "2026-10-06T05:22:19Z",
-            "evse_ids": [
-              "NLLMSE1234937612*1",
-              "NLLMSE1234937612*2"
             ]
           }
         ]
@@ -867,6 +871,22 @@
         "reason": "possible_operator_transition",
         "locations": [
           {
+            "id": "91525484",
+            "name": "EQUANS Waterland 2",
+            "operator": "EQUANS ",
+            "party_id": "LMS",
+            "statuses": [
+              "AVAILABLE",
+              "CHARGING"
+            ],
+            "available": true,
+            "last_updated": "2026-10-07T12:23:05Z",
+            "evse_ids": [
+              "NLLMSE1234937467*1",
+              "NLLMSE1234937467*2"
+            ]
+          },
+          {
             "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
             "name": "Waterland",
             "operator": "Vattenfall InCharge",
@@ -879,21 +899,6 @@
             "evse_ids": [
               "NL*NUO*EEVB*P1512126*1",
               "NL*NUO*EEVB*P1512126*2"
-            ]
-          },
-          {
-            "id": "91525484",
-            "name": "EQUANS Waterland 2",
-            "operator": "EQUANS ",
-            "party_id": "LMS",
-            "statuses": [
-              "AVAILABLE"
-            ],
-            "available": true,
-            "last_updated": "2026-10-06T12:17:48Z",
-            "evse_ids": [
-              "NLLMSE1234937467*1",
-              "NLLMSE1234937467*2"
             ]
           }
         ]
@@ -917,7 +922,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-10-06T03:33:29Z",
+            "last_updated": "2026-10-06T23:32:39Z",
             "evse_ids": [
               "NLLMSE1234937606*1",
               "NLLMSE1234937606*2"
@@ -974,7 +979,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-10-06T05:35:42Z",
+            "last_updated": "2026-10-07T13:05:20Z",
             "evse_ids": [
               "NLLMSE1234937613*1",
               "NLLMSE1234937613*2"
@@ -1000,7 +1005,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-10-06T05:00:46Z",
+            "last_updated": "2026-10-07T11:35:31Z",
             "evse_ids": [
               "NL*LDL*E00000280",
               "NL*LDL*E00000282"
@@ -1016,7 +1021,7 @@
               "INOPERATIVE"
             ],
             "available": true,
-            "last_updated": "2026-10-06T05:00:48Z",
+            "last_updated": "2026-10-07T05:01:15Z",
             "evse_ids": [
               "NL*LDL*E00000286",
               "NL*LDL*E00000288"
@@ -1029,11 +1034,10 @@
             "party_id": "LDL",
             "statuses": [
               "AVAILABLE",
-              "CHARGING",
               "INOPERATIVE"
             ],
             "available": true,
-            "last_updated": "2026-10-06T09:44:35Z",
+            "last_updated": "2026-10-07T11:50:33Z",
             "evse_ids": [
               "NL*LDL*E00000148",
               "NL*LDL*E00000149",
@@ -1054,21 +1058,6 @@
         "reason": "same_operator_multiple_records",
         "locations": [
           {
-            "id": "774bff50-4fbc-4ac4-a1df-67d4d4eb77c8",
-            "name": "PP002058 - Schipbeek 1, Huizen",
-            "operator": "TotalEnergies",
-            "party_id": "GFX",
-            "statuses": [
-              "AVAILABLE"
-            ],
-            "available": true,
-            "last_updated": "2026-10-06T12:46:00Z",
-            "evse_ids": [
-              "NL*TCB*EPP002058*1",
-              "NL*TCB*EPP002058*2"
-            ]
-          },
-          {
             "id": "F32F5D72-5387-4DF8-8445-F1CCECC42E23",
             "name": "TNLP007370 - Schipbeek 1, Huizen",
             "operator": "TotalEnergies",
@@ -1077,10 +1066,25 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-10-05T23:25:29Z",
+            "last_updated": "2026-10-06T23:25:40Z",
             "evse_ids": [
               "NL*PCB*ETNLP007370*1",
               "NL*PCB*ETNLP007370*2"
+            ]
+          },
+          {
+            "id": "774bff50-4fbc-4ac4-a1df-67d4d4eb77c8",
+            "name": "PP002058 - Schipbeek 1, Huizen",
+            "operator": "TotalEnergies",
+            "party_id": "GFX",
+            "statuses": [
+              "AVAILABLE"
+            ],
+            "available": true,
+            "last_updated": "2026-10-07T06:55:04Z",
+            "evse_ids": [
+              "NL*TCB*EPP002058*1",
+              "NL*TCB*EPP002058*2"
             ]
           }
         ]
@@ -1091,13 +1095,13 @@
     "ok": true,
     "mismatches": [],
     "recomputed_stats": {
-      "total": 178,
-      "connector_profiles": 195,
-      "available_snapshot": 148,
+      "total": 179,
+      "connector_profiles": 196,
+      "available_snapshot": 153,
       "comparison_ready": 142,
       "decision_ready": 25,
       "indicative_only": 117,
-      "insufficient": 36,
+      "insufficient": 37,
       "fully_reliable": 25,
       "unknown_base_rate": 0,
       "adhoc_priced": 152,
@@ -1124,7 +1128,7 @@
       "severity": "high",
       "category": "decision_quality",
       "title": "Connectorprofielen met onvoldoende informatie voor vergelijking",
-      "count": 47
+      "count": 48
     },
     {
       "severity": "medium",
@@ -1136,7 +1140,7 @@
       "severity": "medium",
       "category": "cost_completeness",
       "title": "Prijsroutes met bekende maar nog niet volledig gemodelleerde kosten",
-      "count": 997
+      "count": 1003
     },
     {
       "severity": "medium",
