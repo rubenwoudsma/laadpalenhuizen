@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-10-29T13:40:11.682955+00:00",
+  "generated_at": "2026-10-30T13:30:04.545795+00:00",
   "input_schema_version": 5,
   "legacy_profile_fallback": false,
   "coverage": {
@@ -15,7 +15,7 @@
     "comparison_ready": 62,
     "comparison_ready_pct": 32.3,
     "fully_reliable_locations": 53,
-    "available_snapshot": 166
+    "available_snapshot": 156
   },
   "connector_coverage": {
     "total_profiles": 210,
@@ -45,6 +45,18 @@
         "count": 10,
         "examples": [
           {
+            "id": "A895DB65-C43F-41E5-9E5A-B2A7BF486622",
+            "name": "TNLP015462 - Westkade 429, Huizen",
+            "address": "429 Westkade, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 17.0,
+            "evse_ids": [
+              "NL*PCB*ETNLP015462*1",
+              "NL*PCB*ETNLP015462*2"
+            ]
+          },
+          {
             "id": "D4EE9048-9A18-4E45-9922-2E97B55D08EA",
             "name": "TNLP015015 - Draaikom 41, Huizen",
             "address": "41 Draaikom, Huizen",
@@ -57,27 +69,15 @@
             ]
           },
           {
-            "id": "8DF6AAC4-6AD3-465A-905D-EA4CC03B4D22",
-            "name": "TNLP034054 - Jacob van Heemskerkstraat 21, Huizen",
-            "address": "21 Jacob van Heemskerkstraat, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 13.0,
-            "evse_ids": [
-              "NL*PCB*ETNLP034054*1",
-              "NL*PCB*ETNLP034054*2"
-            ]
-          },
-          {
-            "id": "DD2535EC-702E-42F9-A9B3-FF86F1C7356E",
-            "name": "TNLP015368 - Westkade 87, Huizen",
-            "address": "87 Westkade, Huizen",
+            "id": "73E0BEE5-30B4-46FB-9FDE-A8051225B632",
+            "name": "TNLP015435 - Opperweg 2, Huizen",
+            "address": "2 Opperweg, Huizen",
             "connector": "Type 2",
             "current_type": "AC",
             "power_kw": 17.0,
             "evse_ids": [
-              "NL*PCB*ETNLP015368*1",
-              "NL*PCB*ETNLP015368*2"
+              "NL*PCB*ETNLP015435*1",
+              "NL*PCB*ETNLP015435*2"
             ]
           },
           {
@@ -121,6 +121,30 @@
         "count": 106,
         "examples": [
           {
+            "id": "D9C9BF68-56B1-4624-ABD3-751DB4F736E1",
+            "name": "PP005403 - Graaf Floris 43, Huizen",
+            "address": "43 Graaf Floris, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 11.0,
+            "evse_ids": [
+              "NL*PCB*EPP005403*1",
+              "NL*PCB*EPP005403*2"
+            ]
+          },
+          {
+            "id": "A895DB65-C43F-41E5-9E5A-B2A7BF486622",
+            "name": "TNLP015462 - Westkade 429, Huizen",
+            "address": "429 Westkade, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 17.0,
+            "evse_ids": [
+              "NL*PCB*ETNLP015462*1",
+              "NL*PCB*ETNLP015462*2"
+            ]
+          },
+          {
             "id": "C435C358-256D-48D5-AAE5-34E4AA8B5262",
             "name": "TNLP008806 - Oranje Weeshuisstraat 11, Huizen",
             "address": "11 Oranje Weeshuisstraat, Huizen",
@@ -133,51 +157,27 @@
             ]
           },
           {
-            "id": "D64B2E0C-E0BC-4BFE-809D-51A14DA60D6C",
-            "name": "TNLP005918 - Stobbe 118, Huizen",
-            "address": "118 Stobbe, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 11.0,
-            "evse_ids": [
-              "NL*PCB*ETNLP005918*1",
-              "NL*PCB*ETNLP005918*2"
-            ]
-          },
-          {
-            "id": "B684B6C1-3992-418E-B634-7A5EE5AC5621",
-            "name": "PP005035 - Trompstraat 2, Huizen",
-            "address": "2 Trompstraat, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 11.0,
-            "evse_ids": [
-              "NL*PCB*EPP005035*1",
-              "NL*PCB*EPP005035*2"
-            ]
-          },
-          {
-            "id": "0282693c-374c-4b7f-9ec8-d0e79df7f470",
-            "name": "TNLP015096 - Pythagoraspark 2, Huizen",
-            "address": "2 Pythagoraspark, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 11.0,
-            "evse_ids": [
-              "NL*TCB*EPP001512*1",
-              "NL*TCB*EPP001512*2"
-            ]
-          },
-          {
-            "id": "0282693c-374c-4b7f-9ec8-d0e79df7f470",
-            "name": "TNLP015096 - Pythagoraspark 2, Huizen",
-            "address": "2 Pythagoraspark, Huizen",
+            "id": "28069935-27D9-42F4-BDAB-A9C58B4C695D",
+            "name": "TNLP006786 - Aristoteleslaan 135, Huizen",
+            "address": "135 Aristoteleslaan, Huizen",
             "connector": "Type 2",
             "current_type": "AC",
             "power_kw": 17.0,
             "evse_ids": [
-              "NL*PCB*ETNLP015096*1",
-              "NL*PCB*ETNLP015096*2"
+              "NL*PCB*ETNLP006786*1",
+              "NL*PCB*ETNLP006786*2"
+            ]
+          },
+          {
+            "id": "664BFFDC-E933-4ACA-8BAC-F631FD391916",
+            "name": "PP002054 - Kruin 45, Huizen",
+            "address": "45 Kruin, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 11.0,
+            "evse_ids": [
+              "NL*PCB*EPP002054*1",
+              "NL*PCB*EPP002054*2"
             ]
           }
         ]
@@ -188,27 +188,39 @@
         "count": 20,
         "examples": [
           {
-            "id": "1108",
-            "name": "Shell Recharge NL Monnickskamp 3",
-            "address": "Monnickskamp 3, Huizen",
+            "id": "1755",
+            "name": "Shell Recharge NL Graaf Wichman 10",
+            "address": "Graaf Wichman 10, Huizen",
             "connector": "Type 2",
             "current_type": "AC",
             "power_kw": 22.0,
             "evse_ids": [
-              "NL*UB2*E10008528",
-              "NL*UB2*E10045974"
+              "NL*UB2*E10034353",
+              "NL*UB2*E10040442"
             ]
           },
           {
-            "id": "1961",
-            "name": "Shell Recharge NL Alaskastroom 13",
-            "address": "Alaskastroom 13, Huizen",
+            "id": "2378",
+            "name": "Shell Recharge NL Moeflon 31",
+            "address": "Moeflon 31, Huizen",
             "connector": "Type 2",
             "current_type": "AC",
             "power_kw": 22.0,
             "evse_ids": [
-              "NL*UB2*E10021032",
-              "NL*UB2*E10024605"
+              "NL*UB2*E10025806",
+              "NL*UB2*E10076049"
+            ]
+          },
+          {
+            "id": "1588",
+            "name": "Shell Recharge NL Oostkade 56",
+            "address": "Oostkade 56, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 11.0,
+            "evse_ids": [
+              "NL*UB2*E10042328",
+              "NL*UB2*E10056227"
             ]
           },
           {
@@ -221,18 +233,6 @@
             "evse_ids": [
               "NL*UB2*E10034545",
               "NL*UB2*E10061470"
-            ]
-          },
-          {
-            "id": "62",
-            "name": "Shell Recharge NL Huizermaatweg 298",
-            "address": "Huizermaatweg 298, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 11.0,
-            "evse_ids": [
-              "NL*UB2*E133*1",
-              "NL*UB2*E133*2"
             ]
           },
           {
@@ -399,7 +399,7 @@
   },
   "pricing_rule_verification": {
     "mode": "daily_verified_fail_closed",
-    "checked_at": "2026-10-29T13:39:59.698543+00:00",
+    "checked_at": "2026-10-30T13:29:50.759145+00:00",
     "all_ok": false,
     "disabled_rules": [
       "anwb_free",
@@ -744,7 +744,7 @@
     ]
   },
   "freshness": {
-    "older_than_24h": 44,
+    "older_than_24h": 42,
     "older_than_7d": 9,
     "older_than_30d": 8,
     "missing_or_invalid_timestamp": 0,
@@ -758,7 +758,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T14:36:10Z",
-        "age_days": 90.0
+        "age_days": 91.0
       },
       {
         "id": "7e0dfd1b-e2e7-46ff-bcff-53fb5c9af4bb",
@@ -769,7 +769,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T13:43:40Z",
-        "age_days": 90.0
+        "age_days": 91.0
       },
       {
         "id": "74ac2267-f060-4c21-a3fd-483702b00a19",
@@ -780,7 +780,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T12:44:41Z",
-        "age_days": 90.0
+        "age_days": 91.0
       },
       {
         "id": "715d923d-4113-4e5a-8c20-7c41a9b78227",
@@ -791,7 +791,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T09:49:33Z",
-        "age_days": 87.2
+        "age_days": 88.2
       },
       {
         "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
@@ -802,7 +802,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T08:53:12Z",
-        "age_days": 87.2
+        "age_days": 88.2
       },
       {
         "id": "691343b7-cb61-4117-9d42-db44ceb4ba32",
@@ -813,7 +813,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T07:46:28Z",
-        "age_days": 87.2
+        "age_days": 88.2
       },
       {
         "id": "6c715014-aa5e-46e6-9aab-4da426e6b9f2",
@@ -824,7 +824,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T12:12:52Z",
-        "age_days": 87.1
+        "age_days": 88.1
       },
       {
         "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
@@ -835,7 +835,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T10:50:26Z",
-        "age_days": 87.1
+        "age_days": 88.1
       },
       {
         "id": "684ffef6288349929ffb1851ad99445a",
@@ -846,7 +846,7 @@
           "AVAILABLE"
         ],
         "last_updated": "2026-10-21T09:45:22Z",
-        "age_days": 8.2
+        "age_days": 9.2
       }
     ]
   },
@@ -882,22 +882,6 @@
             ]
           },
           {
-            "id": "697cf48a6d2ee9998266ffe3",
-            "name": "Visnet Huizen 1",
-            "operator": "E-Flux by Road",
-            "party_id": "EFL",
-            "statuses": [
-              "AVAILABLE",
-              "CHARGING"
-            ],
-            "available": true,
-            "last_updated": "2026-10-29T10:49:20.256Z",
-            "evse_ids": [
-              "NL*EFL*EV3893250*C1",
-              "NL*EFL*EV6652420*C1"
-            ]
-          },
-          {
             "id": "91525500",
             "name": "EQUANS De Ruyterstraat 7",
             "operator": "EQUANS ",
@@ -910,6 +894,22 @@
             "evse_ids": [
               "NLLMSE1234937483*1",
               "NLLMSE1234937483*2"
+            ]
+          },
+          {
+            "id": "697cf48a6d2ee9998266ffe3",
+            "name": "Visnet Huizen 1",
+            "operator": "E-Flux by Road",
+            "party_id": "EFL",
+            "statuses": [
+              "AVAILABLE",
+              "CHARGING"
+            ],
+            "available": true,
+            "last_updated": "2026-10-30T10:37:00.102Z",
+            "evse_ids": [
+              "NL*EFL*EV3893250*C1",
+              "NL*EFL*EV6652420*C1"
             ]
           }
         ]
@@ -930,32 +930,16 @@
             "party_id": "LDL",
             "statuses": [
               "AVAILABLE",
-              "CHARGING",
               "INOPERATIVE"
             ],
             "available": true,
-            "last_updated": "2026-10-29T11:49:35Z",
+            "last_updated": "2026-10-30T12:54:13Z",
             "evse_ids": [
               "NL*LDL*E00000148",
               "NL*LDL*E00000149",
               "NL*LDL*E00000150",
               "NL*LDL*E00000283",
               "NL*LDL*E00000285"
-            ]
-          },
-          {
-            "id": "eb8361f7-ea8f-42c0-a2ac-89a1177d5426",
-            "name": "Lidl HUIZEN",
-            "operator": "Lidl",
-            "party_id": "LDL",
-            "statuses": [
-              "AVAILABLE"
-            ],
-            "available": true,
-            "last_updated": "2026-10-29T06:00:54Z",
-            "evse_ids": [
-              "NL*LDL*E00000280",
-              "NL*LDL*E00000282"
             ]
           },
           {
@@ -968,10 +952,25 @@
               "INOPERATIVE"
             ],
             "available": true,
-            "last_updated": "2026-10-29T06:00:53Z",
+            "last_updated": "2026-10-30T06:00:38Z",
             "evse_ids": [
               "NL*LDL*E00000286",
               "NL*LDL*E00000288"
+            ]
+          },
+          {
+            "id": "eb8361f7-ea8f-42c0-a2ac-89a1177d5426",
+            "name": "Lidl HUIZEN",
+            "operator": "Lidl",
+            "party_id": "LDL",
+            "statuses": [
+              "AVAILABLE"
+            ],
+            "available": true,
+            "last_updated": "2026-10-30T06:00:39Z",
+            "evse_ids": [
+              "NL*LDL*E00000280",
+              "NL*LDL*E00000282"
             ]
           }
         ]
@@ -994,7 +993,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-10-29T07:17:51Z",
+            "last_updated": "2026-10-29T22:28:17Z",
             "evse_ids": [
               "NL*TCB*EPP002058*1",
               "NL*TCB*EPP002058*2"
@@ -1009,7 +1008,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-10-28T23:40:53Z",
+            "last_updated": "2026-10-29T23:39:27Z",
             "evse_ids": [
               "NL*PCB*ETNLP007370*1",
               "NL*PCB*ETNLP007370*2"
@@ -1027,20 +1026,6 @@
         "reason": "same_operator_multiple_records",
         "locations": [
           {
-            "id": "91203264",
-            "name": "50five-S NL 09000452",
-            "operator": "50five",
-            "party_id": "505",
-            "statuses": [
-              "AVAILABLE"
-            ],
-            "available": true,
-            "last_updated": "2026-10-27T23:55:32Z",
-            "evse_ids": [
-              "NL505E1234831790*1"
-            ]
-          },
-          {
             "id": "91107495",
             "name": "50five-S NL 08000734",
             "operator": "50five",
@@ -1057,6 +1042,20 @@
               "NL505E1234831164*1",
               "NL505E1234831798*1"
             ]
+          },
+          {
+            "id": "91203264",
+            "name": "50five-S NL 09000452",
+            "operator": "50five",
+            "party_id": "505",
+            "statuses": [
+              "AVAILABLE"
+            ],
+            "available": true,
+            "last_updated": "2026-10-27T23:55:32Z",
+            "evse_ids": [
+              "NL505E1234831790*1"
+            ]
           }
         ]
       },
@@ -1071,21 +1070,6 @@
         "reason": "multiple_operators_same_address",
         "locations": [
           {
-            "id": "91525478",
-            "name": "EQUANS Driftweg 24",
-            "operator": "EQUANS ",
-            "party_id": "LMS",
-            "statuses": [
-              "AVAILABLE"
-            ],
-            "available": true,
-            "last_updated": "2026-10-28T13:03:59Z",
-            "evse_ids": [
-              "NLLMSE1234937461*1",
-              "NLLMSE1234937461*2"
-            ]
-          },
-          {
             "id": "7e0dfd1b-e2e7-46ff-bcff-53fb5c9af4bb",
             "name": "Driftweg",
             "operator": "Vattenfall InCharge",
@@ -1098,6 +1082,21 @@
             "evse_ids": [
               "NL*NUO*EEVB*P1523022*1",
               "NL*NUO*EEVB*P1523022*2"
+            ]
+          },
+          {
+            "id": "91525478",
+            "name": "EQUANS Driftweg 24",
+            "operator": "EQUANS ",
+            "party_id": "LMS",
+            "statuses": [
+              "AVAILABLE"
+            ],
+            "available": true,
+            "last_updated": "2026-10-28T13:03:59Z",
+            "evse_ids": [
+              "NLLMSE1234937461*1",
+              "NLLMSE1234937461*2"
             ]
           }
         ]
@@ -1113,21 +1112,6 @@
         "reason": "multiple_operators_same_address",
         "locations": [
           {
-            "id": "715d923d-4113-4e5a-8c20-7c41a9b78227",
-            "name": "Eierlanden",
-            "operator": "Vattenfall InCharge",
-            "party_id": "NUO",
-            "statuses": [
-              "UNKNOWN"
-            ],
-            "available": false,
-            "last_updated": "2026-08-03T09:49:33Z",
-            "evse_ids": [
-              "NL*NUO*EEVB*P1512151*1",
-              "NL*NUO*EEVB*P1512151*2"
-            ]
-          },
-          {
             "id": "91525435",
             "name": "EQUANS Eierlanden 93",
             "operator": "EQUANS ",
@@ -1141,6 +1125,21 @@
             "evse_ids": [
               "NLLMSE1234937418*1",
               "NLLMSE1234937418*2"
+            ]
+          },
+          {
+            "id": "715d923d-4113-4e5a-8c20-7c41a9b78227",
+            "name": "Eierlanden",
+            "operator": "Vattenfall InCharge",
+            "party_id": "NUO",
+            "statuses": [
+              "UNKNOWN"
+            ],
+            "available": false,
+            "last_updated": "2026-08-03T09:49:33Z",
+            "evse_ids": [
+              "NL*NUO*EEVB*P1512151*1",
+              "NL*NUO*EEVB*P1512151*2"
             ]
           }
         ]
@@ -1156,21 +1155,6 @@
         "reason": "multiple_operators_same_address",
         "locations": [
           {
-            "id": "91525550",
-            "name": "EQUANS Mastspoor 3",
-            "operator": "EQUANS ",
-            "party_id": "LMS",
-            "statuses": [
-              "AVAILABLE"
-            ],
-            "available": true,
-            "last_updated": "2026-10-28T10:31:51Z",
-            "evse_ids": [
-              "NLLMSE1234937533*1",
-              "NLLMSE1234937533*2"
-            ]
-          },
-          {
             "id": "74ac2267-f060-4c21-a3fd-483702b00a19",
             "name": "Mastspoor",
             "operator": "Vattenfall InCharge",
@@ -1183,6 +1167,21 @@
             "evse_ids": [
               "NL*NUO*EEVB*P1418171*1",
               "NL*NUO*EEVB*P1418171*2"
+            ]
+          },
+          {
+            "id": "91525550",
+            "name": "EQUANS Mastspoor 3",
+            "operator": "EQUANS ",
+            "party_id": "LMS",
+            "statuses": [
+              "AVAILABLE"
+            ],
+            "available": true,
+            "last_updated": "2026-10-28T10:31:51Z",
+            "evse_ids": [
+              "NLLMSE1234937533*1",
+              "NLLMSE1234937533*2"
             ]
           }
         ]
@@ -1198,21 +1197,6 @@
         "reason": "multiple_operators_same_address",
         "locations": [
           {
-            "id": "6c715014-aa5e-46e6-9aab-4da426e6b9f2",
-            "name": "Salamander",
-            "operator": "Vattenfall InCharge",
-            "party_id": "NUO",
-            "statuses": [
-              "UNKNOWN"
-            ],
-            "available": false,
-            "last_updated": "2026-08-03T12:12:52Z",
-            "evse_ids": [
-              "NL*NUO*EEVB*P1339398*1",
-              "NL*NUO*EEVB*P1339398*2"
-            ]
-          },
-          {
             "id": "91525630",
             "name": "EQUANS Salamander 2",
             "operator": "EQUANS ",
@@ -1225,6 +1209,21 @@
             "evse_ids": [
               "NLLMSE1234937612*1",
               "NLLMSE1234937612*2"
+            ]
+          },
+          {
+            "id": "6c715014-aa5e-46e6-9aab-4da426e6b9f2",
+            "name": "Salamander",
+            "operator": "Vattenfall InCharge",
+            "party_id": "NUO",
+            "statuses": [
+              "UNKNOWN"
+            ],
+            "available": false,
+            "last_updated": "2026-08-03T12:12:52Z",
+            "evse_ids": [
+              "NL*NUO*EEVB*P1339398*1",
+              "NL*NUO*EEVB*P1339398*2"
             ]
           }
         ]
@@ -1283,21 +1282,6 @@
         "reason": "multiple_operators_same_address",
         "locations": [
           {
-            "id": "91525624",
-            "name": "EQUANS Westkade 359",
-            "operator": "EQUANS ",
-            "party_id": "LMS",
-            "statuses": [
-              "AVAILABLE"
-            ],
-            "available": true,
-            "last_updated": "2026-10-27T06:45:01Z",
-            "evse_ids": [
-              "NLLMSE1234937606*1",
-              "NLLMSE1234937606*2"
-            ]
-          },
-          {
             "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
             "name": "Westkade",
             "operator": "Vattenfall InCharge",
@@ -1310,6 +1294,21 @@
             "evse_ids": [
               "NL*NUO*EEVB*P1339393*1",
               "NL*NUO*EEVB*P1339393*2"
+            ]
+          },
+          {
+            "id": "91525624",
+            "name": "EQUANS Westkade 359",
+            "operator": "EQUANS ",
+            "party_id": "LMS",
+            "statuses": [
+              "AVAILABLE"
+            ],
+            "available": true,
+            "last_updated": "2026-10-27T06:45:01Z",
+            "evse_ids": [
+              "NLLMSE1234937606*1",
+              "NLLMSE1234937606*2"
             ]
           }
         ]
@@ -1334,7 +1333,7 @@
               "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-10-29T12:23:17Z",
+            "last_updated": "2026-10-30T12:13:47Z",
             "evse_ids": [
               "NL*NUO*EEVO*0000490*1",
               "NL*NUO*EEVO*0000490*2"
@@ -1407,7 +1406,7 @@
     "recomputed_stats": {
       "total": 192,
       "connector_profiles": 210,
-      "available_snapshot": 166,
+      "available_snapshot": 156,
       "comparison_ready": 62,
       "decision_ready": 53,
       "indicative_only": 9,
