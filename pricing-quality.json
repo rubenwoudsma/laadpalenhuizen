@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generated_at": "2026-11-08T13:49:24.547052+00:00",
+  "generated_at": "2026-11-09T16:49:43.988719+00:00",
   "input_schema_version": 5,
   "legacy_profile_fallback": false,
   "coverage": {
@@ -15,7 +15,7 @@
     "comparison_ready": 62,
     "comparison_ready_pct": 69.7,
     "fully_reliable_locations": 53,
-    "available_snapshot": 66
+    "available_snapshot": 62
   },
   "connector_coverage": {
     "total_profiles": 103,
@@ -53,39 +53,15 @@
         "count": 20,
         "examples": [
           {
-            "id": "522",
-            "name": "Shell Recharge NL Lage Laarderweg 21",
-            "address": "Lage Laarderweg 21, Huizen",
+            "id": "210",
+            "name": "Shell Recharge NL Onderwei 28",
+            "address": "Onderwei 28, Huizen",
             "connector": "Type 2",
             "current_type": "AC",
             "power_kw": 11.0,
             "evse_ids": [
-              "NL*UB2*E592*1",
-              "NL*UB2*E592*2"
-            ]
-          },
-          {
-            "id": "1961",
-            "name": "Shell Recharge NL Alaskastroom 13",
-            "address": "Alaskastroom 13, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 22.0,
-            "evse_ids": [
-              "NL*UB2*E10021032",
-              "NL*UB2*E10024605"
-            ]
-          },
-          {
-            "id": "2419",
-            "name": "Shell Recharge NL Edelhert 2",
-            "address": "Edelhert 2, Huizen",
-            "connector": "Type 2",
-            "current_type": "AC",
-            "power_kw": 22.0,
-            "evse_ids": [
-              "NL*UB2*E10034545",
-              "NL*UB2*E10061470"
+              "NL*UB2*E281*1",
+              "NL*UB2*E281*2"
             ]
           },
           {
@@ -101,15 +77,39 @@
             ]
           },
           {
-            "id": "599",
-            "name": "Shell Recharge NL Enkhuizerzand 47",
-            "address": "Enkhuizerzand 47, Huizen",
+            "id": "1108",
+            "name": "Shell Recharge NL Monnickskamp 3",
+            "address": "Monnickskamp 3, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 22.0,
+            "evse_ids": [
+              "NL*UB2*E10008528",
+              "NL*UB2*E10045974"
+            ]
+          },
+          {
+            "id": "1961",
+            "name": "Shell Recharge NL Alaskastroom 13",
+            "address": "Alaskastroom 13, Huizen",
+            "connector": "Type 2",
+            "current_type": "AC",
+            "power_kw": 22.0,
+            "evse_ids": [
+              "NL*UB2*E10021032",
+              "NL*UB2*E10024605"
+            ]
+          },
+          {
+            "id": "522",
+            "name": "Shell Recharge NL Lage Laarderweg 21",
+            "address": "Lage Laarderweg 21, Huizen",
             "connector": "Type 2",
             "current_type": "AC",
             "power_kw": 11.0,
             "evse_ids": [
-              "NL*UB2*E669*1",
-              "NL*UB2*E669*2"
+              "NL*UB2*E592*1",
+              "NL*UB2*E592*2"
             ]
           }
         ]
@@ -264,7 +264,7 @@
   },
   "pricing_rule_verification": {
     "mode": "daily_verified_fail_closed",
-    "checked_at": "2026-11-08T13:49:10.097036+00:00",
+    "checked_at": "2026-11-09T16:49:30.769779+00:00",
     "all_ok": false,
     "disabled_rules": [
       "anwb_free",
@@ -609,11 +609,22 @@
     ]
   },
   "freshness": {
-    "older_than_24h": 28,
+    "older_than_24h": 25,
     "older_than_7d": 14,
     "older_than_30d": 8,
     "missing_or_invalid_timestamp": 0,
     "stale_locations_over_7d": [
+      {
+        "id": "74ac2267-f060-4c21-a3fd-483702b00a19",
+        "address": "Mastspoor 3, Huizen",
+        "operator": "Vattenfall InCharge",
+        "party_id": "NUO",
+        "statuses": [
+          "UNKNOWN"
+        ],
+        "last_updated": "2026-07-31T12:44:41Z",
+        "age_days": 101.2
+      },
       {
         "id": "50cf8798-1841-4b66-8f8c-86c43af6dfea",
         "address": "De Ruyterstraat 7, Huizen",
@@ -623,7 +634,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T14:36:10Z",
-        "age_days": 100.0
+        "age_days": 101.1
       },
       {
         "id": "7e0dfd1b-e2e7-46ff-bcff-53fb5c9af4bb",
@@ -634,18 +645,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-07-31T13:43:40Z",
-        "age_days": 100.0
-      },
-      {
-        "id": "74ac2267-f060-4c21-a3fd-483702b00a19",
-        "address": "Mastspoor 3, Huizen",
-        "operator": "Vattenfall InCharge",
-        "party_id": "NUO",
-        "statuses": [
-          "UNKNOWN"
-        ],
-        "last_updated": "2026-07-31T12:44:41Z",
-        "age_days": 100.0
+        "age_days": 101.1
       },
       {
         "id": "691343b7-cb61-4117-9d42-db44ceb4ba32",
@@ -656,7 +656,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T07:46:28Z",
-        "age_days": 97.3
+        "age_days": 98.4
       },
       {
         "id": "715d923d-4113-4e5a-8c20-7c41a9b78227",
@@ -667,7 +667,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T09:49:33Z",
-        "age_days": 97.2
+        "age_days": 98.3
       },
       {
         "id": "34843d4c-9b13-4531-baab-9fe02ea9adef",
@@ -678,7 +678,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T08:53:12Z",
-        "age_days": 97.2
+        "age_days": 98.3
       },
       {
         "id": "6c715014-aa5e-46e6-9aab-4da426e6b9f2",
@@ -689,7 +689,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T12:12:52Z",
-        "age_days": 97.1
+        "age_days": 98.2
       },
       {
         "id": "bf31193a-a87d-4be2-9d01-ee43886b92f4",
@@ -700,7 +700,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-08-03T10:50:26Z",
-        "age_days": 97.1
+        "age_days": 98.2
       },
       {
         "id": "91203264",
@@ -711,7 +711,7 @@
           "AVAILABLE"
         ],
         "last_updated": "2026-10-27T23:55:32Z",
-        "age_days": 11.6
+        "age_days": 12.7
       },
       {
         "id": "91107495",
@@ -722,7 +722,7 @@
           "AVAILABLE"
         ],
         "last_updated": "2026-10-27T23:55:30Z",
-        "age_days": 11.6
+        "age_days": 12.7
       },
       {
         "id": "91195284",
@@ -734,7 +734,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-10-27T23:54:12Z",
-        "age_days": 11.6
+        "age_days": 12.7
       },
       {
         "id": "91230406",
@@ -745,7 +745,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-10-27T23:59:42Z",
-        "age_days": 11.6
+        "age_days": 12.7
       },
       {
         "id": "91149385",
@@ -756,7 +756,7 @@
           "UNKNOWN"
         ],
         "last_updated": "2026-10-27T23:33:38Z",
-        "age_days": 11.6
+        "age_days": 12.7
       },
       {
         "id": "91093682",
@@ -767,7 +767,7 @@
           "AVAILABLE"
         ],
         "last_updated": "2026-10-27T23:18:11Z",
-        "age_days": 11.6
+        "age_days": 12.7
       }
     ]
   },
@@ -793,10 +793,10 @@
             "operator": "E-Flux by Road",
             "party_id": "EFL",
             "statuses": [
-              "AVAILABLE"
+              "CHARGING"
             ],
-            "available": true,
-            "last_updated": "2026-11-07T14:27:11.262Z",
+            "available": false,
+            "last_updated": "2026-11-09T10:52:18.774Z",
             "evse_ids": [
               "NL*EFL*EV3893250*C1",
               "NL*EFL*EV6652420*C1"
@@ -808,11 +808,10 @@
             "operator": "EQUANS ",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE",
               "CHARGING"
             ],
-            "available": true,
-            "last_updated": "2026-11-08T12:01:38Z",
+            "available": false,
+            "last_updated": "2026-11-09T16:20:53Z",
             "evse_ids": [
               "NLLMSE1234937483*1",
               "NLLMSE1234937483*2"
@@ -866,11 +865,10 @@
             "operator": "EQUANS ",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE",
-              "CHARGING"
+              "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-11-08T09:43:20Z",
+            "last_updated": "2026-11-09T16:03:27Z",
             "evse_ids": [
               "NLLMSE1234937461*1",
               "NLLMSE1234937461*2"
@@ -913,7 +911,7 @@
               "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-11-08T13:43:28Z",
+            "last_updated": "2026-11-09T14:52:13Z",
             "evse_ids": [
               "NLLMSE1234937418*1",
               "NLLMSE1234937418*2"
@@ -955,7 +953,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-11-08T09:34:19Z",
+            "last_updated": "2026-11-09T15:19:45Z",
             "evse_ids": [
               "NLLMSE1234937533*1",
               "NLLMSE1234937533*2"
@@ -982,7 +980,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-11-08T08:36:34Z",
+            "last_updated": "2026-11-09T06:58:41Z",
             "evse_ids": [
               "NLLMSE1234937612*1",
               "NLLMSE1234937612*2"
@@ -1024,7 +1022,7 @@
               "CHARGING"
             ],
             "available": false,
-            "last_updated": "2026-11-08T11:56:45Z",
+            "last_updated": "2026-11-09T15:21:24Z",
             "evse_ids": [
               "NLLMSE1234937467*1",
               "NLLMSE1234937467*2"
@@ -1078,10 +1076,10 @@
             "operator": "EQUANS ",
             "party_id": "LMS",
             "statuses": [
-              "AVAILABLE"
+              "CHARGING"
             ],
-            "available": true,
-            "last_updated": "2026-11-08T12:12:20Z",
+            "available": false,
+            "last_updated": "2026-11-09T15:05:04Z",
             "evse_ids": [
               "NLLMSE1234937606*1",
               "NLLMSE1234937606*2"
@@ -1109,7 +1107,7 @@
               "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-11-08T13:17:04Z",
+            "last_updated": "2026-11-09T16:14:03Z",
             "evse_ids": [
               "NLLMSE1234937613*1",
               "NLLMSE1234937613*2"
@@ -1142,25 +1140,6 @@
         "reason": "same_operator_multiple_records",
         "locations": [
           {
-            "id": "6c9f31ee-b0ff-4e8f-8434-9f2d1294162c",
-            "name": "Lidl Huizen",
-            "operator": "Lidl",
-            "party_id": "LDL",
-            "statuses": [
-              "AVAILABLE",
-              "INOPERATIVE"
-            ],
-            "available": true,
-            "last_updated": "2026-11-08T13:26:06Z",
-            "evse_ids": [
-              "NL*LDL*E00000148",
-              "NL*LDL*E00000149",
-              "NL*LDL*E00000150",
-              "NL*LDL*E00000283",
-              "NL*LDL*E00000285"
-            ]
-          },
-          {
             "id": "0f9c8ed2-d85f-45d5-a907-502aba2ba249",
             "name": "Lidl Huizen",
             "operator": "Lidl",
@@ -1170,10 +1149,29 @@
               "INOPERATIVE"
             ],
             "available": true,
-            "last_updated": "2026-11-08T08:01:28Z",
+            "last_updated": "2026-11-09T06:01:07Z",
             "evse_ids": [
               "NL*LDL*E00000286",
               "NL*LDL*E00000288"
+            ]
+          },
+          {
+            "id": "6c9f31ee-b0ff-4e8f-8434-9f2d1294162c",
+            "name": "Lidl Huizen",
+            "operator": "Lidl",
+            "party_id": "LDL",
+            "statuses": [
+              "AVAILABLE",
+              "INOPERATIVE"
+            ],
+            "available": true,
+            "last_updated": "2026-11-09T16:05:48Z",
+            "evse_ids": [
+              "NL*LDL*E00000148",
+              "NL*LDL*E00000149",
+              "NL*LDL*E00000150",
+              "NL*LDL*E00000283",
+              "NL*LDL*E00000285"
             ]
           },
           {
@@ -1185,7 +1183,7 @@
               "AVAILABLE"
             ],
             "available": true,
-            "last_updated": "2026-11-08T11:18:50Z",
+            "last_updated": "2026-11-09T16:21:27Z",
             "evse_ids": [
               "NL*LDL*E00000280",
               "NL*LDL*E00000282"
@@ -1247,22 +1245,6 @@
         "reason": "multiple_operators_same_address",
         "locations": [
           {
-            "id": "ac590fb1ec1b22c7c9bb1ef73b09fa98",
-            "name": "Zenderlaan 11",
-            "operator": "Vattenfall InCharge",
-            "party_id": "NUO",
-            "statuses": [
-              "AVAILABLE",
-              "CHARGING"
-            ],
-            "available": true,
-            "last_updated": "2026-11-08T07:22:44Z",
-            "evse_ids": [
-              "NL*NUO*EEVO*0000490*1",
-              "NL*NUO*EEVO*0000490*2"
-            ]
-          },
-          {
             "id": "91591168",
             "name": "EQUANS Zenderlaan 11",
             "operator": "EQUANS ",
@@ -1272,10 +1254,25 @@
               "CHARGING"
             ],
             "available": true,
-            "last_updated": "2026-11-08T12:31:54Z",
+            "last_updated": "2026-11-09T15:44:48Z",
             "evse_ids": [
               "NLLMSE1234946574*1",
               "NLLMSE1234946574*2"
+            ]
+          },
+          {
+            "id": "ac590fb1ec1b22c7c9bb1ef73b09fa98",
+            "name": "Zenderlaan 11",
+            "operator": "Vattenfall InCharge",
+            "party_id": "NUO",
+            "statuses": [
+              "CHARGING"
+            ],
+            "available": false,
+            "last_updated": "2026-11-09T15:57:17Z",
+            "evse_ids": [
+              "NL*NUO*EEVO*0000490*1",
+              "NL*NUO*EEVO*0000490*2"
             ]
           }
         ]
@@ -1288,7 +1285,7 @@
     "recomputed_stats": {
       "total": 89,
       "connector_profiles": 103,
-      "available_snapshot": 66,
+      "available_snapshot": 62,
       "comparison_ready": 62,
       "decision_ready": 53,
       "indicative_only": 9,
